@@ -29,6 +29,48 @@ Modes still exist, and they all reference the same underlying mechanisms describ
 The extra characteristics are stored in the consonant lookup table.
 Every phone (vowels and consonants) have a LipRounding associated with them, of course, and only consonants are affected by it.
 
+(((OLD: Coarticulation logic: When a pronouncing the next phone in a sequence, the transition to the required mode begins. The parameters have inertia ("lazy mouth", coarticulation etc.) and they will try to reach the next target, which is the parameter configuration for the next phone. The mode transition happens by mixing the previous mode down, and mixing the new one up.
+Because vowels are a space, with a single state, this state is shared between modes, but it is **only controlled by the current mode being transitioned into** (or just... current mode). The preivous mode, during the mixing of modes, can still get affected by the changing state though, to make coarticulation happen.)))
+=== OR ===
+Coarticulation logic: I mean I can get more complex: take the current point in time t, look around it, see what kind of phones are around that window, evaluate what their state wants to be (targets), average those tartgets in a weighted manner (the one closer to the current time t gets a lot more weight, kinda like a bell curve around time t), and that's the current *global target*, which the system attempts to move to. Yeah, this would make anticipatory effects work much more smoothly. Essentially a rolling window of phones with center-weighted target averaging, resulting in a GLOBAL TARGET that the system attempts to reach at the current time t. (That requires a lot of little stuff on the parameter level, but may be more natural.) Yes, this may *seem* more complex, but it doesn't actually require a lot more parameters, only a lot more synthesis logic and math, but once that's figured out, it just works. (About modes: (See: I mean... maybe... but now I see modes as not really "modes", rather "generation styles". "For this consonant, use the vowel space at this point, get this formant data from the lookup table, use these amplitude envleopes, and use all these nasality etc. settings, to get the exact, pure consonant without context." That's a "mode"... it's really just a lookup table for lookup tables lol So I guess I could just smooth it out like there were no modes at all. Modes are just... ways of generating stuff. ESSENTIALLY "RECIPES" FOR PHONES.) BUT CONSONANTS NEED LESS SMOOTHING AND VOWELS NEED WIDER SMOOTHING (different kernels for Gaussian smoothing:
+```
+From ChatGPT:
+vowels: wide Gaussian (strong smoothing)
+fricatives: medium width
+stops: very narrow or even impulse-like weighting
+```
+Summary of ChatGPT about this: Your system has converged to a kernel-smoothed target trajectory speech synthesizer driven by phoneme annotations, with dynamical parameter tracking and layered excitation, which is a much more principled and scalable formulation than the earlier mode-based design.
+See last two messages with ChatGPT for more info on this Gaussian thing.
+
+About Breathiness: Yes, it's just /h/, but it's affected by the vowel space as well as LipRounding, actually. It's essentially a separate third system (block), but it's still part of the system. However, as a separate block, it only takes inputs, and outputs breathiness at a specified amplitude, which can be directly mixed into the output. That's the plan.
+
+EACH PHONE IS IN A LOOKUP TABLE. EACH PHONE HAS A MODE ATTACHED, WHICH JUST MEANS WHICH TABLES IT GETS DATA FROM (VOWEL SPACE, CONSONANT LOOKUP) AND WHAT ENVELOPES IT SHOULD HAVE. THAT'S IT. IN FACT, THERE COULD BE ENVELOPE CALCULATOR FUNCTIONS ATTACHED TO EACH "MODE".
+Not every parameter gets an envelope, that would be far too much. Envelopes can also be broken up to categories:
+```
+From ChatGPT:
+1. Fast dynamics (enveloped)
+amplitude
+noise level
+burst energy
+2. Medium dynamics (lazy)
+F1/F2 trajectory
+lip rounding
+tension
+3. Static per phone
+template selection
+consonant identity
+base formant anchor
+
+This keeps:
+
+expressiveness
+but preserves control
+```
+
+
+===
+
+
 Ignore this below, ideas for later and non-finished requirements:
 ```
 All parameter names of the mouth are written in PascalCase. (Even though I'm using Python.)
