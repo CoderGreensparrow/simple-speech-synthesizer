@@ -40,7 +40,7 @@ fricatives: medium width
 stops: very narrow or even impulse-like weighting
 ```
 Summary of ChatGPT about this: Your system has converged to a kernel-smoothed target trajectory speech synthesizer driven by phoneme annotations, with dynamical parameter tracking and layered excitation, which is a much more principled and scalable formulation than the earlier mode-based design.
-See last two messages with ChatGPT for more info on this Gaussian thing.
+See last three messages with ChatGPT for more info on this Gaussian thing.
 
 About Breathiness: Yes, it's just /h/, but it's affected by the vowel space as well as LipRounding, actually. It's essentially a separate third system (block), but it's still part of the system. However, as a separate block, it only takes inputs, and outputs breathiness at a specified amplitude, which can be directly mixed into the output. That's the plan.
 
