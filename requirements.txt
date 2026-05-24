@@ -1,0 +1,1 @@
+pyo==1.0.5  # use Python 3.11.x; installation may fail on Python 3.12+ due to missing Windows wheels

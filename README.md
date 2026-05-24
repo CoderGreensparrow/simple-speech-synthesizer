@@ -1,6 +1,23 @@
 # simple-speech-synthesizer
 A simple speech synthesizer without rigorous internal structure.
 
+The project description is better in __init__.py.
+Everything below is a remnant of the brainstorming.
+
+===
+
+IMPORTANT IDEA:
+the targeting layer actually splits up consonants like plsives into sub-targets that the AcousticState follows dumbly.
+Therefore, plosive envelopes happen at the targeting level, removing the need for phoneme-specific envelopes at the synthesis level.
+Example:
+timing layer: /t/ from 01:23.03 --> 01:23.54
+targeting layer: closure target at this time, next up is release burst target (NOTE: these are just AcousticStates, or MouthStates), next up is a bit of aspiration target, and finally here's the next vowel, now  here's the next etc. etc...
+AcousticState: OK, I got a new target, let's start moving there... hey, here's a new one, let's start moving there... hey, here's a new one... ...
+Synthesis (filters + generators): Let's read the current AcousticState... OK, so this means I have to put a formant here and here on this sawtooth source etc.
+
+**So there are no "modes", only "targeting profiles" for different types of phones that only the targeting layer knows about.**
+
+
 SIMPLIFIED REQUIREMENTS:
 I'll compress it with a few more ideas that shouldn't make it too-too complex:
 Sources: vocal source (F0 sine + F0 sawtooth with RelativeAmplitude, which means the sawtooth's amplitude relative to the sine's amplitude, as a fraction: SawtoothAmplitude/SineAmplitude) and noise source (white noise with Amplitude)

@@ -1,0 +1,9 @@
+[project]
+name = "simple-speech-synthesizer"
+version = "0.0.1"
+description = "Simple parametric acoustic/formant speech synthesizer with simplistic vowel coarticulation using pyo"
+requires-python = ">=3.11,<3.12"
+
+dependencies = [
+    "pyo==1.0.5",
+]
