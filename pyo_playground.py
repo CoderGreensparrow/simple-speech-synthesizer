@@ -44,33 +44,43 @@ s.gui(locals())"""  # nice stuff with low freq oscillators
 
 # making an ε
 
-s = Server(sr=48000).boot().start()
+s = Server(duplex=0)
+output_select = pa_get_output_devices()
+print(output_select)
+i = output_select[0].index('Microsoft hangleképző - Output')
+out_index = output_select[1][i]
+print(out_index)
+s.setOutputDevice(out_index)
+s.boot().start()
 
 F0 = 100
 F1 = 610
 F2 = 1900
-fundamental_sway = ButLP(BrownNoise(), 5, 2)
-vocal_raw = Blit(freq=F0 + fundamental_sway, harms=300)
-vocal = ButLP(vocal_raw, F2 + 500)
-f0 = ButLP(ButBP(vocal, F0 + fundamental_sway, 1, mul=1), (F0 + fundamental_sway) * 3)
-f1 = ButBP(vocal, F1, 100, mul=0.7)
-f2 = ButBP(vocal, F2, 100, mul=0.05)
+fundamental_sway = ButLP(BrownNoise(), freq=3, mul=3)
+FM_jitter = ButLP(BrownNoise(), freq=15, mul=0.15)
+vocal_amp_sway = ButLP(BrownNoise(), freq=25, mul=0.03)
+vocal = Blit(freq=F0 + fundamental_sway + FM_jitter, harms=80, mul=1 + vocal_amp_sway)
+body = ButLP(vocal, 400, mul=1)  # spectral "tilt" (spectral shaping of Blit)
+body_high = ButHP(vocal, 3000, mul=0.01)
+vocal = body + body_high
+f0 = ButLP(Reson(vocal, F0 + fundamental_sway, 1, mul=1), (F0 + fundamental_sway) * 1.5)  # this thing... it may work
+f1 = Reson(vocal, F1, 6, mul=0.5)
+f2 = Reson(vocal, F2, 8, mul=0.3)
 noise = Noise()
-f0noise = ButBP(noise, F0 + fundamental_sway, 5, mul=0.5)
-f1noise = ButBP(noise, F1, 70, mul=0.4)
-f2noise = ButBP(noise, F2, 70, mul=0.2)
-subsum = (f0 + f1 + f2) * 50 + (f0noise + f1noise + f2noise) * 1
-sum = ButLP(subsum, 5000)
+f0noise = ButLP(Reson(noise, F0 + fundamental_sway, 5, mul=1), (F0 + fundamental_sway) * 1.5)
+f1noise = Reson(noise, F1, 30, mul=0.5)
+f2noise = Reson(noise, F2, 40, mul=0.2)
+sum = (f0 + f1 + f2) * 20 + (f0noise + f1noise + f2noise) * 0.8
 sum.out(0)
 sum2 = sum * 1
 sum2.out(1)
 
-Scope(sum)
-analyzer = Spectrum([sum], size=2**14)
+Scope([sum, vocal])
+analyzer = Spectrum([sum, vocal], size=2**14)
 analyzer.setFscaling(True)  # log
 analyzer.setLowFreq(0)
 analyzer.setHighFreq(10000)
-analyzer.setGain(0)
+analyzer.setGain(3)
 s.gui(locals())
 
 """i 	240 	2400 	2160
