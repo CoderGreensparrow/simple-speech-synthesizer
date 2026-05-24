@@ -54,8 +54,9 @@ s.setOutputDevice(out_index)
 s.boot().start()
 
 F0 = 100
-F1 = 610
-F2 = 1900
+F1 = 717 # praat value; orig 610
+F2 = 1858 # praat value; orig 1900
+F3 = 2879 # praat value
 fundamental_sway = ButLP(BrownNoise(), freq=3, mul=3)
 FM_jitter = ButLP(BrownNoise(), freq=15, mul=0.15)
 vocal_amp_sway = ButLP(BrownNoise(), freq=25, mul=0.03)
@@ -66,11 +67,14 @@ vocal = body + body_high
 f0 = ButLP(Reson(vocal, F0 + fundamental_sway, 1, mul=1), (F0 + fundamental_sway) * 1.5)  # this thing... it may work
 f1 = Reson(vocal, F1, 6, mul=0.5)
 f2 = Reson(vocal, F2, 8, mul=0.3)
+f3 = Reson(vocal, F3, 12, mul=0.1)
+f3.ctrl()
 noise = Noise()
 f0noise = ButLP(Reson(noise, F0 + fundamental_sway, 5, mul=1), (F0 + fundamental_sway) * 1.5)
 f1noise = Reson(noise, F1, 30, mul=0.5)
 f2noise = Reson(noise, F2, 40, mul=0.2)
-sum = (f0 + f1 + f2) * 20 + (f0noise + f1noise + f2noise) * 0.8
+f3noise = Reson(noise, F3, 60, mul=0.025)
+sum = (f0 + f1 + f2 + f3) * 20 + (f0noise + f1noise + f2noise + f3noise) * 0.8
 sum.out(0)
 sum2 = sum * 1
 sum2.out(1)
