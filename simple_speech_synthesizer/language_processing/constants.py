@@ -1,0 +1,1 @@
+LANGUAGE_CODES = ("english_american", "japanese", "german_hochdeutsch", "hungarian")
