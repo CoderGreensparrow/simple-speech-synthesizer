@@ -53,10 +53,10 @@ print(out_index)
 s.setOutputDevice(out_index)
 s.boot().start()
 
-F0 = 119
-F1 = 538 # praat value; orig 610
-F2 = 1779 # praat value; orig 1900
-F3 = 2751 # praat value
+F0 = 105
+F1 = 6612 # praat value; orig 610
+F2 = 11665 # praat value; orig 1900
+F3 = 14286 # praat value
 fundamental_sway = ButLP(BrownNoise(), freq=3, mul=3)
 FM_jitter = ButLP(BrownNoise(), freq=15, mul=0.15)
 vocal_amp_sway = ButLP(BrownNoise(), freq=25, mul=0.03)
@@ -69,14 +69,19 @@ f1 = Reson(vocal, F1, 6, mul=0.5)                 # originally mul=0.6 above was
 f2 = Reson(vocal, F2, 8, mul=0.4)  # orig: 0.3
 f3 = Reson(vocal, F3, 12, mul=0.2)  # orig: 0.1
 noise = Noise()
-f0noise = ButLP(Reson(noise, F0 + fundamental_sway, 5, mul=1), (F0 + fundamental_sway) * 1.5)
-f1noise = Reson(noise, F1, 30, mul=0.5)
-f2noise = Reson(noise, F2, 40, mul=0.2)
-f3noise = Reson(noise, F3, 60, mul=0.025)
-sum = (f0 + f1 + f2 + f3) * 20 + (f0noise + f1noise + f2noise + f3noise) * 0.8
+f0noise = ButLP(resonf0temp:=Reson(noise, F0 + fundamental_sway, 5, mul=0.05), (F0 + fundamental_sway) * 1.5)
+f1noise = Reson(noise, F1, 12, mul=0.4)
+f2noise = Reson(noise, F2, 16, mul=0.5)
+f3noise = Reson(noise, F3, 20, mul=0.3)
+sum = (f0 + f1 + f2 + f3) * 0 + (f0noise + f1noise + f2noise + f3noise) * 0.8 + noise * 0.03
 sum.out(0)
 sum2 = sum * 1
 sum2.out(1)
+
+resonf0temp.ctrl()
+f1noise.ctrl()
+f2noise.ctrl()
+f3noise.ctrl()
 
 Scope([sum, vocal])
 analyzer = Spectrum([sum, vocal], size=2**14)
