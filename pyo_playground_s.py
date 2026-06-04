@@ -69,19 +69,20 @@ f1 = Reson(vocal, F1, 6, mul=0.5)                 # originally mul=0.6 above was
 f2 = Reson(vocal, F2, 8, mul=0.4)  # orig: 0.3
 f3 = Reson(vocal, F3, 12, mul=0.2)  # orig: 0.1
 noise = Noise()
-f0noise = ButLP(resonf0temp:=Reson(noise, F0 + fundamental_sway, 5, mul=0.05), (F0 + fundamental_sway) * 1.5)
-f1noise = Reson(noise, F1, 12, mul=0.4)
-f2noise = Reson(noise, F2, 16, mul=0.5)
-f3noise = Reson(noise, F3, 20, mul=0.3)
-sum = (f0 + f1 + f2 + f3) * 0 + (f0noise + f1noise + f2noise + f3noise) * 0.8 + noise * 0.03
+f0noise = ButLP(Reson(noise, F0 + fundamental_sway, 5, mul=0), (F0 + fundamental_sway) * 1.5)
+random_high_noise_for_realism = ButHP(noise, 1700, mul=0.05)
+f1noise = Resonx(noise, F1, 3, mul=0.5, stages=3)
+f2noise = Resonx(noise, F2, 4, mul=0.5, stages=3)
+f3noise = Resonx(noise, F3, 6, mul=0.3, stages=3)
+sum = (f0 + f1 + f2 + f3) * 0 + (f0noise + f1noise + f2noise + f3noise + random_high_noise_for_realism) * 0.8
 sum.out(0)
 sum2 = sum * 1
 sum2.out(1)
 
-resonf0temp.ctrl()
 f1noise.ctrl()
 f2noise.ctrl()
 f3noise.ctrl()
+random_high_noise_for_realism.ctrl()
 
 Scope([sum, vocal])
 analyzer = Spectrum([sum, vocal], size=2**14)

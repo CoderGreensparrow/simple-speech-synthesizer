@@ -28,18 +28,16 @@ class AcousticTarget:
     the next, and then the next target, as t time progresses.
     This is the first type of target used, the other one is "ENVELOPE TARGETS", aka. the GlobalEnvelopeTarget class.
     :param t: The timecode of the acoustic state target.
-    :param formants: The list of formants to be applied at that point in time, in order F1, F2, F3 etc.
-    :param vocal_ratio: How much the vocal chords are activated in the synthesis, range from 0 to 1, where 0 means no voiceless component of the phoneme, 1 means fully engaged voiced component of the phoneme.
-    :param noise_ratio: How much noise (breathiness, voiceless component) are activated in synthesis, range from 0 to 1, where 0 means no voiceless component, and 1 means fully engaged voiceless component.
+    :param formants: The list of formants to be applied at that point in time, in order F1, F2, F3 etc. This includes both vowel-like formants, and fricitive-like "formants", or rather, resonances.
+    :param voiced_to_noise_ratio: The ratio of "how much is this a voiced vowel" (at 0) to "how much is this a fully voiceless consonant" (at 1) with "voiced consonants" somewhere in between the two. Essentially controls the ratio of volume between the two sources: vocal source and noise source.
     """
     t: float
     formants: tuple[SimplifiedFormant, ...]
-    vocal_ratio: float
-    noise_ratio: float
+    voiced_to_noise_ratio: float
 
     def __post_init__(self):
-        if not (0 <= self.vocal_ratio <= 1 and 0 <= self.noise_ratio <= 1):
-            raise ValueError("vocal_ratio and noise_ratio must be between 0 and 1 in AcousticTarget")
+        if not (0 <= self.voiced_to_noise_ratio <= 1):
+            raise ValueError("voiced_to_noise_ratio must be between 0 and 1 in AcousticTarget")
 
 
 @dataclass(frozen=True)
