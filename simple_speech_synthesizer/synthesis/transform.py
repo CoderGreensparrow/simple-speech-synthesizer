@@ -1,5 +1,10 @@
+"""
+LAYER 6: synthesis
+Synthesizes the actual vocals from all the (pyo typed) envelopes given.
+Dead-simple parametric formant/audio-focused speech synthesizer.
+"""
+
 import pyo
-from simple_speech_synthesizer.realization.transform import SynthStates
 
 class Generator:
     def __init__(self, F0, amp = 1.0,

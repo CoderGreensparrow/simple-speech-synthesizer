@@ -27,17 +27,31 @@ class AcousticTarget:
     TECHNICALLY, this is a "POINT-IN-TIME TARGET", which means the dynamics of the mouth will aim for the next,
     the next, and then the next target, as t time progresses.
     This is the first type of target used, the other one is "ENVELOPE TARGETS", aka. the GlobalEnvelopeTarget class.
+
+    IMPORTANT SYSTEM KNOWLEDGE:
+    - the voice source is affected by both vowel_formants (strongly) and constriction_formants (weaker), latter introduced by constriction.
+    - the noise source is affected WEAKLY by the vowel_formants all the time, and by constriction_formants STRONGLY, latter introduced by constriction.
+    So overall, constriction is only a semantic volume of how much constriction is happening.
+
+    This also means PHONEMES ARE STORED NOT AS VOWELS OR CONSONANTS SEPARATELY, rather
+    as ***TONGUE POSITIONS*** or SOMETHING SIMILAR, where /i/ and /ç/ have the same vowel_ and constriction_formants,
+    just differing levels of voice_to_noise_ratio and constriction. (Or they are just duplicated in the lookup table with only those two parameters differing.)
+
     :param t: The timecode of the acoustic state target.
-    :param formants: The list of formants to be applied at that point in time, in order F1, F2, F3 etc. This includes both vowel-like formants, and fricitive-like "formants", or rather, resonances.
-    :param voiced_to_noise_ratio: The ratio of "how much is this a voiced vowel" (at 0) to "how much is this a fully voiceless consonant" (at 1) with "voiced consonants" somewhere in between the two. Essentially controls the ratio of volume between the two sources: vocal source and noise source.
+    :param vowel_formants: The list of formants to be applied at that point in time, in order F1, F2, F3 etc. These are VOWEL-LIKE in quality.
+    :param constriction_formants: The lise of "formants" or spectral peaks to be applied at t, in order S1, S2, S3 etc. These are FRICATIVE-LIKE resonances.
+    :param voice_to_noise_ratio: The ratio of "how much is this a voiced vowel" (at 0) to "how much is this a fully voiceless consonant" (at 1) with "voiced consonants" somewhere in between the two. Essentially controls the ratio of volume between the two sources: vocal source and noise source.
+    :param constriction: float from 0 to 1. Percentage that sets how much "constriction" happens for consonants. It essentially acts like a global semantic volume for the contriction_peaks.
     """
     t: float
-    formants: tuple[SimplifiedFormant, ...]
-    voiced_to_noise_ratio: float
+    vowel_formants: tuple[SimplifiedFormant, ...]
+    constriction_formants: tuple[SimplifiedFormant, ...]
+    voice_to_noise_ratio: float
+    constriction: float
 
     def __post_init__(self):
-        if not (0 <= self.voiced_to_noise_ratio <= 1):
-            raise ValueError("voiced_to_noise_ratio must be between 0 and 1 in AcousticTarget")
+        if not (0 <= self.voice_to_noise_ratio <= 1):
+            raise ValueError("voice_to_noise_ratio must be between 0 and 1 in AcousticTarget")
 
 
 @dataclass(frozen=True)

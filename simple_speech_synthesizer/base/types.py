@@ -61,6 +61,9 @@ class Envelope:
 
     def get_value(self, t: float):
         """
+        NOTE: THIS FUNCTION IS ALMOST NEVER USED OUTSIDE OF THE (TO BE CODED) GUI FOR THE SOFTWARE.
+        AT THE LOW LEVEL, ALL Envelopes ARE CONVERTED TO PYO'S CLASSES, AND THOSE CLASSES HANDLE EVERYTHING FROM THERE,
+        INCLUDING EVALUATING THE ENVELOPE AT SPECIFIC t TIMEPOINTS.
         Evaluate the envelope at time t.
         Interpolation types are explained in detail in the Segment dataclass' docstring.
         """

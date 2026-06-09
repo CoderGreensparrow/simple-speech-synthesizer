@@ -1,3 +1,8 @@
+"""
+LAYER 1: language processing
+NOT IMPLEMENTED
+"""
+
 from constants import LANGUAGE_CODES
 from process_english_american import EnglishPhonemeProcessor
 import _nltk_setup

@@ -1,15 +1,23 @@
 """
+IMPORTANT NOTE !!!!
+ALL THE DOCUMENTATION IN THIS PROJECT WAS ESSENTIALLY THE RESULT OF ME BRAINSTORMING AND WRITING DOWN STUFF AS THE PROJECT IDEAS EVEN BECAME REAL IDEAS.
+SO BASICALLY, THERE CAN BE MANY DIFFERENCES IN WHAT IS DOCUMENTED ABOUT THE ARCHITECTURE AND WHAT HAPPENS.
+TODO: Write a doog documentation about the architecture.
+
+===============
+
 Simplified synthesis pipeline, from the smallest component to the largest:
 
 INPUTS (text, inflection, etc. anything the user desires, like SynthV or UTAU)
 -> LAYER 0: language_processing (NLP layer, may be very simplistic at first, producing monotone voices, but because it's modular, it should be possible to upgrade it later)
 TODO: prosody is not properly defined here. SOLUTION: don't care about prosody, prosody controls are all manually open, like UTAU or Vocaloid. Specific control parameters could be programmatically generated later too. IMPORTANT: create a good prosody input parameter system.
 -> LAYER 1: timing (decides the literal length of individual phonemes/phones, based on the NLP info, and controlles the targeting system)
+BASICALLY NOTHING IS IMPLEMENTED ABOVE LAYER 2 AS OF NOW.
 -> LAYER 2: targeting (decides what the next articulatory target is for the lover subsystems)
 -> LAYER 3: acoustic_state (an ever evolving acoustic simulation of the mouth that is controlled by the current state target given by the targeting layer, so essentially it contains and progresses the current state of the nonexistent/acoustic-only mouth)
 -> LAYER 4: realization (also called "acoustic_to_synthesis_adaptor", converts complex acoustic synthesis data with "Breathiness", "Vocal tilt" and "Lip Rounding", as well as "Consonant voiced component formant corrections" information to dead-simple parameters for the synthesizer.)
-    Outputs: SynthStates
--> LAYER 5: synthesis (voiced source + formant parameters, voiceless source + formant parameters, MAYBE EVEN breathiness voiceless source + formant parameters, SUMMED UP, it's a very dumb layer)
+-> LAYER 5: pyo_adapter: converts my own types (Envelope) to pyo's types (whatever is needed for envelopes in pyo)
+-> LAYER 6: synthesis (voiced source + formant parameters, voiceless source + formant parameters, MAYBE EVEN breathiness voiceless source + formant parameters, SUMMED UP, it's a very dumb layer)
 OUT: audio
 
 IMPORTANT NOTE: formant deltas, formant delta coarticulation with percentage changing as transition between CV and VC happens
