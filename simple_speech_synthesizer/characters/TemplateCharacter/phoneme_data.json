@@ -1,0 +1,6 @@
+{
+  "[insert phoneme ID here]": {
+    "acoustic_parameter": "[insert ID]",
+    "manner": "[insert ID]"
+  }
+}

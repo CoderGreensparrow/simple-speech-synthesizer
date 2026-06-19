@@ -1,0 +1,24 @@
+{
+  "stop_basic [aka. insert any ID here]": {
+    "base_function": "stop",
+    "parameters": {
+      "TODO FOR LATER": ""
+    }
+  },
+  "vowel": {
+    "base_function": "flow",
+    "parameters": {
+      "voice_to_noise_ratio": 0,
+      "constriction": 0,
+      "nasality": 0
+    }
+  },
+  "voiceless_fricative": {
+    "base_function": "flow",
+    "parameters": {
+      "voice_to_noise_ratio": 1,
+      "constriction": 0.5,
+      "nasality": 0
+    }
+  }
+}

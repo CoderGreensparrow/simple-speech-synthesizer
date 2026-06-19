@@ -53,7 +53,7 @@ class Envelope:
             raise ValueError("Points in Envelopes must be sorted by t time.")
         if len(self.segments) != len(self.points) - 1:
             raise ValueError(
-                "Envelope must contain len(points)-1 segments. (Each nth segment describes the segment between the nth and (n+1)th points.)"
+                f"Envelope must contain len(points)-1 segments. (Each nth segment describes the segment between the nth and (n+1)th points.). Got: {len(self.segments)=} and {len(self.points) - 1=}"
             )
 
         object.__setattr__(self, "min_t", self.points[0].t)
@@ -146,7 +146,7 @@ class NdimensionalParameterSpace:
 
     def __post_init__(self):
         if not (len(self.param_names) == len(self.param_pos) == len(self.param_vel)):
-            raise ValueError("The number of parameters, their number of initial values, and their number of initial velocities must match upon parameter space creation.")
+            raise ValueError(f"The number of parameters, their number of initial values, and their number of initial velocities must match upon parameter space creation. Got: {len(self.param_names)=} {len(self.param_pos)=} {len(self.param_vel)=}")
         """for vel in self.param_vel:
             if vel > self.max_vel:
                 raise ValueError("The initialization velocity of all parameters must be less than or equal to max_vel.")""" # TODO fix argument checking

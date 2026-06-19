@@ -5,19 +5,23 @@ from simple_speech_synthesizer.base.types import Envelope, Point, Segment
 @dataclass(frozen=True)
 class SimplifiedFormant:
     """
-    Formant information without formant amplitude/gain.
+    Formant information with formant amplitude/gain.
     When used as a delta, each component acts as a delta on another SimplifiedFormant object's corresponding parameters.
     """
     freq: float
     """in Hz"""
     bandwidth: float
     """in Hz"""
+    importance: float
+    """semantic amplitude"""
 
     def __post_init__(self):
         if self.freq < 0:
-            raise ValueError("freq must be positive in SimplifiedFormant")
+            raise ValueError(f"freq must be positive in SimplifiedFormant; given {self.freq}")
         if self.bandwidth < 0:
-            raise ValueError("bandwidth must be positive in SimplifiedFormant")
+            raise ValueError(f"bandwidth must be positive in SimplifiedFormant; given {self.bandwidth}")
+        if 0 < self.importance and self.importance > 1:
+            raise ValueError(f"importance must be between 0 and 1 (percentage) in SimplifiedFormant; given {self.importance}")
 
 
 @dataclass(frozen=True)
@@ -29,9 +33,18 @@ class AcousticTarget:
     This is the first type of target used, the other one is "ENVELOPE TARGETS", aka. the GlobalEnvelopeTarget class.
 
     IMPORTANT SYSTEM KNOWLEDGE:
+    I. CONSTRICTION
     - the voice source is affected by both vowel_formants (strongly) and constriction_formants (weaker), latter introduced by constriction.
     - the noise source is affected WEAKLY by the vowel_formants all the time, and by constriction_formants STRONGLY, latter introduced by constriction.
     So overall, constriction is only a semantic volume of how much constriction is happening.
+
+    II. NASALITY
+    'Nasality needs no special system of formants for each consonant.
+    I just take an existing set of parameters, lower the importance of lower frequency formants,
+    up the bandwidth of vowel formants, add a "nasal formant" (or nasal murmur) around 250 Hz,
+    apply some dampening to everything that is higher frequency than about 500 Hz (I just observed this on a spectrogram of me saying nasal stuff),
+    and BAM, nasality implemented.
+    This means I could have nasality as just a single slider that does all of that on a low level.'
 
     This also means PHONEMES ARE STORED NOT AS VOWELS OR CONSONANTS SEPARATELY, rather
     as ***TONGUE POSITIONS*** or SOMETHING SIMILAR, where /i/ and /ç/ have the same vowel_ and constriction_formants,
@@ -42,12 +55,14 @@ class AcousticTarget:
     :param constriction_formants: The lise of "formants" or spectral peaks to be applied at t, in order S1, S2, S3 etc. These are FRICATIVE-LIKE resonances.
     :param voice_to_noise_ratio: The ratio of "how much is this a voiced vowel" (at 0) to "how much is this a fully voiceless consonant" (at 1) with "voiced consonants" somewhere in between the two. Essentially controls the ratio of volume between the two sources: vocal source and noise source.
     :param constriction: float from 0 to 1. Percentage that sets how much "constriction" happens for consonants. It essentially acts like a global semantic volume for the contriction_peaks.
+    :param nasality: float from 0 to 1, controls a simple set of modifications to all of the existing sound.
     """
     t: float
     vowel_formants: tuple[SimplifiedFormant, ...]
     constriction_formants: tuple[SimplifiedFormant, ...]
     voice_to_noise_ratio: float
     constriction: float
+    nasality: float
 
     def __post_init__(self):
         if not (0 <= self.voice_to_noise_ratio <= 1):
@@ -87,9 +102,10 @@ class Input:
     GlobalEnvelopeTargets is passed to here without ANY modifications from the previous layer!
     The time t of each parameter is a float from 0 to `duration`, measured in elapsed seconds since the start of the utterance.
     :param acoustic_targets: All the acoustic state targets in a tuple.
-    :param global_envelopes: All the global envelopes as a single GlobalEnvelopeTargets object. PASSED UNMODIFIED FROM THE LAST LAYER.
+    :param global_envelope_targets: All the global envelopes as a single GlobalEnvelopeTargets object. PASSED UNMODIFIED FROM THE LAST LAYER.
     :param duration: The duration of the whole utterance, which is fixed by this point. PASSED UNMODIFIED FROM THE LAST LAYER.
     """
+    character_dir_path: str
     acoustic_targets: tuple[AcousticTarget, ...]
     global_envelope_targets: GlobalEnvelopeTargets
     duration: float

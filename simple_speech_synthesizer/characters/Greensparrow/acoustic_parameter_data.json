@@ -1,0 +1,58 @@
+{
+  "s": {
+    "vowel_formants": [
+      {
+        "freq": 300,
+        "bandwidth": 200,
+        "importance": 1
+      },
+      {
+        "freq": 1100,
+        "bandwidth": 200,
+        "importance": 0.4
+      }
+    ],
+    "constriction_formants": [
+      {
+        "freq": 8000,
+        "bandwidth": 500,
+        "importance": 0.3
+      },
+      {
+        "freq": 7500,
+        "bandwidth": 500,
+        "importance": 1
+      }
+    ],
+    "vowel_coarticulation_coloring": 0.4,
+    "constriction_coarticulation_coloring": 0.1
+  },
+  "a": {
+    "vowel_formants": [
+      {
+        "freq": 200,
+        "bandwidth": 100,
+        "importance": 1
+      },
+      {
+        "freq": 400,
+        "bandwidth": 100,
+        "importance": 0.8
+      }
+    ],
+    "constriction_formants": [
+      {
+        "freq": 6000,
+        "bandwidth": 300,
+        "importance": 0.4
+      },
+      {
+        "freq": 4000,
+        "bandwidth": 300,
+        "importance": 0.9
+      }
+    ],
+    "vowel_coarticulation_coloring": 0.1,
+    "constriction_coarticulation_coloring": 0
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "[insert any ID here for this 'mouth' position]": {
+    "vowel_formants": [
+      {
+        "freq": 300,
+        "bandwidth": 120,
+        "importance": 1
+      },
+      {
+        "freq": 1100,
+        "bandwidth": 120,
+        "importance": 0.4
+      }
+    ],
+    "constriction_formants": [
+      {
+        "freq": 8000,
+        "bandwidth": 500,
+        "importance": 0.3
+      },
+      {
+        "freq": 7500,
+        "bandwidth": 300,
+        "importance": 1
+      }
+    ],
+    "vowel_coarticulation_coloring": 0.3,
+    "constriction_coarticulation_coloring": 0.1
+  }
+}

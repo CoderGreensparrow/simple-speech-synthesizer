@@ -11,6 +11,7 @@ class FormantEnvelope:
     """
     freq: Envelope
     bandwidth: Envelope
+    importance: Envelope
 
 
 @dataclass(frozen=True)
@@ -26,6 +27,7 @@ class HighLevelEnvelopes:
     Constriction_formants: tuple[FormantEnvelope, ...]
     Voice_to_noise_ratio: Envelope
     Constriction: Envelope
+    Nasality: Envelope
     # Global envelopes
     Volume: Envelope  # general singing volume
     F0: Envelope  # fundamental pitch
@@ -45,5 +47,6 @@ class Input:
     :param high_level_envelopes: All the acoustic state envelopes (global, and simulated) in an object.
     :param duration: The duration of the whole utterance, which is fixed by this point. PASSED UNMODIFIED FROM THE LAST LAYER.
     """
+    character_dir_path: str
     high_level_envelopes: HighLevelEnvelopes
     duration: float

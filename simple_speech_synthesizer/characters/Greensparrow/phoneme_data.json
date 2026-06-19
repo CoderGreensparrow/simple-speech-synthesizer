@@ -1,0 +1,10 @@
+{
+  "s": {
+    "acoustic_parameter": "s",
+    "manner": "voiceless_fricative"
+  },
+  "a": {
+    "acoustic_parameter": "a",
+    "manner": "vowel"
+  }
+}

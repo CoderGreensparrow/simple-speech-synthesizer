@@ -7,10 +7,11 @@ Everything below is a remnant of the brainstorming.
 ===
 
 RELATED RESEARCH (without access if access was needed):
-- Basic description of source-filter model: https://cir.nii.ac.jp/crid/1360013168855541376
+- (Basic description of source-filter model: https://cir.nii.ac.jp/crid/1360013168855541376
 - (https://journals.sagepub.com/doi/10.1177/002383096000300105 <- would be useful if I had access)
 - https://pmc.ncbi.nlm.nih.gov/articles/PMC5132428/ <- how are English vs Japanese /s/ and /ʃ or ç/ are pronounced over time (centroid differences!)
-- ! https://www.researchgate.net/publication/3333705_Noise_source_models_for_fricative_consonants
+- https://www.researchgate.net/publication/3333705_Noise_source_models_for_fricative_consonants)
+- ! Different ways to measure fricatives: https://scholarworks.iu.edu/journals/index.php/iulcwp/article/view/40694
 
 ===
 

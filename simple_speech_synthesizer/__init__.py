@@ -2,7 +2,43 @@
 IMPORTANT NOTE !!!!
 ALL THE DOCUMENTATION IN THIS PROJECT WAS ESSENTIALLY THE RESULT OF ME BRAINSTORMING AND WRITING DOWN STUFF AS THE PROJECT IDEAS EVEN BECAME REAL IDEAS.
 SO BASICALLY, THERE CAN BE MANY DIFFERENCES IN WHAT IS DOCUMENTED ABOUT THE ARCHITECTURE AND WHAT HAPPENS.
-TODO: Write a doog documentation about the architecture.
+TODO: Write a good documentation about the architecture.
+
+===============
+
+IMPORTANT UPDATE:
+at the TARGETING LEVEL:
+The voice source is now split in 2:
+- oral tract: modified by constriciton_formants, vowel_formants
+- nasal tract: modified by nasal murmur, oral tract's vowel_formants
+Wherein the constriction and closure of the oral tract (aka. how much frication there is, or if the oral tract is fully closed)
+is controlled by "constriction" (0 to 1).
+And the constriction and closure of the nasal tract
+is constrolled by "nasality" (0 to 1). But this not only controls that:
+NASALITY also constrols stuff in the oral tract, like removing higher-freq vowel_formants, because there's such a real-life effect too.
+So NASALITY effects BOTH tracts.
+
+These two generate two different audio streams which are mixed together.
+
+There's now also
+2 DIFFERENT LEVELS OF COARTICULATION:
+- low level: the one at acoustic_state, that is still the same.
+- high level: at the TARGETING level, between phonemes:
+    - The different vowel_formants are blended together.
+      So the prev_phoneme_vowel_form, current_phoneme_vowel_form_template, next_phoneme_vowel_form are all weighted averaged.
+      The weight is a single value: vowel_coarticulation_coloring, which shows the ratio of the weights between surrounding and current vowel_formants.
+      (Since there are two surrounding vowel_formants, the weight is divided between them equally.)
+      Example: Let's take /ana/. /n/ is not colored that much by surrounding phonemes, because it has to retain it's identity (nasals are fragile).
+      So vowel_coarticulation_coloring is ~0.2.
+      In this case, the /a/s get a collective weight of 0.2, so each /a/ contributes with a weight of 0.1 to the finalized vowel_formants.
+      The /n/'s internal vowel_formant preset/template gets a weight of 0.8.
+      So it's 0.1, 0.8, 0.1, which helps the /n/ get some coarticulation from the sorrounding phonemes (whether it's a vowel or a consonant),
+      but it also retains it's own identity.
+    - The contriction_formants are also blended similarly, but because consonants are complicated,
+      the constriction_coarticulation_coloring is always a low value.
+    - A value of 0 means no coarticulation between phonemes, and a value of 1 means that those spectral peaks/formants are only determined by the surrounding phonemes.
+    - ALSO IMPORTANT: every phoneme has it's vowel_formants (templates) present, and only THOSE are used when calculating
+      the actual vowel formants. So it's prev_template, current_template, next_template weighted average
 
 ===============
 

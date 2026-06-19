@@ -22,10 +22,12 @@ class Input:
     """
     LAYER INPUT:
     The time t of each parameter is a float from 0 to `duration`, measured in elapsed seconds since the start of the utterance.
+    :param character_dir_path: The path to the character's directory with the phoneme_data.json and manner_template.json (etc. if there are more) files.
     :param phonemes: All the phonemes as TimedPhoneme objects.
     :param global_envelope_targets: All the global envelopes as a single GlobalEnvelopeTargets object.
     :param duration: The duration of the whole utterance, which is fixed by this point.
     """
+    character_dir_path: str
     phonemes: tuple[TimedPhoneme, ...]
     global_envelope_targets: GlobalEnvelopeTargets
     duration: float
