@@ -9,5 +9,5 @@
   "percentage_type_parameter_coarticulation_max_acc": 20000,
   "percentage_type_parameter_coarticulation_kp": 20000,
   "percentage_type_parameter_coarticulation_kd": 250,
-  "dt": 0.001
+  "dt": 0.002
 }
