@@ -1,6 +1,8 @@
 from simple_speech_synthesizer.acoustic_state import types as this_layer_types
 from simple_speech_synthesizer.realization import types as next_layer_types
 
+from simple_speech_synthesizer.acoustic_state.load_low_level_character import load_low_level_character
+
 from simple_speech_synthesizer.base.types import NdimensionalParameterSpace, NdimensionalParameterSpaceTarget, NdimensionalParameterSpaceSimulator
 
 from simple_speech_synthesizer.base.types import Envelope, Point, Segment
@@ -19,6 +21,8 @@ def simulate_acoustic_state(input: this_layer_types.Input) -> next_layer_types.H
     :param acoustic_targets: The acoustic_targets argument of this layer's Input class.
     :return: SimulatedEnvelopes.
     """
+
+    synthesis_parameters = load_low_level_character(input.character_dir_path).synthesis_parameters
 
     ####### SIMULATION DESCRIPTION
     # Certain features will be grouped together in simulation spaces, like vowel_formant_frequencies (all tongue),
@@ -49,10 +53,16 @@ def simulate_acoustic_state(input: this_layer_types.Input) -> next_layer_types.H
 
     max_vowel_formants, max_constriction_formants = max_num_of_formants_in_targets(input.acoustic_targets)
 
-    max_acc = 500
-    global_kp = 200  # TODO I'll make these settable later from this_layer_types.Input
-    global_kd = 200
-    dt = 0.01
+    vowel_formant_coarticulation_max_acc = synthesis_parameters["vowel_formant_coarticulation_max_acc"]
+    vowel_formant_coarticulation_kp = synthesis_parameters["vowel_formant_coarticulation_kp"]
+    vowel_formant_coarticulation_kd = synthesis_parameters["vowel_formant_coarticulation_kd"]
+    constriction_formant_coarticulation_max_acc = synthesis_parameters["constriction_formant_coarticulation_max_acc"]
+    constriction_formant_coarticulation_kp = synthesis_parameters["constriction_formant_coarticulation_kp"]
+    constriction_formant_coarticulation_kd = synthesis_parameters["constriction_formant_coarticulation_kd"]
+    percentage_type_parameter_coarticulation_max_acc = synthesis_parameters["percentage_type_parameter_coarticulation_max_acc"]
+    percentage_type_parameter_coarticulation_kp = synthesis_parameters["percentage_type_parameter_coarticulation_kp"]
+    percentage_type_parameter_coarticulation_kd = synthesis_parameters["percentage_type_parameter_coarticulation_kd"]
+    dt = synthesis_parameters["dt"]
 
     # data conversion #1
 
@@ -76,7 +86,7 @@ def simulate_acoustic_state(input: this_layer_types.Input) -> next_layer_types.H
         param_names=tuple([f"F{i}_freq" for i in range(1, max_vowel_formants + 1)]),
         param_pos=np.array(initial_pos),
         param_vel=np.zeros(max_vowel_formants),
-        max_acc=max_acc,
+        max_acc=vowel_formant_coarticulation_max_acc,
         current_t=0
     )
 
@@ -98,7 +108,7 @@ def simulate_acoustic_state(input: this_layer_types.Input) -> next_layer_types.H
         param_names=tuple([f"F{i}_bandwidth" for i in range(1, max_vowel_formants + 1)]),
         param_pos=np.array(initial_pos),
         param_vel=np.zeros(max_vowel_formants),
-        max_acc=max_acc,
+        max_acc=vowel_formant_coarticulation_max_acc,
         current_t=0
     )
 
@@ -115,7 +125,7 @@ def simulate_acoustic_state(input: this_layer_types.Input) -> next_layer_types.H
         param_names=tuple([f"F{i}_importance" for i in range(1, max_vowel_formants + 1)]),
         param_pos=np.array(initial_pos),
         param_vel=np.zeros(max_vowel_formants),
-        max_acc=max_acc,
+        max_acc=vowel_formant_coarticulation_max_acc,
         current_t=0
     )
     # endregion
@@ -140,7 +150,7 @@ def simulate_acoustic_state(input: this_layer_types.Input) -> next_layer_types.H
         param_names=tuple([f"F{i}_freq" for i in range(1, max_constriction_formants + 1)]),
         param_pos=np.array(initial_pos),
         param_vel=np.zeros(max_constriction_formants),
-        max_acc=max_acc,
+        max_acc=constriction_formant_coarticulation_max_acc,
         current_t=0
     )
 
@@ -162,7 +172,7 @@ def simulate_acoustic_state(input: this_layer_types.Input) -> next_layer_types.H
         param_names=tuple([f"F{i}_bandwidth" for i in range(1, max_constriction_formants + 1)]),
         param_pos=np.array(initial_pos),
         param_vel=np.zeros(max_constriction_formants),
-        max_acc=max_acc,
+        max_acc=constriction_formant_coarticulation_max_acc,
         current_t=0
     )
 
@@ -179,7 +189,7 @@ def simulate_acoustic_state(input: this_layer_types.Input) -> next_layer_types.H
         param_names=tuple([f"F{i}_importance" for i in range(1, max_constriction_formants + 1)]),
         param_pos=np.array(initial_pos),
         param_vel=np.zeros(max_constriction_formants),
-        max_acc=max_acc,
+        max_acc=constriction_formant_coarticulation_max_acc,
         current_t=0
     )
     # endregion
@@ -189,21 +199,21 @@ def simulate_acoustic_state(input: this_layer_types.Input) -> next_layer_types.H
         param_names=tuple(["Voice_to_noise_ratio"]),
         param_pos=np.array([input.acoustic_targets[0].voice_to_noise_ratio]),
         param_vel=np.zeros(1),
-        max_acc=max_acc,
+        max_acc=percentage_type_parameter_coarticulation_max_acc,
         current_t=0
     )
     Constriction_space = NdimensionalParameterSpace(
         param_names=tuple(["Constriction"]),
         param_pos=np.array([input.acoustic_targets[0].constriction]),
         param_vel=np.zeros(1),
-        max_acc=max_acc,
+        max_acc=percentage_type_parameter_coarticulation_max_acc,
         current_t=0
     )
     Nasality_space = NdimensionalParameterSpace(
         param_names=tuple(["Nasality"]),
         param_pos=np.array([input.acoustic_targets[0].nasality]),
         param_vel=np.zeros(1),
-        max_acc=max_acc,
+        max_acc=percentage_type_parameter_coarticulation_max_acc,
         current_t=0
     )
     # endregion
@@ -229,12 +239,12 @@ def simulate_acoustic_state(input: this_layer_types.Input) -> next_layer_types.H
     # endregion
 
     # region 2. Initializing Envelope point containers
-    Vowel_formants_frequency_points = [[]] * max_vowel_formants  # 2d array
-    Vowel_formants_bandwidth_points = [[]] * max_vowel_formants
-    Vowel_formants_importance_points = [[]] * max_vowel_formants
-    Constriction_formants_frequency_points = [[]] * max_constriction_formants
-    Constriction_formants_bandwidth_points = [[]] * max_constriction_formants
-    Constriction_formants_importance_points = [[]] * max_constriction_formants
+    Vowel_formants_frequency_points = [[] for _ in range(max_vowel_formants)]  # 2d array
+    Vowel_formants_bandwidth_points = [[] for _ in range(max_vowel_formants)]
+    Vowel_formants_importance_points = [[] for _ in range(max_vowel_formants)]
+    Constriction_formants_frequency_points = [[] for _ in range(max_constriction_formants)]
+    Constriction_formants_bandwidth_points = [[] for _ in range(max_constriction_formants)]
+    Constriction_formants_importance_points = [[] for _ in range(max_constriction_formants)]
     Voice_to_noise_ratio_points = []
     Constriction_points = []
     Nasality_points = []
@@ -261,15 +271,15 @@ def simulate_acoustic_state(input: this_layer_types.Input) -> next_layer_types.H
                                                                     max_constriction_formants, input)
 
         # III) SIMULATE
-        vf_freq_sim.simulate(vf_freq_target, dt, global_kp, global_kd)
-        vf_band_sim.simulate(vf_bandwidth_target, dt, global_kp, global_kd)
-        vf_impo_sim.simulate(vf_importance_target, dt, global_kp, global_kd)
-        cf_freq_sim.simulate(cf_freq_target, dt, global_kp, global_kd)
-        cf_band_sim.simulate(cf_bandwidth_target, dt, global_kp, global_kd)
-        cf_impo_sim.simulate(cf_importance_target, dt, global_kp, global_kd)
-        v_t_n_ratio_sim.simulate(v_t_n_ratio_target, dt, global_kp, global_kd)
-        constriction_sim.simulate(constriction_target, dt, global_kp, global_kd)
-        nasality_sim.simulate(nasality_target, dt, global_kp, global_kd)
+        vf_freq_sim.simulate(vf_freq_target, dt, vowel_formant_coarticulation_kp, vowel_formant_coarticulation_kd)
+        vf_band_sim.simulate(vf_bandwidth_target, dt, vowel_formant_coarticulation_kp, vowel_formant_coarticulation_kd)
+        vf_impo_sim.simulate(vf_importance_target, dt, vowel_formant_coarticulation_kp, vowel_formant_coarticulation_kd)
+        cf_freq_sim.simulate(cf_freq_target, dt, constriction_formant_coarticulation_kp, constriction_formant_coarticulation_kd)
+        cf_band_sim.simulate(cf_bandwidth_target, dt, constriction_formant_coarticulation_kp, constriction_formant_coarticulation_kd)
+        cf_impo_sim.simulate(cf_importance_target, dt, constriction_formant_coarticulation_kp, constriction_formant_coarticulation_kd)
+        v_t_n_ratio_sim.simulate(v_t_n_ratio_target, dt, percentage_type_parameter_coarticulation_kp, percentage_type_parameter_coarticulation_kd)
+        constriction_sim.simulate(constriction_target, dt, percentage_type_parameter_coarticulation_kp, percentage_type_parameter_coarticulation_kd)
+        nasality_sim.simulate(nasality_target, dt, percentage_type_parameter_coarticulation_kp, percentage_type_parameter_coarticulation_kd)
 
         # IV) record simulation output to point lists (data conversion #2/a)
         for i, vf_freq_sim_pos in enumerate(vf_freq_sim.get_current_parameter_space().param_pos):

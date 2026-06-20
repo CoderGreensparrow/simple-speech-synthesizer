@@ -3,6 +3,7 @@ Base types used for representing more complex, but universal concepts, like an "
 """
 
 from dataclasses import dataclass
+from http.client import UnimplementedFileMode
 from typing import Literal
 
 import numpy as np
@@ -26,6 +27,8 @@ class Segment:
     params: dict | None = None
 
     def __post_init__(self):
+        if self.interp != "linear":
+            raise NotImplementedError("Non-linear interpolation between Envelope Points is not implemented yet at a synthesis level, therefore usage is denied.")
         if self.interp == "polynomial":
             if self.params is None:
                 raise ValueError("Polynomial interpolation requires the 'exponent' parameter, therefore params must not be None.")
