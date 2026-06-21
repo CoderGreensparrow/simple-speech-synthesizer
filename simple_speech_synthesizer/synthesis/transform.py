@@ -10,10 +10,10 @@ class InitializedEnvelopesInput:
         self.duration = input.duration
         # Phoneme synthesis
         self.Vowel_formant_freqs = [pyo.Linseg(raw_env) for raw_env in input.Vowel_formant_freqs]
-        self.Vowel_formant_qs =    [pyo.Linseg(raw_env) for raw_env in input.Vowel_formant_qs]
+        self.Vowel_formant_bandwidths = [pyo.Linseg(raw_env) for raw_env in input.Vowel_formant_bandwidths]
         self.Vowel_formant_muls =  [pyo.Linseg(raw_env) for raw_env in input.Vowel_formant_muls]
         self.Constriction_formant_freqs = [pyo.Linseg(raw_env) for raw_env in input.Constriction_formant_freqs]
-        self.Constriction_formant_qs =    [pyo.Linseg(raw_env) for raw_env in input.Constriction_formant_qs]
+        self.Constriction_formant_bandwidths = [pyo.Linseg(raw_env) for raw_env in input.Constriction_formant_bandwidths]
         self.Constriction_formant_muls =  [pyo.Linseg(raw_env) for raw_env in input.Constriction_formant_muls]
         self.Voiced_component_mul = pyo.Linseg(input.Voiced_component_mul)
         self.Voiceless_component_mul = pyo.Linseg(input.Voiceless_component_mul)
@@ -69,10 +69,11 @@ def synthesize(input: this_layer_types.Input):
             pyo.Reson(voice_source, true_F0, 1, mul=0.6),
         true_F0 * 1.5)
     vowel_formants = list()
-    for freq, q, mul in zip(input.Vowel_formant_freqs, input.Vowel_formant_qs, input.Vowel_formant_muls):
+    for freq, bandwidth, mul in zip(input.Vowel_formant_freqs, input.Vowel_formant_bandwidths, input.Vowel_formant_muls):
         vowel_formants.append(
-            pyo.Reson(voice_source, freq=freq, q=q, mul=mul)
+            pyo.Reson(voice_source, freq=freq, q=freq / bandwidth, mul=mul)
         )
+        # q = freq / bandwidth
 
     voiced_component = vowel_f0 + sum(vowel_formants)
     voiced_component = voiced_component * input.Voiced_component_mul
@@ -83,9 +84,9 @@ def synthesize(input: this_layer_types.Input):
 
     constriction_f0 = pyo.ButLP(pyo.Reson(noise_source, true_F0, 5, mul=0), true_F0 * 1.5)  # TODO I have to parametrize F0 too, or change the architecture
     constriction_formants = list()
-    for freq, q, mul in zip(input.Constriction_formant_freqs, input.Constriction_formant_qs, input.Constriction_formant_muls):
+    for freq, bandwidth, mul in zip(input.Constriction_formant_freqs, input.Constriction_formant_bandwidths, input.Constriction_formant_muls):
         constriction_formants.append(
-            pyo.Resonx(noise_source, freq=freq, q=q, mul=mul, stages=3)
+            pyo.Resonx(noise_source, freq=freq, q=freq / bandwidth, mul=mul, stages=3)
         )
 
     voiceless_component = constriction_f0 + sum(constriction_formants)
@@ -100,10 +101,10 @@ def synthesize(input: this_layer_types.Input):
 
     #### RECORD
     for env in input.Vowel_formant_freqs: env.play()
-    for env in input.Vowel_formant_qs: env.play()
+    for env in input.Vowel_formant_bandwidths: env.play()
     for env in input.Vowel_formant_muls: env.play()
     for env in input.Constriction_formant_freqs: env.play()
-    for env in input.Constriction_formant_qs: env.play()
+    for env in input.Constriction_formant_bandwidths: env.play()
     for env in input.Constriction_formant_muls: env.play()
     input.Voiced_component_mul.play()
     input.Voiceless_component_mul.play()
@@ -148,18 +149,18 @@ if __name__ == "__main__":
         Vowel_formant_freqs=[[(0, F1), (3, F1)],
                              [(0, F2), (3, F2)],
                              [(0, F3), (3, F3)]],
-        Vowel_formant_qs=[[(0, 6), (3, 6)],
-                          [(0, 8), (3, 8)],
-                          [(0, 12), (3, 12)]],
+        Vowel_formant_bandwidths=[[(0, 100), (3, 100)],
+                          [(0, 100), (3, 100)],
+                          [(0, 100), (3, 100)]],
         Vowel_formant_muls=[[(0, 0.5), (3, 0.5)],
                           [(0, 0.4), (3, 0.4)],
                           [(0, 0.2), (3, 0.2)]],
         Constriction_formant_freqs=[[(0, F1), (3, F1)],
                                     [(0, F2), (3, F2)],
                                     [(0, F3), (3, F3)]],
-        Constriction_formant_qs=[[(0, 30), (3, 30)],
-                                 [(0, 40), (3, 40)],
-                                 [(0, 60), (3, 60)]],
+        Constriction_formant_bandwidths=[[(0, 30), (3, 30)],
+                                 [(0, 30), (3, 30)],
+                                 [(0, 30), (3, 30)]],
         Constriction_formant_muls=[[(0, 0.5), (3, 0.5)],
                                    [(0, 0.2), (3, 0.2)],
                                    [(0, 0.025), (3, 0.025)]],

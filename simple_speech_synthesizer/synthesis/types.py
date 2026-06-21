@@ -17,10 +17,10 @@ class Input:
     duration: float
     # Phoneme synthesis
     Vowel_formant_freqs: Sequence[Sequence[tuple[float, float]]]
-    Vowel_formant_qs: Sequence[Sequence[tuple[float, float]]]
+    Vowel_formant_bandwidths: Sequence[Sequence[tuple[float, float]]]
     Vowel_formant_muls: Sequence[Sequence[tuple[float, float]]]
     Constriction_formant_freqs: Sequence[Sequence[tuple[float, float]]]
-    Constriction_formant_qs: Sequence[Sequence[tuple[float, float]]]
+    Constriction_formant_bandwidths: Sequence[Sequence[tuple[float, float]]]
     Constriction_formant_muls: Sequence[Sequence[tuple[float, float]]]
     Voiced_component_mul: Sequence[tuple[float, float]]
     Voiceless_component_mul: Sequence[tuple[float, float]]
