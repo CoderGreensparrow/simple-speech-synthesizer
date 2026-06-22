@@ -14,11 +14,12 @@ vowels = {
     "ɹ": [396, 1850, 2221],
     "a": [808, 1210, 3005],
     "o": [312, 593, 2934],
-    "ə": [602, 1219, 2794]
+    "ə": [602, 1219, 2794],
+    "i": [424, 2460, 2922]  # i'm trying to imitate a vtuber saying iiiii, I should also TODO try to have the program imitate the vtuber
 }
 
-F0 = 100
-vowel = "ə"
+F0 = 407
+vowel = "i"
 F1 = vowels[vowel][0]
 F2 = vowels[vowel][1]
 F3 = vowels[vowel][2]
@@ -29,20 +30,22 @@ vocal = Blit(freq=F0 + fundamental_sway + FM_jitter, harms=80, mul=1 + vocal_amp
 body = ButLP(vocal, 400, mul=1)  # spectral "tilt" (spectral shaping of Blit)
 body_high = ButHP(vocal, 3000, mul=0.01)
 vocal = body + body_high
-f0 = ButLP(Reson(vocal, F0 + fundamental_sway, 1, mul=1), (F0 + fundamental_sway) * 1.5)  # this thing... it may work
-f1 = Reson(vocal, F1, 6, mul=0.5)
-f2 = Reson(vocal, F2, 8, mul=0.3)
-f3 = Reson(vocal, F3, 12, mul=0.1)
+f0 = ButLP(Reson(vocal, F0 + fundamental_sway, 1, mul=0.6), (F0 + fundamental_sway) * 1.5)  # this thing... it may work
+f1 = Reson(vocal, F1, 20, mul=1)
+f2 = Reson(vocal, F2, 25, mul=0.8)
+f3 = Reson(vocal, F3, 30, mul=0.7)
+f4fix = Reson(vocal, 4000, 30, mul=0.5)
 noise = Noise()
 f0noise = ButLP(Reson(noise, F0 + fundamental_sway, 5, mul=1), (F0 + fundamental_sway) * 1.5)
 f1noise = Reson(noise, F1, 30, mul=0.5)
 f2noise = Reson(noise, F2, 40, mul=0.2)
 f3noise = Reson(noise, F3, 60, mul=0.025)
-sum = (f0 + f1 + f2 + f3) * 20 + (f0noise + f1noise + f2noise + f3noise) * 0.8
+sum = (f0 + f1 + f2 + f3 + f4fix) * 20 + (f0noise + f1noise + f2noise + f3noise) * 0.02
 sum.out(0)
 sum2 = sum * 1
 sum2.out(1)
 
+f4fix.ctrl()
 Scope([sum, vocal])
 analyzer = Spectrum([sum, vocal], size=2**14)
 analyzer.setFscaling(True)  # log
