@@ -10,39 +10,78 @@ s.setOutputDevice(out_index)
 s.boot().start()
 
 vowels = {
-    "ε": [717, 1858, 2879],
+    "ε": [538, 1779, 2751],
     "ɹ": [396, 1850, 2221],
     "a": [808, 1210, 3005],
     "o": [312, 593, 2934],
     "ə": [602, 1219, 2794],
-    "i": [424, 2460, 2922]  # i'm trying to imitate a vtuber saying iiiii, I should also TODO try to have the program imitate the vtuber
+    "i": [450, 2460, 2922],  # i'm trying to imitate a vtuber saying iiiii, I should also TODO try to have the program imitate the vtuber
+    "vtuber_i": [450, 3264, 3760]
 }
 
-F0 = 407
-vowel = "i"
+F0 = 416
+vowel = "vtuber_i"
 F1 = vowels[vowel][0]
 F2 = vowels[vowel][1]
 F3 = vowels[vowel][2]
+TENSION = Sig(0)
+TENSION.ctrl()
 fundamental_sway = ButLP(BrownNoise(), freq=3, mul=3)
 FM_jitter = ButLP(BrownNoise(), freq=15, mul=0.15)
 vocal_amp_sway = ButLP(BrownNoise(), freq=25, mul=0.03)
 vocal = Blit(freq=F0 + fundamental_sway + FM_jitter, harms=80, mul=1 + vocal_amp_sway)
-body = ButLP(vocal, 400, mul=1)  # spectral "tilt" (spectral shaping of Blit)
-body_high = ButHP(vocal, 3000, mul=0.01)
-vocal = body + body_high
-f0 = ButLP(Reson(vocal, F0 + fundamental_sway, 1, mul=0.6), (F0 + fundamental_sway) * 1.5)  # this thing... it may work
+body_12db = ButLP(vocal, 400, mul=1)  # spectral "tilt" (spectral shaping of Blit)
+body_6db = Tone(vocal, 400, mul=1)  # spectral "tilt" (spectral shaping of Blit)
+body = (body_12db * (1-TENSION)) + (body_6db * TENSION)
+body_high = ButHP(vocal, F3, mul=0.01)
+tension_middle = ButBP(body, (F1 + F2) / 2, ((F1 + F2) / 2) / (F2 - F1), mul=0)
+tension_middle.ctrl()
+raw_vocal = body + body_high + tension_middle
+vocal_raw = EQ(raw_vocal, F3, 0.5, 6)  # feminine spectral "hill"
+vocal_raw.ctrl()
+reverbed_vocal = Freeverb(
+    vocal_raw,
+    size=0.15,    # Very small room size to avoid massive echoes
+    damp=0.85,    # Heavily muffle the high frequencies of the reflections
+    bal=0.12      # Keep it subtle! Just 12% wet mix to smear the edges
+)
+vocal = Chorus(
+    reverbed_vocal,
+    depth=1,
+    feedback=0.02,
+    bal=0
+)
+H1_H2_TILT = Sig(0.15, 10)
+H1_H2_TILT.ctrl()
+f0 = ButLP(
+    Reson(vocal, F0 + fundamental_sway, 1, mul=0.5), (F0 + fundamental_sway) * H1_H2_TILT
+)  # this thing... it may work
 f1 = Reson(vocal, F1, 20, mul=1)
-f2 = Reson(vocal, F2, 25, mul=0.8)
-f3 = Reson(vocal, F3, 30, mul=0.7)
-f4fix = Reson(vocal, 4000, 30, mul=0.5)
+f2 = Reson(vocal, F2, 25, mul=1)
+f3 = Reson(vocal, F3, 30, mul=1)
+f4fix = Reson(vocal, 4000, 30, mul=1)
 noise = Noise()
-f0noise = ButLP(Reson(noise, F0 + fundamental_sway, 5, mul=1), (F0 + fundamental_sway) * 1.5)
+f0noise = Biquadx(Reson(noise, F0 + fundamental_sway, 5, mul=1), (F0 + fundamental_sway) * 1.5)
 f1noise = Reson(noise, F1, 30, mul=0.5)
 f2noise = Reson(noise, F2, 40, mul=0.2)
 f3noise = Reson(noise, F3, 60, mul=0.025)
 sum = (f0 + f1 + f2 + f3 + f4fix) * 20 + (f0noise + f1noise + f2noise + f3noise) * 0.02
-sum.out(0)
-sum2 = sum * 1
+reverb_sum = Freeverb(
+    sum,
+    size=0.15,    # Very small room size to avoid massive echoes
+    damp=0.85,    # Heavily muffle the high frequencies of the reflections
+    bal=0.12      # Keep it subtle! Just 12% wet mix to smear the edges
+)
+filtered_sum = Chorus(
+    reverb_sum,
+    depth=1,
+    feedback=0.02,
+    bal=0.02
+)
+filtered_sum.ctrl()
+
+filtered_sum.out(0)
+sum2 = filtered_sum * 1
 sum2.out(1)
 
 f4fix.ctrl()

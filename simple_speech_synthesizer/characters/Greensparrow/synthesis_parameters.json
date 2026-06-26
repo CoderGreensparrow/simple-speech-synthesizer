@@ -1,5 +1,7 @@
 {
   "nasal_murmur": 250,
+  "F0_F1_min_difference": 50,
+  "spectral_tilt": 400,
   "vowel_formant_coarticulation_max_acc": 800000,
   "vowel_formant_coarticulation_kp": 40000,
   "vowel_formant_coarticulation_kd": 400,
