@@ -1,7 +1,15 @@
 {
-  "nasal_murmur": 250,
+  "FO_mul": 0.5,
   "F0_F1_min_difference": 50,
-  "spectral_tilt": 400,
+  "H1_H2_balance": 0.15,
+  "spectral_tilt_cutoff": 400,
+  "spectral_hill_freq": 600,
+  "spectral_hill_boost": 0,
+  "vowel_Q_floor": 50,
+  "vowel_Q_slope": 0.05,
+
+  "nasal_murmur": 250,
+
   "vowel_formant_coarticulation_max_acc": 800000,
   "vowel_formant_coarticulation_kp": 40000,
   "vowel_formant_coarticulation_kd": 400,

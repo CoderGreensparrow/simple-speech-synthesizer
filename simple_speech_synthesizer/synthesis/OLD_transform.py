@@ -1,70 +1,177 @@
-"""
-LAYER 6: synthesis
-Synthesizes the actual vocals from all the (pyo typed) envelopes given.
-Dead-simple parametric formant/audio-focused speech synthesizer.
-"""
-
 import pyo
 
-class Generator:
-    def __init__(self, F0, amp = 1.0,
-                 F0_sway_amp = 3, vocal_jitter_amp = 0.15,
-                 vocal_amp_jitter_amp = 0.03,
-                 blit_harmonics = 80,
-                 delta_vocal_tilt = 0.0):
-        """
-        Instantiates vocal and noise generators.
-        :param F0: The starting fundamental frequency
-        :param amp: The amplitude of the generator. Leave at default.
-        :param F0_sway_amp: The amplitude of the slow instability of F0 in Hz. Default 3.
-        :param vocal_jitter_amp: The amplitude of the vocal jitter in Hz. Default 0.15.
-        :param vocal_amp_jitter_amp: How much the amplitude of the vocal jitters. Ratio difference. default 0.03.
-        :param blit_harmonics: How many harmonics the base tone has, essentially how dense the basic vocal is.
-        :param delta_vocal_tilt: The amount in Hz to adjust the "vocal tilt effect" by (how muddy or how bright the original signal is). Too high values cause sawtooth-like engine noise.
-        """
-        fundamental_sway = pyo.ButLP(pyo.BrownNoise(), freq=3, mul=F0_sway_amp)
-        FM_jitter = pyo.ButLP(pyo.BrownNoise(), freq=15, mul=vocal_jitter_amp)
-        vocal_amp_sway = pyo.ButLP(pyo.BrownNoise(), freq=25, mul=vocal_amp_jitter_amp)
-        vocal_raw = pyo.Blit(freq=F0 + fundamental_sway + FM_jitter, harms=blit_harmonics, mul=amp + vocal_amp_sway)
-        body = pyo.ButLP(vocal_raw, 400 + delta_vocal_tilt, mul=1)  # spectral "tilt" (spectral shaping of Blit)
-        body_high = pyo.ButHP(vocal_raw, 3000 + delta_vocal_tilt, mul=0.01)
-        self.vocal = body + body_high
+from simple_speech_synthesizer.synthesis import types as this_layer_types
 
-        self.noise = pyo.Noise()
+# This is a bit hacky
+class InitializedEnvelopesInput:
+    def __init__(self, input: this_layer_types.Input):
+        # metaparams
+        self.output_filepath = input.output_filepath
+        self.duration = input.duration
+        # Phoneme synthesis
+        self.Vowel_formant_freqs = [pyo.Linseg(raw_env) for raw_env in input.Vowel_formant_freqs]
+        self.Vowel_formant_bandwidths = [pyo.Linseg(raw_env) for raw_env in input.Vowel_formant_bandwidths]
+        self.Vowel_formant_muls =  [pyo.Linseg(raw_env) for raw_env in input.Vowel_formant_muls]
+        self.Constriction_formant_freqs = [pyo.Linseg(raw_env) for raw_env in input.Constriction_formant_freqs]
+        self.Constriction_formant_bandwidths = [pyo.Linseg(raw_env) for raw_env in input.Constriction_formant_bandwidths]
+        self.Constriction_formant_muls =  [pyo.Linseg(raw_env) for raw_env in input.Constriction_formant_muls]
+        self.Voiced_component_mul = pyo.Linseg(input.Voiced_component_mul)
+        self.Voiceless_component_mul = pyo.Linseg(input.Voiceless_component_mul)
+        # Global Envelopes
+        self.Volume = pyo.Linseg(input.Volume)
+        self.F0 = pyo.Linseg(input.F0)
+        self.VocalTiltDelta = pyo.Linseg(input.VocalTiltDelta)
+        self.Tension = pyo.Linseg(input.Tension)
+        # scalar parameters
+        self.F0_freq_sway = input.F0_freq_sway
+        self.F0_freq_FM_jitter = input.F0_freq_FM_jitter
+        self.voice_source_amp_sway = input.voice_source_amp_sway
 
 
-    def instantiate_vocal_source(self, F0, amp):
-        pass
+def synthesize(input: this_layer_types.Input):
+    """
+    The actual synthesis part.
+    :param input: The layer input.
+    :return:
+    """
 
-class Synthesis:
-    def __init__(self, pyo_server_kwargs: dict = None):
-        pyo_server_kwargs = {
-            "sr": 48000,
-            "nchnls": 2,
-            "buffersize": 256,
-            "duplex": 0,
-            "audio": "portaudio"
-        }
-        if pyo_server_kwargs is not None:
-            for key, val in pyo_server_kwargs.items():
-                pyo_server_kwargs[key] = val
-        self.s = pyo.Server(**pyo_server_kwargs)
-        self.s.deactivateMidi()
-        self.s.boot()
-        self.s.start()
+    pyo_server_kwargs = {
+        "sr": 48000,
+        "nchnls": 2,
+        "buffersize": 256,
+        "duplex": 0,
+        "audio": "offline"
+    }
+    if pyo_server_kwargs is not None:
+        for key, val in pyo_server_kwargs.items():
+            pyo_server_kwargs[key] = val
+    s = pyo.Server(**pyo_server_kwargs)
+    s.deactivateMidi()
+    s.boot()
+    s.recordOptions(dur=input.duration, filename=input.output_filepath)
 
-    def synthesize_grain(self):
-        pass
+    input = InitializedEnvelopesInput(input)
 
-    def synthesize(self, synth_frames: SynthStates, deltaTime):
-        """
-        MAIN LAYER ENTRY FUNCTION
-        :param synth_frames: The SynthFrames to synthesize
-        :param deltaTime: The equal time spacing between each frame, effectively the resolution of how many times the synthesis can change.
-        :return:
-        """
-        pass
+    # voice source + filter
+
+    F0_freq_sway = pyo.ButLP(pyo.BrownNoise(), freq=3, mul=3 * input.F0_freq_sway)
+    F0_freq_FM_jitter = pyo.ButLP(pyo.BrownNoise(), freq=15, mul=0.15 * input.F0_freq_FM_jitter)
+    true_F0 = input.F0 + F0_freq_sway + F0_freq_FM_jitter
+
+    voice_source_amp_sway = pyo.ButLP(pyo.BrownNoise(), freq=25, mul=0.03 * input.voice_source_amp_sway)
+
+    raw_voice_source = pyo.Blit(freq=true_F0, harms=80, mul=1 + voice_source_amp_sway)
+    spectral_tilted_voice_source = pyo.ButLP(raw_voice_source, 400 + input.VocalTiltDelta, mul=1)  # spectral "tilt" (spectral shaping of Blit)
+    high_freq_retention_voice_source = pyo.ButHP(raw_voice_source, 3000, mul=0.01)
+    voice_source = spectral_tilted_voice_source + high_freq_retention_voice_source
+
+    vowel_f0 = pyo.ButLP(
+            pyo.Reson(voice_source, true_F0, 1, mul=0.6),
+        true_F0 * 1.5)
+    vowel_formants = list()
+    for freq, bandwidth, mul in zip(input.Vowel_formant_freqs, input.Vowel_formant_bandwidths, input.Vowel_formant_muls):
+        vowel_formants.append(
+            pyo.Reson(voice_source, freq=freq, q=freq / bandwidth, mul=mul)
+        )
+        # q = freq / bandwidth
+
+    voiced_component = vowel_f0 + sum(vowel_formants)
+    voiced_component = voiced_component * input.Voiced_component_mul
+
+    # noise source + filter
+
+    noise_source = pyo.Noise()
+
+    constriction_f0 = pyo.ButLP(pyo.Reson(noise_source, true_F0, 5, mul=0), true_F0 * 1.5)  # TODO I have to parametrize F0 too, or change the architecture
+    constriction_formants = list()
+    for freq, bandwidth, mul in zip(input.Constriction_formant_freqs, input.Constriction_formant_bandwidths, input.Constriction_formant_muls):
+        constriction_formants.append(
+            pyo.Resonx(noise_source, freq=freq, q=freq / bandwidth, mul=mul, stages=3)
+        )
+
+    voiceless_component = constriction_f0 + sum(constriction_formants)
+    voiceless_component = voiceless_component * input.Voiceless_component_mul
+
+    # FULL SUM
+
+    audio_out = voiced_component + voiceless_component
+    audio_out.out(0)
+    audio_out_2 = audio_out * 1
+    audio_out_2.out(1)
+
+    #### RECORD
+    for env in input.Vowel_formant_freqs: env.play()
+    for env in input.Vowel_formant_bandwidths: env.play()
+    for env in input.Vowel_formant_muls: env.play()
+    for env in input.Constriction_formant_freqs: env.play()
+    for env in input.Constriction_formant_bandwidths: env.play()
+    for env in input.Constriction_formant_muls: env.play()
+    input.Voiced_component_mul.play()
+    input.Voiceless_component_mul.play()
+    input.Volume.play()
+    input.F0.play()
+    input.VocalTiltDelta.play()
+    input.Tension.play()
+
+    s.start()
+    s.shutdown()
+
+    return input.output_filepath
+
+
+def transform(input: this_layer_types.Input) -> str:
+    """
+    The final layer in the synthesis stack.
+    :param input: This layer's Input.
+    :return: The filepath to the output audio.
+    """
+    synthesize(input)
+    return input.output_filepath
+
+
+
+
+
+
+
+
 
 
 if __name__ == "__main__":
-    synthesis = Synthesis()
+    F0 = 119
+    F1 = 538  # praat value; orig 610
+    F2 = 1779  # praat value; orig 1900
+    F3 = 2751  # praat value
+    # parameters adapted from pyo_playground_e.py
+    i = this_layer_types.Input(
+        output_filepath=r"D:\PycharmProjects\simple-speech-synthesizer\simple_speech_synthesizer\synthesis\testaudio.wav",
+        duration=3.0,
+        Vowel_formant_freqs=[[(0, F1), (3, F1)],
+                             [(0, F2), (3, F2)],
+                             [(0, F3), (3, F3)]],
+        Vowel_formant_bandwidths=[[(0, 100), (3, 100)],
+                          [(0, 100), (3, 100)],
+                          [(0, 100), (3, 100)]],
+        Vowel_formant_muls=[[(0, 0.5), (3, 0.5)],
+                          [(0, 0.4), (3, 0.4)],
+                          [(0, 0.2), (3, 0.2)]],
+        Constriction_formant_freqs=[[(0, F1), (3, F1)],
+                                    [(0, F2), (3, F2)],
+                                    [(0, F3), (3, F3)]],
+        Constriction_formant_bandwidths=[[(0, 30), (3, 30)],
+                                 [(0, 30), (3, 30)],
+                                 [(0, 30), (3, 30)]],
+        Constriction_formant_muls=[[(0, 0.5), (3, 0.5)],
+                                   [(0, 0.2), (3, 0.2)],
+                                   [(0, 0.025), (3, 0.025)]],
+        Voiced_component_mul=[(0, 20), (3, 20)],
+        Voiceless_component_mul=[(0, 0.8), (3, 0.8)],
+        Volume=[(0, 1), (3, 1)],  # TODO have this effect the volume
+        F0=[(0, F0), (3, F0)],
+        F0_freq_sway=1,
+        F0_freq_FM_jitter=1,
+        voice_source_amp_sway=1,
+        VocalTiltDelta=[(0, 0), (3, 0)],
+        Tension=[(0, 1), (3, 1)]
+    )
+    o = transform(i)

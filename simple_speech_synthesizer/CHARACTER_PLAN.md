@@ -64,3 +64,56 @@ Now that you are considering character-specific lookup tables, how do you plan t
 
 5. Phase Diffusion: A subtle FX chain blurs the rigid digital alignment, giving your engine its signature "style."
 ```
+
+3. Q factor changes per character
+They are a damping_deltafactor for the Q calculation of each formant.
+REPLACEMENT: Instead, those magic 50 and 0.05 valules are made into parameters like so (see old calculate_Q):
+```python
+    # 1. Calculate natural human bandwidth expansion (with a 50Hz floor)
+    bandwidth = 50.0 + (0.05 * freq)
+```
+character_anime_girl = {
+    "vowel_f_floor": 25.0,        # Lower floor = ultra-sharp, bright low formants
+    "vowel_f_slope": 0.02         # Lower slope = high formants stay crisp and laser-focused
+}
+character_giant_ogre = {
+    "vowel_f_floor": 90.0,        # Higher floor = muddy, massive, warm chest resonance
+    "vowel_f_slope": 0.08         # Higher slope = high formants become incredibly wide and breathy
+}
+POTENTIAL CODE: (tension_mul doesn't exist in this though)
+```python
+def get_custom_character_q(freq, floor, slope):
+    # Calculate bandwidth using the character's specific tissue traits
+    bandwidth = floor + (slope * freq)
+    
+    # Convert straight to Q
+    return freq / bandwidth
+```
+4. Vocal-tract-length (VTL) for GenderDelta
+All formants are just scaled by a factor evenly. (multiplication, not addition)
+$$F_{\text{character}} = F_{\text{base}} \times \text{VTL\_Scale}$$
+5. spectral tilt and hill parameters for characters
+The 3, 4 and 5 can be summarized as:
+# Character Profile Object (part of it)
+character_profile = {
+    "vtl_scale": 1.18,          # Shifts the entire vocal size up/down
+    "damping": 0.85,            # Controls throat wall texture (sharp vs soft)
+    "tilt_type": "6db",         # Selects the glottal source slope
+    "hill_freq": 2800,          # Dictates the speaker's main resonance zone
+    "hill_boost": 8.0           # Dictates how intensely that zone punches through
+}
+# A complete, standalone character profile
+character_vtuber = {
+    # 1. Raw Phonetical Data (Straight from Praat!)
+    "vowels": {
+        "a": [808, 1210, 3005],
+        "i": [450, 3264, 3760],
+        "ε": [717, 1858, 2879]
+    },
+    # 2. Global Biological Lenses (The Macro Modifiers)
+    "glottal_damping AKA. vtl_scale": 0.85,    # Tightens the bandwidths globally
+    "damping": 0.85,            # Controls throat wall texture (sharp vs soft)
+    "hill_freq": 3200,          # The presence zone peak
+    "hill_boost": 10.0,         # How hard the presence zone pushes
+    "gender_delta": 1.0         # Baseline size (can be warped dynamically later)
+}
