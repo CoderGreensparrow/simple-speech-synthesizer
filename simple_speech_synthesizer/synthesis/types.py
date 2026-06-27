@@ -13,22 +13,24 @@ class Input:
     Except for scalar inputs.
     """
     # metaparams
+    character_dir_path: str
     output_filepath: str
     duration: float
     # Phoneme synthesis
     Vowel_formant_freqs: Sequence[Sequence[tuple[float, float]]]
-    Vowel_formant_bandwidths: Sequence[Sequence[tuple[float, float]]]
-    Vowel_formant_muls: Sequence[Sequence[tuple[float, float]]]
     Constriction_formant_freqs: Sequence[Sequence[tuple[float, float]]]
     Constriction_formant_bandwidths: Sequence[Sequence[tuple[float, float]]]
     Constriction_formant_muls: Sequence[Sequence[tuple[float, float]]]
-    Voiced_component_mul: Sequence[tuple[float, float]]
-    Voiceless_component_mul: Sequence[tuple[float, float]]
+    Voiced_component_importance: Sequence[tuple[float, float]]
+    Voiceless_component_importance: Sequence[tuple[float, float]]
     # Global Envelopes
     Volume: Sequence[tuple[float, float]]
     F0: Sequence[tuple[float, float]]
-    VocalTiltDelta: Sequence[tuple[float, float]]
-    Tension: Sequence[tuple[float, float]]
+    Spectral_tilt_cutoff_delta: Sequence[tuple[float, float]]
+    Spectral_tilt_tension: Sequence[tuple[float, float]]
+    Spectral_hill_freq_deltafactor: Sequence[tuple[float, float]]
+    Spectral_hill_boost_delta: Sequence[tuple[float, float]]
+    Vowel_Q_tension_deltafactor: Sequence[tuple[float, float]]
     # scalar parameters
     F0_freq_sway: float  # these are percentages from 0 to 1 (unbounded)
     F0_freq_FM_jitter: float

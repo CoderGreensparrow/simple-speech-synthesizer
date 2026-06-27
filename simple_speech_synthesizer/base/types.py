@@ -3,7 +3,6 @@ Base types used for representing more complex, but universal concepts, like an "
 """
 
 from dataclasses import dataclass
-from http.client import UnimplementedFileMode
 from typing import Literal
 
 import numpy as np
