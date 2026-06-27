@@ -1,3 +1,5 @@
+# The file had to be renamed to avoid conflict with the internal naming of pyo
+
 from dataclasses import dataclass
 from collections.abc import Sequence
 
@@ -21,6 +23,7 @@ class Input:
     Constriction_formant_freqs: Sequence[Sequence[tuple[float, float]]]
     Constriction_formant_bandwidths: Sequence[Sequence[tuple[float, float]]]
     Constriction_formant_muls: Sequence[Sequence[tuple[float, float]]]
+    # (Technically global Envelopes)
     Voiced_component_importance: Sequence[tuple[float, float]]
     Voiceless_component_importance: Sequence[tuple[float, float]]
     # Global Envelopes

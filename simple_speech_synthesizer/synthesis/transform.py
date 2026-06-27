@@ -1,9 +1,10 @@
 import pyo
 
-from simple_speech_synthesizer.synthesis import types as this_layer_types
+from simple_speech_synthesizer.synthesis import synthesis_types as this_layer_types
 from simple_speech_synthesizer.base.load_low_level_character import load_low_level_character
 
-# This is a bit hacky
+# This is a bit hacky, the reason I have to convert them to a pyo object here is because
+# pyo doesn't allow the creation of pyo objects unless a server is launched already
 class InitializedEnvelopesInput:
     def __init__(self, input: this_layer_types.Input):
         # metaparams
@@ -100,8 +101,8 @@ def synthesize(input: this_layer_types.Input):
     voice_source_amp_sway = pyo.ButLP(pyo.BrownNoise(), freq=25, mul=0.03 * input.voice_source_amp_sway)
 
     raw_blit_source = pyo.Blit(freq=true_F0, harms=80, mul=1 + voice_source_amp_sway)
-    spectral_tilted_6db_rolloff_blit_source = pyo.ButLP(raw_blit_source, synthesis_parameters["spectral_tilt_cutoff"] + input.SpectralTiltCutoff, mul=1)
-    spectral_tilted_12db_rolloff_blit_source = pyo.ButLP(raw_blit_source, synthesis_parameters["spectral_tilt_cutoff"] + input.SpectralTiltCutoff, mul=1)
+    spectral_tilted_6db_rolloff_blit_source = pyo.ButLP(raw_blit_source, synthesis_parameters["spectral_tilt_cutoff"] + input.Spectral_tilt_cutoff_delta, mul=1)
+    spectral_tilted_12db_rolloff_blit_source = pyo.ButLP(raw_blit_source, synthesis_parameters["spectral_tilt_cutoff"] + input.Spectral_tilt_cutoff_delta, mul=1)
     spectral_tilted_blit_source = (spectral_tilted_12db_rolloff_blit_source * (1-input.Spectral_tilt_tension)) + (spectral_tilted_6db_rolloff_blit_source * input.Spectral_tilt_tension)
     high_freq_retention_blit_source = pyo.ButHP(raw_blit_source, 3000, mul=0.005)
     partial_voice_source = spectral_tilted_blit_source + high_freq_retention_blit_source
@@ -200,17 +201,12 @@ if __name__ == "__main__":
     F3 = 2751  # praat value
     # parameters adapted from pyo_playground_e.py
     i = this_layer_types.Input(
-        output_filepath=r"D:\PycharmProjects\simple-speech-synthesizer\simple_speech_synthesizer\synthesis\testaudio.wav",
+        character_dir_path=r"..\characters\Greensparrow",
+        output_filepath=r"testaudio.wav",
         duration=3.0,
         Vowel_formant_freqs=[[(0, F1), (3, F1)],
                              [(0, F2), (3, F2)],
                              [(0, F3), (3, F3)]],
-        Vowel_formant_bandwidths=[[(0, 100), (3, 100)],
-                          [(0, 100), (3, 100)],
-                          [(0, 100), (3, 100)]],
-        Vowel_formant_muls=[[(0, 0.5), (3, 0.5)],
-                          [(0, 0.4), (3, 0.4)],
-                          [(0, 0.2), (3, 0.2)]],
         Constriction_formant_freqs=[[(0, F1), (3, F1)],
                                     [(0, F2), (3, F2)],
                                     [(0, F3), (3, F3)]],
@@ -220,14 +216,17 @@ if __name__ == "__main__":
         Constriction_formant_muls=[[(0, 0.5), (3, 0.5)],
                                    [(0, 0.2), (3, 0.2)],
                                    [(0, 0.025), (3, 0.025)]],
-        Voiced_component_mul=[(0, 20), (3, 20)],
-        Voiceless_component_mul=[(0, 0.8), (3, 0.8)],
-        Volume=[(0, 1), (3, 1)],  # TODO have this effect the volume
+        Voiced_component_importance=[(0, 1), (3, 1)],
+        Voiceless_component_importance=[(0, 0.02), (3, 0.02)],
+        Volume=[(0, -6), (3, -6)],  # TODO have this effect the volume
         F0=[(0, F0), (3, F0)],
         F0_freq_sway=1,
         F0_freq_FM_jitter=1,
         voice_source_amp_sway=1,
-        VocalTiltDelta=[(0, 0), (3, 0)],
-        Tension=[(0, 1), (3, 1)]
+        Spectral_tilt_cutoff_delta=[(0, 0), (3, 0)],
+        Spectral_tilt_tension=[(0, 0), (3, 0)],
+        Spectral_hill_freq_deltafactor=[(0, 0), (3, 0)],
+        Spectral_hill_boost_delta=[(0, 0), (3, 0)],
+        Vowel_Q_tension_deltafactor=[(0, 0), (3, 0)]
     )
     o = transform(i)
