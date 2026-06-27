@@ -3,6 +3,8 @@ import pyo
 from simple_speech_synthesizer.synthesis import synthesis_types as this_layer_types
 from simple_speech_synthesizer.base.load_low_level_character import load_low_level_character
 
+from time import sleep
+
 # This is a bit hacky, the reason I have to convert them to a pyo object here is because
 # pyo doesn't allow the creation of pyo objects unless a server is launched already
 class InitializedEnvelopesInput:
@@ -100,17 +102,19 @@ def synthesize(input: this_layer_types.Input):
 
     voice_source_amp_sway = pyo.ButLP(pyo.BrownNoise(), freq=25, mul=0.03 * input.voice_source_amp_sway)
 
-    raw_blit_source = pyo.Blit(freq=true_F0, harms=80, mul=1 + voice_source_amp_sway)
-    spectral_tilted_6db_rolloff_blit_source = pyo.ButLP(raw_blit_source, synthesis_parameters["spectral_tilt_cutoff"] + input.Spectral_tilt_cutoff_delta, mul=1)
+    raw_blit_source = pyo.Blit(freq=true_F0, harms=70, mul=1 + voice_source_amp_sway)
+    spectral_tilted_6db_rolloff_blit_source = pyo.Tone(raw_blit_source, synthesis_parameters["spectral_tilt_cutoff"] + input.Spectral_tilt_cutoff_delta, mul=1)
     spectral_tilted_12db_rolloff_blit_source = pyo.ButLP(raw_blit_source, synthesis_parameters["spectral_tilt_cutoff"] + input.Spectral_tilt_cutoff_delta, mul=1)
     spectral_tilted_blit_source = (spectral_tilted_12db_rolloff_blit_source * (1-input.Spectral_tilt_tension)) + (spectral_tilted_6db_rolloff_blit_source * input.Spectral_tilt_tension)
     high_freq_retention_blit_source = pyo.ButHP(raw_blit_source, 3000, mul=0.005)
     partial_voice_source = spectral_tilted_blit_source + high_freq_retention_blit_source
     unbalanced_voice_source = pyo.EQ(partial_voice_source,
-                                     synthesis_parameters["spectral_hill_freq"] * input.Spectral_hill_freq_deltafactor,
-                                     synthesis_parameters["spectral_hill_boost"] + input.Spectral_hill_boost_delta)
+                                     freq=synthesis_parameters["spectral_hill_freq"] * input.Spectral_hill_freq_deltafactor,
+                                     q=synthesis_parameters["spectral_hill_freq"] * input.Spectral_hill_freq_deltafactor / synthesis_parameters["spectral_hill_bandwidth"],
+                                     # TODO that spectral_hill_bandwidth was just a quick fix, that may not be the best implementation method
+                                     boost=synthesis_parameters["spectral_hill_boost"] + input.Spectral_hill_boost_delta)
     amp_multiplier = pyo.DBToA(input.Volume)
-    voice_source = pyo.Balance(unbalanced_voice_source, pyo.FastSine(true_F0, mul=amp_multiplier))
+    voice_source = pyo.Balance(unbalanced_voice_source, pyo.SineLoop(true_F0, mul=amp_multiplier))
 
     # TODO potential chorus effect could be applied here for a multiple singers effect
 
@@ -225,8 +229,8 @@ if __name__ == "__main__":
         voice_source_amp_sway=1,
         Spectral_tilt_cutoff_delta=[(0, 0), (3, 0)],
         Spectral_tilt_tension=[(0, 0), (3, 0)],
-        Spectral_hill_freq_deltafactor=[(0, 0), (3, 0)],
+        Spectral_hill_freq_deltafactor=[(0, 1), (3, 1)],
         Spectral_hill_boost_delta=[(0, 0), (3, 0)],
-        Vowel_Q_tension_deltafactor=[(0, 0), (3, 0)]
+        Vowel_Q_tension_deltafactor=[(0, 1), (3, 1)]
     )
     o = transform(i)
