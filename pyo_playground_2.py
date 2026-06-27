@@ -1,5 +1,24 @@
 from pyo import *
 
+
+# Magic Gemini code that calculates human-like formant scaling for a frequency.
+def calculate_q(freq, tension_mul=1.0):
+    """
+    Calculates a natural human-like Q factor
+    based on the formant frequency.
+    """
+    # 1. Calculate natural human bandwidth expansion (with a 50Hz floor)
+    bandwidth = 50.0 + (0.05 * freq)
+
+    # 2. Convert to Q factor and apply your global tension modifier
+    base_q = freq / bandwidth
+    return base_q * tension_mul
+
+    # Example Usage in your parallel bank:
+    # f1_q = calculate_q(F1)  --> If F1=500,  Bw=75,  Q ≈ 6.6
+    # f3_q = calculate_q(F3)  --> If F3=3000, Bw=200, Q ≈ 15.0
+
+
 s = Server(duplex=0)
 output_select = pa_get_output_devices()
 print(output_select)
@@ -19,8 +38,8 @@ vowels = {
     "vtuber_i": [450, 3264, 3760]
 }
 
-F0 = 416
-vowel = "vtuber_i"
+F0 = 119
+vowel = "ε"
 F1 = vowels[vowel][0]
 F2 = vowels[vowel][1]
 F3 = vowels[vowel][2]
@@ -37,7 +56,7 @@ body_high = ButHP(vocal, F3, mul=0.01)
 tension_middle = ButBP(body, (F1 + F2) / 2, ((F1 + F2) / 2) / (F2 - F1), mul=0)
 tension_middle.ctrl()
 raw_vocal = body + body_high + tension_middle
-vocal_raw = EQ(raw_vocal, F3, 0.5, 6)  # feminine spectral "hill"
+vocal_raw = EQ(raw_vocal, F1, 0.5, 0)  # feminine spectral "hill"
 vocal_raw.ctrl()
 reverbed_vocal = Freeverb(
     vocal_raw,
@@ -56,16 +75,16 @@ H1_H2_TILT.ctrl()
 f0 = ButLP(
     Reson(vocal, F0 + fundamental_sway, 1, mul=0.5), (F0 + fundamental_sway) * H1_H2_TILT
 )  # this thing... it may work
-f1 = Reson(vocal, F1, 20, mul=1)
-f2 = Reson(vocal, F2, 25, mul=1)
-f3 = Reson(vocal, F3, 30, mul=1)
-f4fix = Reson(vocal, 4000, 30, mul=1)
+f1 = Reson(vocal, F1, calculate_q(F1), mul=1)  # orig Q: 20
+f2 = Reson(vocal, F2, calculate_q(F2), mul=1)  # orig Q: 25
+f3 = Reson(vocal, F3, calculate_q(F3), mul=1)  # orig Q: 30
+f4fix = Reson(vocal, 4000, calculate_q(4000), mul=0)  # orig Q: 30
 noise = Noise()
 f0noise = Biquadx(Reson(noise, F0 + fundamental_sway, 5, mul=1), (F0 + fundamental_sway) * 1.5)
 f1noise = Reson(noise, F1, 30, mul=0.5)
 f2noise = Reson(noise, F2, 40, mul=0.2)
 f3noise = Reson(noise, F3, 60, mul=0.025)
-sum = (f0 + f1 + f2 + f3 + f4fix) * 20 + (f0noise + f1noise + f2noise + f3noise) * 0.02
+sum = (f0 + f1 + f2 + f3 + f4fix) * 20 + (f0noise + f1noise + f2noise + f3noise) * 0.8
 reverb_sum = Freeverb(
     sum,
     size=0.15,    # Very small room size to avoid massive echoes
