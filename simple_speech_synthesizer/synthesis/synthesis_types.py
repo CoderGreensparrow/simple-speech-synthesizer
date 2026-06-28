@@ -31,7 +31,7 @@ class Input:
     F0: Sequence[tuple[float, float]]
     Spectral_tilt_cutoff_delta: Sequence[tuple[float, float]]
     Spectral_tilt_tension: Sequence[tuple[float, float]]
-    Spectral_hill_freq_deltafactor: Sequence[tuple[float, float]]
+    #  Spectral_hill_freq_deltafactor: Sequence[tuple[float, float]]
     Spectral_hill_boost_delta: Sequence[tuple[float, float]]
     Vowel_Q_tension_deltafactor: Sequence[tuple[float, float]]
     # scalar parameters

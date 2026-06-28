@@ -5,6 +5,8 @@ from simple_speech_synthesizer.base.load_low_level_character import load_low_lev
 
 from time import sleep
 
+_DEBUG = False
+
 # This is a bit hacky, the reason I have to convert them to a pyo object here is because
 # pyo doesn't allow the creation of pyo objects unless a server is launched already
 class InitializedEnvelopesInput:
@@ -37,7 +39,7 @@ class InitializedEnvelopesInput:
         self.Spectral_tilt_tension = pyo.Linseg(input.Spectral_tilt_tension)
         """Controls the TENSION, the crossfade between the ButLP and the Tone filters. (-12 db/octave cutoff vs -6 db/octave)
         Default is 0, which means no tension."""
-        self.Spectral_hill_freq_deltafactor = pyo.Linseg(input.Spectral_hill_freq_deltafactor)
+        #  self.Spectral_hill_freq_deltafactor = pyo.Linseg(input.Spectral_hill_freq_deltafactor)
         """Shifts the default spectral hill frequency, by multiplying it (being a factor).
         The spectral hill refers to a modification of the descent of the vocal tilt.
         It allows for brighter and anime-like, or lower and masculine formants.
@@ -85,7 +87,7 @@ def synthesize(input: this_layer_types.Input):
         "nchnls": 2,
         "buffersize": 256,
         "duplex": 0,
-        "audio": "offline"
+        "audio": "offline" if not _DEBUG else "portaudio"
     }
     s = pyo.Server(**pyo_server_kwargs)
     s.deactivateMidi()
@@ -109,8 +111,8 @@ def synthesize(input: this_layer_types.Input):
     high_freq_retention_blit_source = pyo.ButHP(raw_blit_source, 3000, mul=0.005)
     partial_voice_source = spectral_tilted_blit_source + high_freq_retention_blit_source
     unbalanced_voice_source = pyo.EQ(partial_voice_source,
-                                     freq=synthesis_parameters["spectral_hill_freq"] * input.Spectral_hill_freq_deltafactor,
-                                     q=synthesis_parameters["spectral_hill_freq"] * input.Spectral_hill_freq_deltafactor / synthesis_parameters["spectral_hill_bandwidth"],
+                                     freq=synthesis_parameters["spectral_hill_freq"],  # SPECTRAL HILL DELTAFACTOR REMOVED
+                                     q=synthesis_parameters["spectral_hill_freq"] / synthesis_parameters["spectral_hill_bandwidth"],
                                      # TODO that spectral_hill_bandwidth was just a quick fix, that may not be the best implementation method
                                      boost=synthesis_parameters["spectral_hill_boost"] + input.Spectral_hill_boost_delta)
     amp_multiplier = pyo.DBToA(input.Volume)
@@ -121,12 +123,15 @@ def synthesize(input: this_layer_types.Input):
     ### VOICE FILTER
     vowel_f0 = pyo.ButLP(
             pyo.Reson(voice_source, true_F0, 1, mul=synthesis_parameters["FO_mul"]),
-        true_F0 * synthesis_parameters["H1_H2_balance"])
+        true_F0 * synthesis_parameters["H1_H2_balance"])  # TODO implement H1_H2_balance correctly (there are weird cancelling artifacts...
     vowel_formants = list()
-    for freq in input.Vowel_formant_freqs:
+    for j, freq in enumerate(input.Vowel_formant_freqs):
+        calculated_freq = freq
+        if j == 0:
+            calculated_freq = pyo.Max(calculated_freq, true_F0 + synthesis_parameters["F0_F1_min_difference"])
         vowel_formants.append(
             pyo.Reson(voice_source,
-                      freq=freq,
+                      freq=calculated_freq,
                       q=calculate_q(freq, synthesis_parameters["vowel_Q_floor"], synthesis_parameters["vowel_Q_slope"]) * input.Vowel_Q_tension_deltafactor,
                       mul=1)
         )
@@ -168,12 +173,21 @@ def synthesize(input: this_layer_types.Input):
     input.F0.play()
     input.Spectral_tilt_cutoff_delta.play()
     input.Spectral_tilt_tension.play()
-    input.Spectral_hill_freq_deltafactor.play()
+    #  input.Spectral_hill_freq_deltafactor.play()
     input.Spectral_hill_boost_delta.play()
     input.Vowel_Q_tension_deltafactor.play()
 
     s.start()
-    s.shutdown()
+    if _DEBUG:
+        pyo.Scope([audio_out])
+        analyzer = pyo.Spectrum([audio_out], size=2 ** 14)
+        analyzer.setFscaling(True)  # log
+        analyzer.setLowFreq(0)
+        analyzer.setHighFreq(10000)
+        analyzer.setGain(3)
+        s.gui(locals())
+    else:
+        s.shutdown()
 
     return input.output_filepath
 
@@ -222,14 +236,14 @@ if __name__ == "__main__":
                                    [(0, 0.025), (3, 0.025)]],
         Voiced_component_importance=[(0, 1), (3, 1)],
         Voiceless_component_importance=[(0, 0.02), (3, 0.02)],
-        Volume=[(0, -6), (3, -6)],  # TODO have this effect the volume
+        Volume=[(0, -12), (3, -12)],  # TODO have this effect the volume
         F0=[(0, F0), (3, F0)],
         F0_freq_sway=1,
         F0_freq_FM_jitter=1,
         voice_source_amp_sway=1,
         Spectral_tilt_cutoff_delta=[(0, 0), (3, 0)],
         Spectral_tilt_tension=[(0, 0), (3, 0)],
-        Spectral_hill_freq_deltafactor=[(0, 1), (3, 1)],
+        #  Spectral_hill_freq_deltafactor=[(0, 1), (3, 1)],
         Spectral_hill_boost_delta=[(0, 0), (3, 0)],
         Vowel_Q_tension_deltafactor=[(0, 1), (3, 1)]
     )

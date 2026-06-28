@@ -1,11 +1,11 @@
 {
-  "FO_mul": 0.8,
+  "FO_mul": 1,
   "F0_F1_min_difference": 50,
-  "H1_H2_balance": 0.15,
+  "H1_H2_balance": 1.5,
   "spectral_tilt_cutoff": 400,
-  "spectral_hill_freq": 600,
+  "spectral_hill_freq": 3400,
   "spectral_hill_boost": 0,
-  "spectral_hill_bandwidth": 2000,
+  "spectral_hill_bandwidth": 6800,
   "vowel_Q_floor": 50,
   "vowel_Q_slope": 0.05,
 
