@@ -1,3 +1,11 @@
+"""
+
+THIS IS AN ARCHIVED PLAYGROUND.
+
+It produces a *good* /ε/ sound, therefore it can be used as a baseline.
+
+"""
+
 from pyo import *
 
 """s = Server().boot().start()

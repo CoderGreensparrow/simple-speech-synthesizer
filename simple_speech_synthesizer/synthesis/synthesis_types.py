@@ -26,6 +26,7 @@ class Input:
     # (Technically global Envelopes)
     Voiced_component_importance: Sequence[tuple[float, float]]
     Voiceless_component_importance: Sequence[tuple[float, float]]
+    Aspiration_component_importance: Sequence[tuple[float, float]]
     # Global Envelopes
     Volume: Sequence[tuple[float, float]]
     F0: Sequence[tuple[float, float]]
@@ -34,6 +35,7 @@ class Input:
     #  Spectral_hill_freq_deltafactor: Sequence[tuple[float, float]]
     Spectral_hill_boost_delta: Sequence[tuple[float, float]]
     Vowel_Q_tension_deltafactor: Sequence[tuple[float, float]]
+    Vowel_aspiration: Sequence[tuple[float, float]]
     # scalar parameters
     F0_freq_sway: float  # these are percentages from 0 to 1 (unbounded)
     F0_freq_FM_jitter: float

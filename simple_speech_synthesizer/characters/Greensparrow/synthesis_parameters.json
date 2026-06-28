@@ -1,13 +1,21 @@
 {
   "FO_mul": 1,
+  "F0_aspiration_mul": 0.5,
   "F0_F1_min_difference": 50,
   "H1_H2_balance": 1.5,
   "spectral_tilt_cutoff": 400,
-  "spectral_hill_freq": 3400,
+  "spectral_hill_freq": 2800,
   "spectral_hill_boost": 0,
-  "spectral_hill_bandwidth": 6800,
+  "spectral_hill_bandwidth": 5000,
   "vowel_Q_floor": 50,
   "vowel_Q_slope": 0.05,
+  "aspiration_Q_floor": 50,
+  "aspiration_Q_slope": 0.015,
+  "spectral_hill_aspiration_boost": 0,
+  "aspiration_brightness_loss_compensation_factor": 0.02,
+  "default_Vowel_aspiration_as_a_factor_of_volume": 0.4,
+  "aspiration_tension_scaling_factor": "unknown",
+  "aspiration_F0_scaling_factor": "unknown",
 
   "nasal_murmur": 250,
 
