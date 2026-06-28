@@ -106,8 +106,14 @@ def synthesize(input: this_layer_types.Input):
 
     raw_blit_source = pyo.Blit(freq=true_F0, harms=70, mul=1 + voice_source_amp_sway)
     spectral_tilted_6db_rolloff_blit_source = pyo.Tone(raw_blit_source, synthesis_parameters["spectral_tilt_cutoff"] + input.Spectral_tilt_cutoff_delta, mul=1)
-    spectral_tilted_12db_rolloff_blit_source = pyo.ButLP(raw_blit_source, synthesis_parameters["spectral_tilt_cutoff"] + input.Spectral_tilt_cutoff_delta, mul=1)
-    spectral_tilted_blit_source = (spectral_tilted_12db_rolloff_blit_source * (1-input.Spectral_tilt_tension)) + (spectral_tilted_6db_rolloff_blit_source * input.Spectral_tilt_tension)
+    spectral_tilted_12db_rolloff_blit_source = pyo.Tone(spectral_tilted_6db_rolloff_blit_source, synthesis_parameters["spectral_tilt_cutoff"] + input.Spectral_tilt_cutoff_delta, mul=1)
+    spectral_tilted_18db_rolloff_blit_source = pyo.Tone(spectral_tilted_12db_rolloff_blit_source, synthesis_parameters["spectral_tilt_cutoff"] + input.Spectral_tilt_cutoff_delta, mul=1)
+    spectral_tilted_24db_rolloff_blit_source = pyo.Tone(spectral_tilted_18db_rolloff_blit_source, synthesis_parameters["spectral_tilt_cutoff"] + input.Spectral_tilt_cutoff_delta, mul=1)
+    #  OLD CODE: spectral_tilted_blit_source = (spectral_tilted_12db_rolloff_blit_source * (1-input.Spectral_tilt_tension)) + (spectral_tilted_6db_rolloff_blit_source * input.Spectral_tilt_tension)
+    spectral_tilted_blit_source = pyo.Selector([spectral_tilted_24db_rolloff_blit_source,
+                                                spectral_tilted_18db_rolloff_blit_source,
+                                                spectral_tilted_12db_rolloff_blit_source,
+                                                spectral_tilted_6db_rolloff_blit_source], input.Spectral_tilt_tension * 3)
     high_freq_retention_blit_source = pyo.ButHP(raw_blit_source, 3000, mul=0.005)
     partial_voice_source = spectral_tilted_blit_source + high_freq_retention_blit_source
     unbalanced_voice_source = pyo.EQ(partial_voice_source,
@@ -242,7 +248,7 @@ if __name__ == "__main__":
         F0_freq_FM_jitter=1,
         voice_source_amp_sway=1,
         Spectral_tilt_cutoff_delta=[(0, 0), (3, 0)],
-        Spectral_tilt_tension=[(0, 0), (3, 0)],
+        Spectral_tilt_tension=[(0, 0.5), (3, 0.5)],
         #  Spectral_hill_freq_deltafactor=[(0, 1), (3, 1)],
         Spectral_hill_boost_delta=[(0, 0), (3, 0)],
         Vowel_Q_tension_deltafactor=[(0, 1), (3, 1)]
