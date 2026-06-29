@@ -4,9 +4,9 @@
   "F0_F1_min_difference": 50,
   "H1_H2_balance": 1.5,
   "spectral_tilt_cutoff": 400,
-  "spectral_hill_freq": 2800,
+  "spectral_hill_freq": 3000,
   "spectral_hill_boost": 0,
-  "spectral_hill_bandwidth": 5000,
+  "spectral_hill_bandwidth": 1000,
   "vowel_Q_floor": 50,
   "vowel_Q_slope": 0.05,
   "aspiration_Q_floor": 50,
@@ -21,6 +21,7 @@
 
   "default_Constriction_volume_as_a_factor_of_volume": 0.4,
 
+  "voiced_frication_constriction_component_importance": 0.1,
 
   "vowel_formant_coarticulation_max_acc": 800000,
   "vowel_formant_coarticulation_kp": 40000,

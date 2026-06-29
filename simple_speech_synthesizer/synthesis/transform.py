@@ -3,12 +3,12 @@ import pyo
 from simple_speech_synthesizer.synthesis import synthesis_types as this_layer_types
 from simple_speech_synthesizer.base.load_low_level_character import load_low_level_character
 
-_DEBUG = False
+_DEBUG = True
 
 # This is a bit hacky, the reason I have to convert them to a pyo object here is because
 # pyo doesn't allow the creation of pyo objects unless a server is launched already
 class InitializedEnvelopesInput:
-    AMPLITUDE_CORRECTION = -12
+    AMPLITUDE_CORRECTION = -9
     """
     A bodged in value because F0 is about 12 dB boosted than what it needs to be.
     """
@@ -255,8 +255,8 @@ def synthesize(input: this_layer_types.Input):
     # CONSTRICTION SOURCE
     constriction_source = pyo.Noise()
 
-    constr1_hp_filter     = pyo.ButHP(constriction_source, freq=input.Constriction_HP_freq)
-    constr2_lp_filter     = pyo.ButLP(constr1_hp_filter, freq=input.Constriction_LP_freq)
+    constr1_hp_filter     = pyo.Biquadx(constriction_source, freq=input.Constriction_HP_freq * 1.25, stages=3, type=1)
+    constr2_lp_filter     = pyo.Biquadx(constr1_hp_filter, freq=input.Constriction_LP_freq * 0.75, stages=3, type=0)
     amp_multiplier = pyo.DBToA(input.Volume) * input.Constriction_volume_factor
     constr3_balanced      = pyo.Balance(constr2_lp_filter, pyo.FastSine(mul=amp_multiplier))
     constr4_peak          = pyo.EQ(constr3_balanced,
@@ -320,7 +320,7 @@ def synthesize(input: this_layer_types.Input):
         analyzer.setFscaling(True)  # log
         analyzer.setLowFreq(0)
         analyzer.setHighFreq(10000)
-        analyzer.setGain(3)
+        analyzer.setGain(0)
         s.gui(locals())
     else:
         s.shutdown()
@@ -350,9 +350,9 @@ def transform(input: this_layer_types.Input) -> str:
 
 if __name__ == "__main__":
     F0 = 119
-    F1 = 538  # praat value; orig 610
-    F2 = 1779  # praat value; orig 1900
-    F3 = 2751  # praat value
+    F1 = 2118  # praat value; orig 610
+    F2 = 2836  # praat value; orig 1900
+    F3 = 3367  # praat value
     # parameters adapted from pyo_playground_e.py
     i = this_layer_types.Input(
         character_dir_path=r"..\characters\Greensparrow",
@@ -365,12 +365,12 @@ if __name__ == "__main__":
         Constriction_LP_freq=[(0, 14000), (3, 14000)],
         Constriction_peak_freq=[(0, 3400), (3, 3400)],
         Constriction_peak_bandwidth=[(0, 1500), (3, 1500)],
-        Constriction_peak_boost=[(0, 25), (3, 25)],
-        Constriction_peak_overtone_importance=[(0, 0.3), (3, 0.3)],
-        Constriction_volume_factor=[(0, 0.2), (3, 0.2)],
-        Voiced_component_importance=[(0, 0), (3, 0)],
-        Constriction_component_importance=[(0, 1), (3, 1)],
-        Aspiration_component_importance=[(0, 0), (1, 0)],
+        Constriction_peak_boost=[(0, 20), (3, 20)],
+        Constriction_peak_overtone_importance=[(0, 0.4), (3, 0.4)],
+        Constriction_volume_factor=[(0, 0.15), (3, 0.15)],
+        Voiced_component_importance=[(0, 1), (3, 1)],
+        Constriction_component_importance=[(0, 0.1), (3, 0.1)],
+        Aspiration_component_importance=[(0, 1), (1, 1)],
         Volume=[(0, -3), (3, -3)],
         F0=[(0, F0), (3, F0)],
         F0_freq_sway=1,
@@ -379,7 +379,7 @@ if __name__ == "__main__":
         Spectral_tilt_cutoff_delta=[(0, 0), (3, 0)],
         Spectral_tilt_tension=[(0, 0), (3, 0)],
         #  Spectral_hill_freq_deltafactor=[(0, 1), (3, 1)],
-        Spectral_hill_boost_delta=[(0, 0), (3, 0)],
+        Spectral_hill_boost_delta=[(0, 10), (3, 10)],
         Vowel_Q_tension_deltafactor=[(0, 1), (3, 1)],
         Aspiration_volume_factor=[(0, 0.4), (3, 0.4)]
     )
