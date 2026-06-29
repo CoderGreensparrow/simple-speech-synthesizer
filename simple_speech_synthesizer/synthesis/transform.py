@@ -3,7 +3,7 @@ import pyo
 from simple_speech_synthesizer.synthesis import synthesis_types as this_layer_types
 from simple_speech_synthesizer.base.load_low_level_character import load_low_level_character
 
-_DEBUG = True
+_DEBUG = False
 
 # This is a bit hacky, the reason I have to convert them to a pyo object here is because
 # pyo doesn't allow the creation of pyo objects unless a server is launched already
@@ -85,6 +85,8 @@ class InitializedEnvelopesInput:
         """
         A factor from 0 to 1 or more. It describes the constriction volume as a factor of the self.Volume.
         Similar to self.Aspiration_volume_factor.
+        IMPORTANT NOTE THAT THIS DESCRIBES THE VOLUME OF THE BACKGROUND NOISE BEFORE ANY SPECTRAL PEAKS OF THE CONSONANT ARE ADDED.
+        THEREFORE, IF YOU NEED STRONG DISTINCT SPECRTAL PEAKS, THIS VALUE SHOULD BE SMALL AND THE PEAK BOOST SHOULD BE BIG.
         """
         # scalar parameters
         self.F0_freq_sway = input.F0_freq_sway
@@ -263,7 +265,7 @@ def synthesize(input: this_layer_types.Input):
                                    boost=input.Constriction_peak_boost)
     constr5_peak_overtone = pyo.EQ(constr4_peak,
                                    freq=input.Constriction_peak_freq * 2,  # TODO maybe shake that 2 around a bit...
-                                   q=input.Constriction_peak_freq / input.Constriction_peak_bandwidth / 2,  # TODO and that division by 2 could be parametrized
+                                   q=input.Constriction_peak_freq / input.Constriction_peak_bandwidth * 2,  # TODO and that division by 2 could be parametrized
                                    boost=input.Constriction_peak_boost * input.Constriction_peak_overtone_importance)
     constriction_component = constr5_peak_overtone * input.Constriction_component_importance
 
@@ -359,13 +361,13 @@ if __name__ == "__main__":
         Vowel_formant_freqs=[[(0, F1), (3, F1)],
                              [(0, F2), (3, F2)],
                              [(0, F3), (3, F3)]],
-        Constriction_HP_freq=[(0, 2000), (3, 2000)],
+        Constriction_HP_freq=[(0, 3000), (3, 3000)],
         Constriction_LP_freq=[(0, 14500), (3, 14500)],
-        Constriction_peak_freq=[(0, 3450), (3, 3450)],
-        Constriction_peak_bandwidth=[(0, 1000), (3, 1000)],
-        Constriction_peak_boost=[(0, 16), (3, 16)],
-        Constriction_peak_overtone_importance=[(0, 0.7)],
-        Constriction_volume_factor=[(0, 0.3), (3, 0.3)],
+        Constriction_peak_freq=[(0, 3500), (3, 3500)],
+        Constriction_peak_bandwidth=[(0, 100), (3, 100)],
+        Constriction_peak_boost=[(0, 30), (3, 30)],
+        Constriction_peak_overtone_importance=[(0, 0.3), (3, 0.3)],
+        Constriction_volume_factor=[(0, 0.1), (3, 0.1)],
         Voiced_component_importance=[(0, 0), (3, 0)],
         Voiceless_component_importance=[(0, 1), (3, 1)],
         Aspiration_component_importance=[(0, 0), (1, 0)],

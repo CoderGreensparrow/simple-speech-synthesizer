@@ -33,13 +33,13 @@ f1noise = Resonx(noise, F1, 3, mul=0.5, stages=3)
 f2noise = Resonx(noise, F2, 4, mul=0.5, stages=3)
 f3noise = Resonx(noise, F3, 6, mul=0.3, stages=3)
 
-hp_filter = ButHP(noise, 100, mul=0.2)
-peak = EQ(hp_filter, 1800, q=1800/1200, boost=8)
-peak_2 = EQ(peak, 1800 * 2, q=1800/1200/2, boost=3)
-lp_filter = MoogLP(peak_2, 10000)
+hp_filter = ButHP(noise, 1700, mul=0.2)
+peak = EQ(hp_filter, 3300, q=3300/1000, boost=26)
+peak_2 = EQ(peak, 3300 * 2, q=3300/1000/2, boost=15)
+lp_filter = MoogLP(peak_2, 14500)
 
 #  sum = (f0 + f1 + f2 + f3) * 0 + (f0noise + f1noise + f2noise + f3noise + random_high_noise_for_realism) * 0.8
-sum = lp_filter * 0.05
+sum = lp_filter * 0.1
 sum.out(0)
 sum2 = sum * 1
 sum2.out(1)
