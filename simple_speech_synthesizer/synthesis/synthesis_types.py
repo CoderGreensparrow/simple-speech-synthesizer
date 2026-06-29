@@ -28,7 +28,7 @@ class Input:
     Constriction_LP_freq: Sequence[tuple[float, float]]
     # (Technically global Envelopes)
     Voiced_component_importance: Sequence[tuple[float, float]]
-    Voiceless_component_importance: Sequence[tuple[float, float]]
+    Constriction_component_importance: Sequence[tuple[float, float]]
     Aspiration_component_importance: Sequence[tuple[float, float]]
     # Global Envelopes
     Volume: Sequence[tuple[float, float]]

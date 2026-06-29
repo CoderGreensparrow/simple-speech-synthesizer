@@ -24,8 +24,8 @@ class InitializedEnvelopesInput:
         #  self.Constriction_formant_bandwidths = [pyo.Linseg(raw_env) for raw_env in input.Constriction_formant_bandwidths]
         #  self.Constriction_formant_muls =       [pyo.Linseg(raw_env) for raw_env in input.Constriction_formant_muls]
         self.Constriction_HP_freq = pyo.Linseg(input.Constriction_HP_freq)
-        self.Constriction_peak_freq = pyo.Linseg(input.Constriction_HP_freq)
-        self.Constriction_peak_bandwidth = pyo.Linseg(input.Constriction_HP_freq)
+        self.Constriction_peak_freq = pyo.Linseg(input.Constriction_peak_freq)
+        self.Constriction_peak_bandwidth = pyo.Linseg(input.Constriction_peak_bandwidth)
         self.Constriction_peak_boost = pyo.Linseg(input.Constriction_peak_boost)
         self.Constriction_peak_overtone_importance = pyo.Linseg(input.Constriction_peak_overtone_importance)
         self.Constriction_LP_freq = pyo.Linseg(input.Constriction_LP_freq)
@@ -38,7 +38,7 @@ class InitializedEnvelopesInput:
         """
         importance means semantic amplitude, 1 means full power, 0 means None.
         """
-        self.Constriction_component_importance = pyo.Linseg(input.Voiceless_component_importance)
+        self.Constriction_component_importance = pyo.Linseg(input.Constriction_component_importance)
         self.Aspiration_component_importance = pyo.Linseg(input.Aspiration_component_importance)
         """
         The difference between this importance and the Aspiration_volume_factor is... almost nothing,
@@ -361,15 +361,15 @@ if __name__ == "__main__":
         Vowel_formant_freqs=[[(0, F1), (3, F1)],
                              [(0, F2), (3, F2)],
                              [(0, F3), (3, F3)]],
-        Constriction_HP_freq=[(0, 3000), (3, 3000)],
-        Constriction_LP_freq=[(0, 14500), (3, 14500)],
-        Constriction_peak_freq=[(0, 3500), (3, 3500)],
-        Constriction_peak_bandwidth=[(0, 100), (3, 100)],
-        Constriction_peak_boost=[(0, 30), (3, 30)],
+        Constriction_HP_freq=[(0, 1500), (3, 1500)],
+        Constriction_LP_freq=[(0, 14000), (3, 14000)],
+        Constriction_peak_freq=[(0, 3400), (3, 3400)],
+        Constriction_peak_bandwidth=[(0, 1500), (3, 1500)],
+        Constriction_peak_boost=[(0, 25), (3, 25)],
         Constriction_peak_overtone_importance=[(0, 0.3), (3, 0.3)],
-        Constriction_volume_factor=[(0, 0.1), (3, 0.1)],
+        Constriction_volume_factor=[(0, 0.2), (3, 0.2)],
         Voiced_component_importance=[(0, 0), (3, 0)],
-        Voiceless_component_importance=[(0, 1), (3, 1)],
+        Constriction_component_importance=[(0, 1), (3, 1)],
         Aspiration_component_importance=[(0, 0), (1, 0)],
         Volume=[(0, -3), (3, -3)],
         F0=[(0, F0), (3, F0)],
