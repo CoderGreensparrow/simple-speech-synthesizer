@@ -20,17 +20,28 @@ class InitializedEnvelopesInput:
         self.duration = input.duration
         # Phoneme synthesis
         self.Vowel_formant_freqs = [pyo.Linseg(raw_env) for raw_env in input.Vowel_formant_freqs]
-        self.Constriction_formant_freqs =      [pyo.Linseg(raw_env) for raw_env in input.Constriction_formant_freqs]
-        self.Constriction_formant_bandwidths = [pyo.Linseg(raw_env) for raw_env in input.Constriction_formant_bandwidths]
-        self.Constriction_formant_muls =       [pyo.Linseg(raw_env) for raw_env in input.Constriction_formant_muls]
+        #  self.Constriction_formant_freqs =      [pyo.Linseg(raw_env) for raw_env in input.Constriction_formant_freqs]
+        #  self.Constriction_formant_bandwidths = [pyo.Linseg(raw_env) for raw_env in input.Constriction_formant_bandwidths]
+        #  self.Constriction_formant_muls =       [pyo.Linseg(raw_env) for raw_env in input.Constriction_formant_muls]
+        self.Constriction_HP_freq = pyo.Linseg(input.Constriction_HP_freq)
+        self.Constriction_peak_freq = pyo.Linseg(input.Constriction_HP_freq)
+        self.Constriction_peak_bandwidth = pyo.Linseg(input.Constriction_HP_freq)
+        self.Constriction_peak_boost = pyo.Linseg(input.Constriction_peak_boost)
+        self.Constriction_peak_overtone_importance = pyo.Linseg(input.Constriction_peak_overtone_importance)
+        self.Constriction_LP_freq = pyo.Linseg(input.Constriction_LP_freq)
+        """
+        Phoneme specific value. Controls how strong the first overtone EQ of the constriction peak, relative to that first peak.
+        0 means there is no EQ. 1 means they are the same loudness.
+        """
+        # TODO: It doesn't have to be a perfect *2 overtone!! It can vary!
         self.Voiced_component_importance = pyo.Linseg(input.Voiced_component_importance)
         """
         importance means semantic amplitude, 1 means full power, 0 means None.
         """
-        self.Voiceless_component_importance = pyo.Linseg(input.Voiceless_component_importance)
+        self.Constriction_component_importance = pyo.Linseg(input.Voiceless_component_importance)
         self.Aspiration_component_importance = pyo.Linseg(input.Aspiration_component_importance)
         """
-        The difference between this importance and the vowel_aspiration is... almost nothing,
+        The difference between this importance and the Aspiration_volume_factor is... almost nothing,
         but their use case is different.
         This one is used for enabling (1) and disabling (0).
         While the other one controls the literal amplitude of the aspiration.
@@ -60,15 +71,20 @@ class InitializedEnvelopesInput:
         A multiplier for all the Q values of all formants.
         """
         ### CONSONANT STUFFS (none yet)
-        self.Vowel_aspiration = pyo.Linseg(input.Vowel_aspiration)
+        self.Aspiration_volume_factor = pyo.Linseg(input.Aspiration_volume_factor)
         """
-        A factor from 0 to 1 or more. It describes the aspiration volume as a factor of the abs(self.Volume).
+        A factor from 0 to 1 or more. It describes the aspiration volume as a factor of the self.Volume.
         So 0 means no aspiration, 1 means the same level of aspiration as there is voiced formants (this is already bad).
         
         Controls how much noise there is on the vowel formants themselves.
         Imitates breathiness, or aspiration, like saying /h/ onto the phoneme.
         Completely separate control from voiced and voiceless components.
         WHEN CONTROLLING HIGHER-LEVEL TENSION, IT SHOULD DO THE OPPOSITE TO THAT TENSION (inversely proportional).
+        """
+        self.Constriction_volume_factor = pyo.Linseg(input.Constriction_volume_factor)
+        """
+        A factor from 0 to 1 or more. It describes the constriction volume as a factor of the self.Volume.
+        Similar to self.Aspiration_volume_factor.
         """
         # scalar parameters
         self.F0_freq_sway = input.F0_freq_sway
@@ -200,7 +216,7 @@ def synthesize(input: this_layer_types.Input):
                                      freq=synthesis_parameters["spectral_hill_freq"],
                                      q=synthesis_parameters["spectral_hill_freq"] / synthesis_parameters["spectral_hill_bandwidth"],
                                      boost=synthesis_parameters["spectral_hill_aspiration_boost"] + input.Spectral_hill_boost_delta)
-    amp_multiplier = pyo.DBToA(input.Volume) * input.Vowel_aspiration
+    amp_multiplier = pyo.DBToA(input.Volume) * input.Aspiration_volume_factor
     aspiration_source = pyo.Balance(unbalanced_noise_source, pyo.FastSine(true_F0, mul=amp_multiplier))
 
     ### ASPIRATION FILTER
@@ -229,30 +245,31 @@ def synthesize(input: this_layer_types.Input):
         freq=synthesis_parameters["spectral_hill_freq"],
         q=synthesis_parameters["spectral_hill_freq"] / synthesis_parameters["spectral_hill_bandwidth"],
         mul=1)
-    amp_multiplier = pyo.DBToA(input.Volume) * input.Vowel_aspiration * synthesis_parameters["aspiration_brightness_loss_compensation_factor"]
+    amp_multiplier = pyo.DBToA(input.Volume) * input.Aspiration_volume_factor * synthesis_parameters["aspiration_brightness_loss_compensation_factor"]
     aspiration_component = dark_aspiration_component + pyo.Balance(brightness_loss_compensation, pyo.FastSine(mul=amp_multiplier))
 
     aspiration_component = aspiration_component * input.Aspiration_component_importance
 
-    # noise source + filter
+    # CONSTRICTION SOURCE
+    constriction_source = pyo.Noise()
 
-    noise_source = pyo.Noise()
+    constr1_hp_filter     = pyo.ButHP(constriction_source, freq=input.Constriction_HP_freq)
+    constr2_lp_filter     = pyo.ButLP(constr1_hp_filter, freq=input.Constriction_LP_freq)
+    amp_multiplier = pyo.DBToA(input.Volume) * input.Constriction_volume_factor
+    constr3_balanced      = pyo.Balance(constr2_lp_filter, pyo.FastSine(mul=amp_multiplier))
+    constr4_peak          = pyo.EQ(constr3_balanced,
+                                   freq=input.Constriction_peak_freq,
+                                   q=input.Constriction_peak_freq / input.Constriction_peak_bandwidth,
+                                   boost=input.Constriction_peak_boost)
+    constr5_peak_overtone = pyo.EQ(constr4_peak,
+                                   freq=input.Constriction_peak_freq * 2,  # TODO maybe shake that 2 around a bit...
+                                   q=input.Constriction_peak_freq / input.Constriction_peak_bandwidth / 2,  # TODO and that division by 2 could be parametrized
+                                   boost=input.Constriction_peak_boost * input.Constriction_peak_overtone_importance)
+    constriction_component = constr5_peak_overtone * input.Constriction_component_importance
 
-    """constriction_f0 = pyo.Biquadx(
-        pyo.Reson(noise_source, true_F0, 5, mul=1), true_F0 * synthesis_parameters["H1_H2_balance"]
-    )"""  # TODO implement formant constriction, aka. breathiness
-    constriction_formants = list()
-    for freq, bandwidth, mul in zip(input.Constriction_formant_freqs, input.Constriction_formant_bandwidths, input.Constriction_formant_muls):
-        constriction_formants.append(
-            pyo.Resonx(noise_source, freq=freq, q=freq / bandwidth, mul=mul, stages=3)
-        )
+    ### Effects + FULL SUM OUT
 
-    voiceless_component = sum(constriction_formants)  # + constriction_f0
-    voiceless_component = voiceless_component * input.Voiceless_component_importance
-
-    # Effects + FULL SUM OUT
-
-    non_effected_sum = voiced_component + aspiration_component + voiceless_component
+    non_effected_sum = voiced_component + aspiration_component + constriction_component
 
     reverb_sum = pyo.Freeverb(
         non_effected_sum,
@@ -267,17 +284,21 @@ def synthesize(input: this_layer_types.Input):
         bal=0.01
     )
 
+    #### ROUTE OUTPUT
     audio_out.out(0)
     audio_out_2 = audio_out * 1
     audio_out_2.out(1)
 
-    #### RECORD
+    #### PLAY ALL THE ENVELOPES
     for env in input.Vowel_formant_freqs: env.play()
-    for env in input.Constriction_formant_freqs: env.play()
-    for env in input.Constriction_formant_bandwidths: env.play()
-    for env in input.Constriction_formant_muls: env.play()
+    input.Constriction_HP_freq.play()
+    input.Constriction_peak_freq.play()
+    input.Constriction_peak_bandwidth.play()
+    input.Constriction_peak_boost.play()
+    input.Constriction_peak_overtone_importance.play()
+    input.Constriction_LP_freq.play()
     input.Voiced_component_importance.play()
-    input.Voiceless_component_importance.play()
+    input.Constriction_component_importance.play()
     input.Aspiration_component_importance.play()
     input.Volume.play()
     input.F0.play()
@@ -286,8 +307,10 @@ def synthesize(input: this_layer_types.Input):
     #  input.Spectral_hill_freq_deltafactor.play()
     input.Spectral_hill_boost_delta.play()
     input.Vowel_Q_tension_deltafactor.play()
-    input.Vowel_aspiration.play()
+    input.Aspiration_volume_factor.play()
+    input.Constriction_volume_factor.play()
 
+    #### RECORD
     s.start()
     if _DEBUG:
         pyo.Scope([audio_out])
@@ -336,19 +359,17 @@ if __name__ == "__main__":
         Vowel_formant_freqs=[[(0, F1), (3, F1)],
                              [(0, F2), (3, F2)],
                              [(0, F3), (3, F3)]],
-        Constriction_formant_freqs=[[(0, F1), (3, F1)],
-                                    [(0, F2), (3, F2)],
-                                    [(0, F3), (3, F3)]],
-        Constriction_formant_bandwidths=[[(0, 30), (3, 30)],
-                                 [(0, 30), (3, 30)],
-                                 [(0, 30), (3, 30)]],
-        Constriction_formant_muls=[[(0, 0.5), (3, 0.5)],
-                                   [(0, 0.2), (3, 0.2)],
-                                   [(0, 0.025), (3, 0.025)]],
-        Voiced_component_importance=[(0, 1), (3, 1)],
-        Voiceless_component_importance=[(0, 0), (3, 0)],
-        Aspiration_component_importance=[(0, 1), (1, 1)],
-        Volume=[(0, -3), (3, -3)],  # TODO have this effect the volume
+        Constriction_HP_freq=[(0, 2000), (3, 2000)],
+        Constriction_LP_freq=[(0, 14500), (3, 14500)],
+        Constriction_peak_freq=[(0, 3450), (3, 3450)],
+        Constriction_peak_bandwidth=[(0, 1000), (3, 1000)],
+        Constriction_peak_boost=[(0, 16), (3, 16)],
+        Constriction_peak_overtone_importance=[(0, 0.7)],
+        Constriction_volume_factor=[(0, 0.3), (3, 0.3)],
+        Voiced_component_importance=[(0, 0), (3, 0)],
+        Voiceless_component_importance=[(0, 1), (3, 1)],
+        Aspiration_component_importance=[(0, 0), (1, 0)],
+        Volume=[(0, -3), (3, -3)],
         F0=[(0, F0), (3, F0)],
         F0_freq_sway=1,
         F0_freq_FM_jitter=1,
@@ -358,6 +379,6 @@ if __name__ == "__main__":
         #  Spectral_hill_freq_deltafactor=[(0, 1), (3, 1)],
         Spectral_hill_boost_delta=[(0, 0), (3, 0)],
         Vowel_Q_tension_deltafactor=[(0, 1), (3, 1)],
-        Vowel_aspiration=[(0, 0.4), (3, 0.4)]
+        Aspiration_volume_factor=[(0, 0.4), (3, 0.4)]
     )
     o = transform(i)

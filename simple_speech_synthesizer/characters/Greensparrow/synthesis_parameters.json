@@ -19,6 +19,9 @@
 
   "nasal_murmur": 250,
 
+  "default_Constriction_volume_as_a_factor_of_volume": 0.4,
+
+
   "vowel_formant_coarticulation_max_acc": 800000,
   "vowel_formant_coarticulation_kp": 40000,
   "vowel_formant_coarticulation_kd": 400,

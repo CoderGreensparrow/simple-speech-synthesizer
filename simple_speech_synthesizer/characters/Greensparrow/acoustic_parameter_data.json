@@ -1,17 +1,6 @@
 {
   "s": {
-    "vowel_formants": [
-      {
-        "freq": 300,
-        "bandwidth": 200,
-        "importance": 1
-      },
-      {
-        "freq": 1100,
-        "bandwidth": 200,
-        "importance": 0.4
-      }
-    ],
+    "vowel_formants": [300, 1100],
     "constriction_formants": [
       {
         "freq": 8000,

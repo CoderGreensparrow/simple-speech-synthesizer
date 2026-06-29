@@ -20,9 +20,12 @@ class Input:
     duration: float
     # Phoneme synthesis
     Vowel_formant_freqs: Sequence[Sequence[tuple[float, float]]]
-    Constriction_formant_freqs: Sequence[Sequence[tuple[float, float]]]
-    Constriction_formant_bandwidths: Sequence[Sequence[tuple[float, float]]]
-    Constriction_formant_muls: Sequence[Sequence[tuple[float, float]]]
+    Constriction_HP_freq: Sequence[tuple[float, float]]
+    Constriction_peak_freq: Sequence[tuple[float, float]]
+    Constriction_peak_bandwidth: Sequence[tuple[float, float]]
+    Constriction_peak_boost: Sequence[tuple[float, float]]
+    Constriction_peak_overtone_importance: Sequence[tuple[float, float]]
+    Constriction_LP_freq: Sequence[tuple[float, float]]
     # (Technically global Envelopes)
     Voiced_component_importance: Sequence[tuple[float, float]]
     Voiceless_component_importance: Sequence[tuple[float, float]]
@@ -35,7 +38,8 @@ class Input:
     #  Spectral_hill_freq_deltafactor: Sequence[tuple[float, float]]
     Spectral_hill_boost_delta: Sequence[tuple[float, float]]
     Vowel_Q_tension_deltafactor: Sequence[tuple[float, float]]
-    Vowel_aspiration: Sequence[tuple[float, float]]
+    Aspiration_volume_factor: Sequence[tuple[float, float]]
+    Constriction_volume_factor: Sequence[tuple[float, float]]
     # scalar parameters
     F0_freq_sway: float  # these are percentages from 0 to 1 (unbounded)
     F0_freq_FM_jitter: float
