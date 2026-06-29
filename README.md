@@ -1,6 +1,9 @@
 # simple-speech-synthesizer
 A simple speech synthesizer without rigorous internal structure.
 
+Name: PESK (from a typo by one of my friends)
+It's an acronym not yet decided... maybe parametrically engineered speech K____
+
 The project description is better in __init__.py.
 Everything below is a remnant of the brainstorming.
 
