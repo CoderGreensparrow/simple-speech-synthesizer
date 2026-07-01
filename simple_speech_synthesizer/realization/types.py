@@ -30,18 +30,20 @@ class HighLevelEnvelopes:
     Constriction_peak_boost: Envelope
     Constriction_peak_overtone_importance: Envelope
     Constriction_LP_freq: Envelope
-    Voice_to_noise_ratio: Envelope
-    Constriction: Envelope
+    #  Voice_to_noise_ratio: Envelope  This is replaced by individual Vowel, Aspiration and Constriction importances and Nasality
+    Vowel_importance: Envelope
+    Aspiration_importance: Envelope
+    Constriction_importance: Envelope
     Nasality: Envelope
     # Global envelopes
     Volume: Envelope  # general singing volume in dB (0 means maximum, negatives count down)
     F0: Envelope  # fundamental pitch
     NasalityDelta: Envelope  # modifies the original nasality (since each phoneme has different levels of it by default)
     BreathinessDelta: Envelope  # modifies the original breathiness
-    Tension: Envelope  # vocal chord tension
-    VocalTilt: Envelope  # vocal tilt
-    LipRoundingDelta: Envelope  # modifies LipRound (lass rounded than normal, more rounded than normal)
-    GenderDelta: Envelope  # modifies the perceived gender of the sound (similar to how other vocal synths use a gender property)
+    Tension: Envelope  # softness - hardness modifier
+    MachineGrowl: Envelope  # lets the Blit run rampant
+    LipRoundingDelta: Envelope  # WIP, may not be implemented; modifies the formants for liprounding
+    VocalGenderDelta: Envelope  # modifies the perceived gender of the sound (similar to how other vocal synths use a gender property)
 
 
 @dataclass(frozen=True)
