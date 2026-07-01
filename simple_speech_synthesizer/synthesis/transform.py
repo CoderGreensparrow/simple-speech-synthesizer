@@ -10,7 +10,7 @@ _DEBUG = True
 class InitializedEnvelopesInput:
     AMPLITUDE_CORRECTION = -9
     """
-    A bodged in value because F0 is about 12 dB boosted than what it needs to be.
+    A bodged in value because F0 is about 9 dB boosted than what it needs to be.
     """
 
     def __init__(self, input: this_layer_types.Input):
@@ -66,9 +66,10 @@ class InitializedEnvelopesInput:
         It allows for brighter and anime-like, or lower and masculine formants.
         When applied to the top of the vocal tilt, it reverses some of its effects, effectively flatting out the voice source spectrum in the highs."""
         self.Spectral_hill_boost_delta = pyo.Linseg(input.Spectral_hill_boost_delta)
-        self.Vowel_Q_tension_deltafactor = pyo.Linseg(input.Vowel_Q_tension_deltafactor)
+        self.Vowel_Q_multiplier = pyo.Linseg(input.Vowel_Q_multiplier)
         """
         A multiplier for all the Q values of all formants.
+        USED FOR TENSION, NASALITY AND GENDERBENDING.
         """
         ### CONSONANT STUFFS (none yet)
         self.Aspiration_volume_factor = pyo.Linseg(input.Aspiration_volume_factor)
@@ -87,6 +88,21 @@ class InitializedEnvelopesInput:
         Similar to self.Aspiration_volume_factor.
         IMPORTANT NOTE THAT THIS DESCRIBES THE VOLUME OF THE BACKGROUND NOISE BEFORE ANY SPECTRAL PEAKS OF THE CONSONANT ARE ADDED.
         THEREFORE, IF YOU NEED STRONG DISTINCT SPECRTAL PEAKS, THIS VALUE SHOULD BE SMALL AND THE PEAK BOOST SHOULD BE BIG.
+        """
+        ### NASALITY STUFFS
+        self.Nasal_murmur_importance = pyo.Linseg(input.Nasal_murmur_importance)
+        """Controls the nasal murmur as if it was a formant in the oral tract.
+        The importance is the same semantic amplitude that the others have. (It's the mul of the LP filter.)"""
+        self.Nasality_LP_strength = pyo.Linseg(input.Nasality_LP_strength)
+        """
+        Sets the strength of the nasality low-pass filter.
+        It's an LP filter applied to the computed oral tract afterwards.
+        The normal output and the LPed output are crossfaded, so this value goes from 0 (no nasality) to 1 (full nasality).
+        """
+        self.Nasality_antiformant_boost = pyo.Linseg(input.Nasality_antiformant_boost)
+        """
+        The NEGATIVE EQ boost applied at where the antiformant would go.
+        It must be a negative value.
         """
         # scalar parameters
         self.F0_freq_sway = input.F0_freq_sway
@@ -192,12 +208,34 @@ def synthesize(input: this_layer_types.Input):
         vowel_formants.append(
             pyo.Reson(voice_source,
                       freq=calculated_freq,
-                      q=calculate_q(freq, synthesis_parameters["vowel_Q_floor"], synthesis_parameters["vowel_Q_slope"]) * input.Vowel_Q_tension_deltafactor,
+                      q=calculate_q(freq, synthesis_parameters["vowel_Q_floor"], synthesis_parameters["vowel_Q_slope"]) * input.Vowel_Q_multiplier,
                       mul=1)
         )
+    ##### NASAL MURMUR "FORMANT"
+    nasal_murmur_freq = synthesis_parameters["nasal_murmur"]
+    vowel_formants.append(
+        pyo.Reson(voice_source,
+                  freq=nasal_murmur_freq,
+                  q=calculate_q(nasal_murmur_freq, synthesis_parameters["vowel_Q_floor"], synthesis_parameters["vowel_Q_slope"]) * input.Vowel_Q_multiplier,
+                  mul=input.Nasal_murmur_importance)
+    )
 
-    voiced_component = vowel_f0 + sum(vowel_formants)
+    voiced_component_without_nasal_component = vowel_f0 + sum(vowel_formants)
+    ##### NASAL LP AND ANTIFORMANT
+    nasal_lp_applied = pyo.MoogLP(voiced_component_without_nasal_component,
+                                freq=synthesis_parameters["nasal_LP_freq"])
+    nasal_lp_crossfade = pyo.Selector([voiced_component_without_nasal_component,
+                                       nasal_lp_applied],
+                                      voice=input.Nasality_LP_strength)
+    voiced_component = pyo.EQ(nasal_lp_crossfade,
+                              freq=synthesis_parameters["nasal_antiformant_freq"],
+                              q=synthesis_parameters["nasal_antiformant_freq"] / synthesis_parameters["nasal_antiformant_bandwidth"],
+                              boost=input.Nasality_antiformant_boost)
+
+    ### VOWEL + NASALITY OUTPUT
     voiced_component = voiced_component * input.Voiced_component_importance
+
+
 
     # TODO: There's still a whistle left because of the aspiration...
     ### ASPIRATION SOURCE (this is also passed to the same filters for efficiency)
@@ -293,7 +331,7 @@ def synthesize(input: this_layer_types.Input):
 
     #### PLAY ALL THE ENVELOPES
     for env in input.Vowel_formant_freqs: env.play()
-    input.Constriction_HP_freq.play()
+    """input.Constriction_HP_freq.play()
     input.Constriction_peak_freq.play()
     input.Constriction_peak_bandwidth.play()
     input.Constriction_peak_boost.play()
@@ -308,9 +346,17 @@ def synthesize(input: this_layer_types.Input):
     input.Spectral_tilt_tension.play()
     #  input.Spectral_hill_freq_deltafactor.play()
     input.Spectral_hill_boost_delta.play()
-    input.Vowel_Q_tension_deltafactor.play()
+    input.Vowel_Q_multiplier.play()
     input.Aspiration_volume_factor.play()
     input.Constriction_volume_factor.play()
+    input.Nasal_murmur_importance.play()
+    input.Nasality_LP_strength.play()
+    input.Nasality_antiformant_boost.play()"""
+    input_all_attributes = vars(input)
+    for attr in input_all_attributes.values():
+        if isinstance(attr, pyo.Linseg):
+            attr.play()
+
 
     #### RECORD
     s.start()
@@ -349,16 +395,26 @@ def transform(input: this_layer_types.Input) -> str:
 
 
 if __name__ == "__main__":
+    vowels = {
+        "ε": [538, 1779, 2751],
+        "ɹ": [396, 1850, 2221],
+        "a": [808, 1210, 3005],
+        "o": [312, 593, 2934],
+        "ə": [602, 1219, 2794],
+        "i": [450, 2460, 2922],
+        "vtuber_i": [450, 3264, 3760]
+    }
     F0 = 119
-    F1 = 2118  # praat value; orig 610
-    F2 = 2836  # praat value; orig 1900
-    F3 = 3367  # praat value
+    F1 = 312  # praat value; orig 610
+    F2 = 593  # praat value; orig 1900
+    F3 = 2934  # praat value
+    # 538, 1779, 2751
     # parameters adapted from pyo_playground_e.py
     i = this_layer_types.Input(
         character_dir_path=r"..\characters\Greensparrow",
         output_filepath=r"testaudio.wav",
         duration=3.0,
-        Vowel_formant_freqs=[[(0, F1), (3, F1)],
+        Vowel_formant_freqs=[[(0, F1), (3, F1)],  # it's <a> rn
                              [(0, F2), (3, F2)],
                              [(0, F3), (3, F3)]],
         Constriction_HP_freq=[(0, 1500), (3, 1500)],
@@ -369,9 +425,9 @@ if __name__ == "__main__":
         Constriction_peak_overtone_importance=[(0, 0.4), (3, 0.4)],
         Constriction_volume_factor=[(0, 0.15), (3, 0.15)],
         Voiced_component_importance=[(0, 1), (3, 1)],
-        Constriction_component_importance=[(0, 0.1), (3, 0.1)],
-        Aspiration_component_importance=[(0, 1), (1, 1)],
-        Volume=[(0, -3), (3, -3)],
+        Constriction_component_importance=[(0, 0), (3, 0)],
+        Aspiration_component_importance=[(0, 1), (3, 0.5)],
+        Volume=[(0, -6), (3, -6)],
         F0=[(0, F0), (3, F0)],
         F0_freq_sway=1,
         F0_freq_FM_jitter=1,
@@ -379,8 +435,11 @@ if __name__ == "__main__":
         Spectral_tilt_cutoff_delta=[(0, 0), (3, 0)],
         Spectral_tilt_tension=[(0, 0), (3, 0)],
         #  Spectral_hill_freq_deltafactor=[(0, 1), (3, 1)],
-        Spectral_hill_boost_delta=[(0, 10), (3, 10)],
-        Vowel_Q_tension_deltafactor=[(0, 1), (3, 1)],
+        Spectral_hill_boost_delta=[(0, 0), (3, 0)],
+        Vowel_Q_multiplier=[(0, 1), (3, 0.5)],
+        Nasal_murmur_importance=[(0, 0), (3, 0.5)],
+        Nasality_LP_strength=[(0, 0), (3, 0.5)],
+        Nasality_antiformant_boost=[(0, -0), (3, -5)],
         Aspiration_volume_factor=[(0, 0.4), (3, 0.4)]
     )
     o = transform(i)

@@ -24,12 +24,17 @@ class HighLevelEnvelopes:
     """
     # Envelopes, simulated from acoustic targets
     Vowel_formants: tuple[FormantEnvelope, ...]
-    Constriction_formants: tuple[FormantEnvelope, ...]
+    Constriction_HP_freq: Envelope
+    Constriction_peak_freq: Envelope
+    Constriction_peak_bandwidth: Envelope
+    Constriction_peak_boost: Envelope
+    Constriction_peak_overtone_importance: Envelope
+    Constriction_LP_freq: Envelope
     Voice_to_noise_ratio: Envelope
     Constriction: Envelope
     Nasality: Envelope
     # Global envelopes
-    Volume: Envelope  # general singing volume
+    Volume: Envelope  # general singing volume in dB (0 means maximum, negatives count down)
     F0: Envelope  # fundamental pitch
     NasalityDelta: Envelope  # modifies the original nasality (since each phoneme has different levels of it by default)
     BreathinessDelta: Envelope  # modifies the original breathiness

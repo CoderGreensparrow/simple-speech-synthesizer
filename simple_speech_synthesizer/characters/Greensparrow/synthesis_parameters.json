@@ -18,6 +18,11 @@
   "aspiration_F0_scaling_factor": "unknown",
 
   "nasal_murmur": 250,
+  "default_nasal_murmur_importance": 1,
+  "nasal_LP_freq": 1300,
+  "nasal_antiformant_freq": 500,
+  "nasal_antiformant_bandwidth": 500,
+  "default_nasal_antiformant_boost": -10,
 
   "default_Constriction_volume_as_a_factor_of_volume": 0.4,
 

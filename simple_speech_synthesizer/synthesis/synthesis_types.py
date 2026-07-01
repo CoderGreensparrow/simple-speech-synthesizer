@@ -37,9 +37,12 @@ class Input:
     Spectral_tilt_tension: Sequence[tuple[float, float]]
     #  Spectral_hill_freq_deltafactor: Sequence[tuple[float, float]]
     Spectral_hill_boost_delta: Sequence[tuple[float, float]]
-    Vowel_Q_tension_deltafactor: Sequence[tuple[float, float]]
+    Vowel_Q_multiplier: Sequence[tuple[float, float]]
     Aspiration_volume_factor: Sequence[tuple[float, float]]
     Constriction_volume_factor: Sequence[tuple[float, float]]
+    Nasal_murmur_importance: Sequence[tuple[float, float]]
+    Nasality_LP_strength: Sequence[tuple[float, float]]
+    Nasality_antiformant_boost: Sequence[tuple[float, float]]
     # scalar parameters
     F0_freq_sway: float  # these are percentages from 0 to 1 (unbounded)
     F0_freq_FM_jitter: float
