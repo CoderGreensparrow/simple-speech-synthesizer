@@ -47,7 +47,6 @@ def _targets_to_step(targets: Targets, input_duration: float) -> pyo.Linseg:
     return pyo.Linseg(tuple(stepped_targets))
 
 
-PLACEHOLDER_FREQ_IF_THERE_IS_NO_DATA = 500
 def _formant_targets_to_steps(formant_targets: FormantTargets, input_duration: float) -> tuple[list[pyo.Linseg], list[pyo.Linseg]]:
     """
     Converts the FormantTargets to step function control signal lists.
@@ -56,14 +55,13 @@ def _formant_targets_to_steps(formant_targets: FormantTargets, input_duration: f
     :param input_duration: this_layer_types.Input.duration
     :return: The 2 control signal lists.
     """
-    max_num_formants = 0
-    for points in formant_targets.vs:
-        if len(points) > max_num_formants:
-            max_num_formants = len(points)
+    max_num_formants = max(len(points) for points in formant_targets.vs)
+
+    PLACEHOLDER_FREQ_IF_THERE_IS_NO_DATA = 500
 
     # Each of the lists within stepped_formant_* will be converted to pyo.Linsegs.
-    stepped_formant_targets = [[] for i in range(max_num_formants)]
-    stepped_formant_importances = [[] for i in range(max_num_formants)]
+    stepped_formant_targets = [[] for _ in range(max_num_formants)]
+    stepped_formant_importances = [[] for _ in range(max_num_formants)]
     for i in range(len(formant_targets.ts)):
         if i == 0:  # 1. if there are no initial data points (at t=0), there will be
             for formant_i in range(max_num_formants):
