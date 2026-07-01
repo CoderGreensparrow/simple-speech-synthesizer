@@ -7,7 +7,7 @@ from simple_speech_synthesizer.base.types import NdimensionalParameterSpace, Ndi
 
 from simple_speech_synthesizer.base.types import Envelope, Point, Segment
 
-from simple_speech_synthesizer.acoustic_state.count_formants import max_num_of_formants_in_targets
+from simple_speech_synthesizer.acoustic_state.OLD_count_formants import max_num_of_formants_in_targets
 
 import numpy as np
 

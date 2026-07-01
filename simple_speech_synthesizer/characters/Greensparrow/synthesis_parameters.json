@@ -28,14 +28,12 @@
 
   "voiced_frication_constriction_component_importance": 0.1,
 
-  "vowel_formant_coarticulation_max_acc": 800000,
-  "vowel_formant_coarticulation_kp": 40000,
-  "vowel_formant_coarticulation_kd": 400,
-  "constriction_formant_coarticulation_max_acc": 1000000,
-  "constriction_formant_coarticulation_kp": 50000,
-  "constriction_formant_coarticulation_kd": 500,
-  "percentage_type_parameter_coarticulation_max_acc": 20000,
-  "percentage_type_parameter_coarticulation_kp": 20000,
-  "percentage_type_parameter_coarticulation_kd": 250,
-  "dt": 0.002
+  "acoustic_simulation_tongue_risetime": 0.2,
+  "acoustic_simulation_tongue_falltime": 0.2,
+  "acoustic_simulation_larynx_risetime": 0.2,
+  "acoustic_simulation_larynx_falltime": 0.2,
+  "acoustic_simulation_pharynx_risetime": 0.2,
+  "acoustic_simulation_pharynx_falltime": 0.2,
+  "acoustic_simulation_lip_risetime": 0.2,
+  "acoustic_simulation_lip_falltime": 0.2
 }
