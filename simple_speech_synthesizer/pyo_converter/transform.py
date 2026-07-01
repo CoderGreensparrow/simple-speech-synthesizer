@@ -12,7 +12,7 @@ import pyo
 import dataclasses
 
 from simple_speech_synthesizer.pyo_converter import types as this_layer_types
-from simple_speech_synthesizer.synthesis import synthesis_types as next_layer_types
+from simple_speech_synthesizer.acoustic_state import synthesis_types as next_layer_types
 
 from simple_speech_synthesizer.base.types import FormantTargets, Targets, Envelope
 
@@ -121,14 +121,23 @@ def _formant_targets_to_steps(formant_targets: FormantTargets, input_duration: f
                     stepped_formant_importances[formant_i].append((formant_targets.ts[i], 0))
                     stepped_formant_importances[formant_i].append((input_duration, 0))
 
-    _DEBUG_RETURN = True
+    _DEBUG_RETURN = False
     normal_return = ([pyo.Linseg(points) for points in stepped_formant_targets],
             [pyo.Linseg(points) for points in stepped_formant_importances])
     debug_return = (stepped_formant_targets, stepped_formant_importances)
     return normal_return if not _DEBUG_RETURN else debug_return
 
 
-def targets_to_step_functions(input_: this_layer_types.Input):
+def _approximate_envelopes_with_linseg(envelope: Envelope, dt: float = 1/100) -> pyo.Linseg:
+    t = envelope.min_t
+    points = []
+    while t <= envelope.max_t:
+        points.append((t, envelope.get_value(t)))
+        t += dt
+    return pyo.Linseg(points)
+
+
+def convert_input(input_: this_layer_types.Input) -> dict:
     """
     Generate a pyo step function control signal from the targets.
     MultiTargets are also treated correctly, so that extra formant fading in and out of existence is handled here.
@@ -139,22 +148,29 @@ def targets_to_step_functions(input_: this_layer_types.Input):
     # It may also be used with @dataclass(frozen=True, slots=True). That slots argument would break vars().
     attr_overrides = {}
 
+    to_delete_because_of_formanttargets = []
     for key, val in input_all_attrs.items():
-        if isinstance(val, FormantTargets):
-            attr_overrides[key] = []
+        if key == "vowel_formant_freqs_targets":
+            to_delete_because_of_formanttargets.append(key)
+            Vowel_formant_freqs, Vowel_formant_importances = _formant_targets_to_steps(val, input_.duration)
+            attr_overrides["Vowel_formant_freqs"] = Vowel_formant_freqs
+            attr_overrides["Vowel_formant_importances"] = Vowel_formant_importances
         elif isinstance(val, Targets):
             attr_overrides[key] = _targets_to_step(val, input_.duration)
+        elif isinstance(val, Envelope):
+            attr_overrides[key] = _approximate_envelopes_with_linseg(val, input_.duration)
 
     input_all_attrs.update(attr_overrides)
-    return next_layer_types.Input(**input_all_attrs)
+    for key in to_delete_because_of_formanttargets:
+        del input_all_attrs[key]
+    return input_all_attrs
 
 
 def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     s = start_pyo()
-
-
-    """This was old code that converted low-level parameters to pyo objects."""
-
+    input_all_attrs = convert_input(input_)
+    output = next_layer_types.Input(server=s, **input_all_attrs)
+    return output
 
 
 

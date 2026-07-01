@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from collections.abc import Sequence
 
-import pyo
+from pyo import Server, Linseg
 
 # TODO: Rn every interpolation type is Linseg, this may stay like this
 #       NOTE: Everything WILL stay like this... I will NOT implement different interpolations, it doesn't make sense.
@@ -15,38 +15,39 @@ class Input:
     The inputs are directly passed to pyo.Linseg (so the input has to be pyo-compatible).
     Except for scalar inputs.
     """
-    server: pyo.Server
+    server: Server
     # metaparams
     character_dir_path: str
     output_filepath: str
     duration: float
     # Phoneme synthesis
-    Vowel_formant_freqs: Sequence[Sequence[tuple[float, float]]]
-    Constriction_HP_freq: Sequence[tuple[float, float]]
-    Constriction_peak_freq: Sequence[tuple[float, float]]
-    Constriction_peak_bandwidth: Sequence[tuple[float, float]]
-    Constriction_peak_boost: Sequence[tuple[float, float]]
-    Constriction_peak_overtone_importance: Sequence[tuple[float, float]]
-    Constriction_LP_freq: Sequence[tuple[float, float]]
+    Vowel_formant_freqs: Sequence[Linseg]
+    Vowel_formant_importances: Sequence[Linseg]
+    Constriction_HP_freq: Linseg
+    Constriction_peak_freq: Linseg
+    Constriction_peak_bandwidth: Linseg
+    Constriction_peak_boost: Linseg
+    Constriction_peak_overtone_importance: Linseg
+    Constriction_LP_freq: Linseg
     # (Technically global Envelopes)
-    Voiced_component_importance: Sequence[tuple[float, float]]
-    Constriction_component_importance: Sequence[tuple[float, float]]
-    Aspiration_component_importance: Sequence[tuple[float, float]]
+    Voiced_component_importance: Linseg
+    Constriction_component_importance: Linseg
+    Aspiration_component_importance: Linseg
     # Global Envelopes
-    Volume: Sequence[tuple[float, float]]
-    F0: Sequence[tuple[float, float]]
-    Spectral_tilt_cutoff_delta: Sequence[tuple[float, float]]
-    Spectral_tilt_tension: Sequence[tuple[float, float]]
-    #  Spectral_hill_freq_deltafactor: Sequence[tuple[float, float]]
-    Spectral_hill_boost_delta: Sequence[tuple[float, float]]
-    Vowel_Q_multiplier: Sequence[tuple[float, float]]
-    Aspiration_volume_factor: Sequence[tuple[float, float]]
-    Constriction_volume_factor: Sequence[tuple[float, float]]
-    Nasal_murmur_importance: Sequence[tuple[float, float]]
-    Nasality_LP_strength: Sequence[tuple[float, float]]
-    Nasality_antiformant_boost: Sequence[tuple[float, float]]
+    Volume: Linseg
+    F0: Linseg
+    Spectral_tilt_cutoff_delta: Linseg
+    Spectral_tilt_tension: Linseg
+    #  Spectral_hill_freq_deltafactor: Linseg
+    Spectral_hill_boost_delta: Linseg
+    Vowel_Q_multiplier: Linseg
+    Aspiration_volume_factor: Linseg
+    Constriction_volume_factor: Linseg
+    Nasal_murmur_importance: Linseg
+    Nasality_LP_strength: Linseg
+    Nasality_antiformant_boost: Linseg
     # Throat jitter
-    F0_freq_sway: Sequence[tuple[float, float]]  # these are percentages from 0 to 1 (unbounded)
-    F0_freq_FM_jitter: Sequence[tuple[float, float]]
-    voice_source_amp_sway: Sequence[tuple[float, float]]
+    F0_freq_sway: Linseg  # these are percentages from 0 to 1 (unbounded)
+    F0_freq_FM_jitter: Linseg
+    voice_source_amp_sway: Linseg
 

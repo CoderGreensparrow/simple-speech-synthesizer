@@ -1,21 +1,7 @@
-from pyo import Server, Linseg
+from dataclasses import dataclass
 from collections.abc import Sequence
 
-from dataclasses import dataclass
-
-from simple_speech_synthesizer.base.types import Envelope
-
-'''@dataclass(frozen=True)
-class FormantEnvelope:
-    """
-    Represents the grouping of the freq and bandwidth Envelopes of a formants.
-    Technically, the two envelopes are still separate, this may just be an abstraction that will get
-    unabstracted by the realization layer anyways.
-    """
-    freq: Envelope
-    bandwidth: Envelope
-    importance: Envelope'''  # TODO: rewrite all code relating to this and then delete it
-
+from pyo import Server, Linseg
 
 @dataclass(frozen=True)
 class Input:

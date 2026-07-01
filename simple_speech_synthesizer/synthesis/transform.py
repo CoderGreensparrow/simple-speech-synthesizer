@@ -3,113 +3,7 @@ import pyo
 from simple_speech_synthesizer.synthesis import synthesis_types as this_layer_types
 from simple_speech_synthesizer.base.load_low_level_character import load_low_level_character
 
-# This is a bit hacky, the reason I have to convert them to a pyo object here is because
-# pyo doesn't allow the creation of pyo objects unless a server is launched already
-class InitializedEnvelopesInput:
-    AMPLITUDE_CORRECTION = -9
-    """
-    A bodged in value because F0 is about 9 dB boosted than what it needs to be.
-    """
-
-    def __init__(self, input: this_layer_types.Input):
-        # metaparams
-        self.character_dir_path = input.character_dir_path
-        self.output_filepath = input.output_filepath
-        self.duration = input.duration
-        # Phoneme synthesis
-        self.Vowel_formant_freqs = [pyo.Linseg(raw_env) for raw_env in input.Vowel_formant_freqs]
-        self.Vowel_formant_importances = [pyo.Linseg(raw_env) for raw_env in input.Vowel_formant_freqs]
-        """Serves as a switch to turn off formants that are not given at a specific point in time.
-        Therefore, it should, at most, oscillate between 1 and 0."""
-        #  self.Constriction_formant_freqs =      [pyo.Linseg(raw_env) for raw_env in input.Constriction_formant_freqs]
-        #  self.Constriction_formant_bandwidths = [pyo.Linseg(raw_env) for raw_env in input.Constriction_formant_bandwidths]
-        #  self.Constriction_formant_muls =       [pyo.Linseg(raw_env) for raw_env in input.Constriction_formant_muls]
-        self.Constriction_HP_freq = pyo.Linseg(input.Constriction_HP_freq)
-        self.Constriction_peak_freq = pyo.Linseg(input.Constriction_peak_freq)
-        self.Constriction_peak_bandwidth = pyo.Linseg(input.Constriction_peak_bandwidth)
-        self.Constriction_peak_boost = pyo.Linseg(input.Constriction_peak_boost)
-        self.Constriction_peak_overtone_importance = pyo.Linseg(input.Constriction_peak_overtone_importance)
-        self.Constriction_LP_freq = pyo.Linseg(input.Constriction_LP_freq)
-        """
-        Phoneme specific value. Controls how strong the first overtone EQ of the constriction peak, relative to that first peak.
-        0 means there is no EQ. 1 means they are the same loudness.
-        """
-        # TODO: It doesn't have to be a perfect *2 overtone!! It can vary!
-        self.Voiced_component_importance = pyo.Linseg(input.Voiced_component_importance)
-        """
-        importance means semantic amplitude, 1 means full power, 0 means None.
-        """
-        self.Constriction_component_importance = pyo.Linseg(input.Constriction_component_importance)
-        self.Aspiration_component_importance = pyo.Linseg(input.Aspiration_component_importance)
-        """
-        The difference between this importance and the Aspiration_volume_factor is... almost nothing,
-        but their use case is different.
-        This one is used for enabling (1) and disabling (0).
-        While the other one controls the literal amplitude of the aspiration.
-        """
-        # Global Envelopes
-        self.Volume = pyo.Linseg(input.Volume, add=self.AMPLITUDE_CORRECTION)
-        """The amplitude of the voice_source in decibels, as per the convention in audio processing.
-        So 0 dB is the largest.
-        -6 dB is half of that.
-        -20 dB is a tenth etc."""
-        self.F0 = pyo.Linseg(input.F0)
-        ### VOWEL STUFFS
-        self.Spectral_tilt_cutoff_delta = pyo.Linseg(input.Spectral_tilt_cutoff_delta)
-        """Also called vocal tilt.
-        Controls the cutoff point, adjusted from a character-specific default cutoff point, for the vocal tilt filters (ButLP-Tone crossfade)"""
-        self.Spectral_tilt_tension = pyo.Linseg(input.Spectral_tilt_tension)
-        """Controls the TENSION, the crossfade between the ButLP and the Tone filters. (-12 db/octave cutoff vs -6 db/octave)
-        Default is 0, means no tension. 1 means full tension, -1 means least tension (sets the spectral tilt slope, so it goes from -24 dB/octave to -6 dB/octave.)"""
-        #  self.Spectral_hill_freq_deltafactor = pyo.Linseg(input.Spectral_hill_freq_deltafactor)
-        """Shifts the default spectral hill frequency, by multiplying it (being a factor).
-        The spectral hill refers to a modification of the descent of the vocal tilt.
-        It allows for brighter and anime-like, or lower and masculine formants.
-        When applied to the top of the vocal tilt, it reverses some of its effects, effectively flatting out the voice source spectrum in the highs."""
-        self.Spectral_hill_boost_delta = pyo.Linseg(input.Spectral_hill_boost_delta)
-        self.Vowel_Q_multiplier = pyo.Linseg(input.Vowel_Q_multiplier)
-        """
-        A multiplier for all the Q values of all formants.
-        USED FOR TENSION, NASALITY AND GENDERBENDING.
-        """
-        ### CONSONANT STUFFS (none yet)
-        self.Aspiration_volume_factor = pyo.Linseg(input.Aspiration_volume_factor)
-        """
-        A factor from 0 to 1 or more. It describes the aspiration volume as a factor of the self.Volume.
-        So 0 means no aspiration, 1 means the same level of aspiration as there is voiced formants (this is already bad).
-        
-        Controls how much noise there is on the vowel formants themselves.
-        Imitates breathiness, or aspiration, like saying /h/ onto the phoneme.
-        Completely separate control from voiced and voiceless components.
-        WHEN CONTROLLING HIGHER-LEVEL TENSION, IT SHOULD DO THE OPPOSITE TO THAT TENSION (inversely proportional).
-        """
-        self.Constriction_volume_factor = pyo.Linseg(input.Constriction_volume_factor)
-        """
-        A factor from 0 to 1 or more. It describes the constriction volume as a factor of the self.Volume.
-        Similar to self.Aspiration_volume_factor.
-        IMPORTANT NOTE THAT THIS DESCRIBES THE VOLUME OF THE BACKGROUND NOISE BEFORE ANY SPECTRAL PEAKS OF THE CONSONANT ARE ADDED.
-        THEREFORE, IF YOU NEED STRONG DISTINCT SPECRTAL PEAKS, THIS VALUE SHOULD BE SMALL AND THE PEAK BOOST SHOULD BE BIG.
-        """
-        ### NASALITY STUFFS
-        self.Nasal_murmur_importance = pyo.Linseg(input.Nasal_murmur_importance)
-        """Controls the nasal murmur as if it was a formant in the oral tract.
-        The importance is the same semantic amplitude that the others have. (It's the mul of the LP filter.)"""
-        self.Nasality_LP_strength = pyo.Linseg(input.Nasality_LP_strength)
-        """
-        Sets the strength of the nasality low-pass filter.
-        It's an LP filter applied to the computed oral tract afterwards.
-        The normal output and the LPed output are crossfaded, so this value goes from 0 (no nasality) to 1 (full nasality).
-        """
-        self.Nasality_antiformant_boost = pyo.Linseg(input.Nasality_antiformant_boost)
-        """
-        The NEGATIVE EQ boost applied at where the antiformant would go.
-        It must be a negative value.
-        """
-        # scalar parameters
-        self.F0_freq_sway = input.F0_freq_sway
-        self.F0_freq_FM_jitter = input.F0_freq_FM_jitter
-        self.voice_source_amp_sway = input.voice_source_amp_sway
-
+AMPLITUDE_CORRECTION = -9
 
 # Gemini code that calculates human-like formant scaling for a frequency.
 def calculate_q(freq, floor=50.0, slope=0.05):
@@ -152,8 +46,9 @@ def synthesize(input: this_layer_types.Input):
     s = input.server
     s.recordOptions(dur=input.duration, filename=input.output_filepath)
 
-    input = InitializedEnvelopesInput(input)
     s_p = load_low_level_character(input.character_dir_path).synthesis_parameters
+
+    input_Volume = input.Volume + AMPLITUDE_CORRECTION
 
     ### VOICE SOURCE
     F0_freq_sway = pyo.ButLP(pyo.BrownNoise(), freq=3, mul=3 * input.F0_freq_sway)
@@ -182,7 +77,7 @@ def synthesize(input: this_layer_types.Input):
                                      q=s_p["spectral_hill_freq"] / s_p["spectral_hill_bandwidth"],
                                      # TODO that spectral_hill_bandwidth was just a quick fix, that may not be the best implementation method
                                      boost=s_p["spectral_hill_boost"] + input.Spectral_hill_boost_delta)
-    amp_multiplier = pyo.DBToA(input.Volume)
+    amp_multiplier = pyo.DBToA(input_Volume)
     voice_source = pyo.Balance(unbalanced_voice_source, pyo.FastSine(true_F0, mul=amp_multiplier))
 
     # TODO potential chorus effect could be applied here for a multiple singers effect
@@ -248,7 +143,7 @@ def synthesize(input: this_layer_types.Input):
                                      freq=s_p["spectral_hill_freq"],
                                      q=s_p["spectral_hill_freq"] / s_p["spectral_hill_bandwidth"],
                                      boost=s_p["spectral_hill_aspiration_boost"] + input.Spectral_hill_boost_delta)
-    amp_multiplier = pyo.DBToA(input.Volume) * input.Aspiration_volume_factor
+    amp_multiplier = pyo.DBToA(input_Volume) * input.Aspiration_volume_factor
     aspiration_source = pyo.Balance(unbalanced_noise_source, pyo.FastSine(true_F0, mul=amp_multiplier))
 
     ### ASPIRATION FILTER
@@ -277,7 +172,7 @@ def synthesize(input: this_layer_types.Input):
         freq=s_p["spectral_hill_freq"],
         q=s_p["spectral_hill_freq"] / s_p["spectral_hill_bandwidth"],
         mul=1)
-    amp_multiplier = pyo.DBToA(input.Volume) * input.Aspiration_volume_factor * s_p["aspiration_brightness_loss_compensation_factor"]
+    amp_multiplier = pyo.DBToA(input_Volume) * input.Aspiration_volume_factor * s_p["aspiration_brightness_loss_compensation_factor"]
     aspiration_component = dark_aspiration_component + pyo.Balance(brightness_loss_compensation, pyo.FastSine(mul=amp_multiplier))
 
     aspiration_component = aspiration_component * input.Aspiration_component_importance
@@ -287,7 +182,7 @@ def synthesize(input: this_layer_types.Input):
 
     constr1_hp_filter     = pyo.Biquadx(constriction_source, freq=input.Constriction_HP_freq * 1.25, stages=3, type=1)
     constr2_lp_filter     = pyo.Biquadx(constr1_hp_filter, freq=input.Constriction_LP_freq * 0.75, stages=3, type=0)
-    amp_multiplier = pyo.DBToA(input.Volume) * input.Constriction_volume_factor
+    amp_multiplier = pyo.DBToA(input_Volume) * input.Constriction_volume_factor
     constr3_balanced      = pyo.Balance(constr2_lp_filter, pyo.FastSine(mul=amp_multiplier))
     constr4_peak          = pyo.EQ(constr3_balanced,
                                    freq=input.Constriction_peak_freq,

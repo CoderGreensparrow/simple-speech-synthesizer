@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from simple_speech_synthesizer.base.types import Targets, Envelope
+from simple_speech_synthesizer.base.types import FormantTargets, Targets, Envelope
 
 @dataclass(frozen=True)
 class Input:
@@ -8,8 +8,7 @@ class Input:
     output_filepath: str
     duration: float
     # Phoneme targets
-    vowel_formant_freqs_targets: tuple[Targets, ...]
-    vowel_formant_importances_targets: tuple[Targets, ...]
+    vowel_formant_freqs_targets: FormantTargets
     constriction_HP_freq_targets: Targets
     constriction_peak_freq_targets: Targets
     constriction_peak_bandwidth_targets: Targets
