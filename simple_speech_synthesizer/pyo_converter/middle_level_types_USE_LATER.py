@@ -11,6 +11,7 @@ class Input:
     The inputs are directly passed to pyo.Linseg (so the input has to be pyo-compatible).
     Except for scalar inputs.
     """
+    server: pyo.Server
     # metaparams
     character_dir_path: str
     output_filepath: str

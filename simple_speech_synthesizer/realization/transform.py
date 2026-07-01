@@ -1,5 +1,5 @@
 """
-LAYER 4: realization
+LAYER 5: realization
 Evaluates higher-level acoustic parameters into the lower-level ones.
 So Nasality, Breathiness etc. gets all encoded in F0, F1, F2, noise_amp, voiced_amp etc.
 It makes the higher-level data synthesizer-friendly.
@@ -18,3 +18,14 @@ def transform(input: this_layer_types.Input) -> next_layer_types.Input:
     :param input:
     :return:
     """
+    hle = input.high_level_envelopes
+    s_p = load_low_level_character(input.character_dir_path).synthesis_parameters
+    out = {}
+
+
+    ### APPLY NASALITY
+    hle.Nasality + hle.NasalityDelta
+    out[""]
+
+    ### RETURN OUTPUT
+    return next_layer_types.Input(**out)

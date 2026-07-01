@@ -4,6 +4,15 @@ ALL THE DOCUMENTATION IN THIS PROJECT WAS ESSENTIALLY THE RESULT OF ME BRAINSTOR
 SO BASICALLY, THERE CAN BE MANY DIFFERENCES IN WHAT IS DOCUMENTED ABOUT THE ARCHITECTURE AND WHAT HAPPENS.
 TODO: Write a good documentation about the architecture.
 
+NEW LAYERS (2026. 07. 01.)
+-> targeting
+-> pyo_converter
+-> reworked acoustic_state
+-> realization
+-> synthesis
+
+
+
 ===============
 
 IMPORTANT UPDATE:

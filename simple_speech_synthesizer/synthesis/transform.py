@@ -3,8 +3,6 @@ import pyo
 from simple_speech_synthesizer.synthesis import synthesis_types as this_layer_types
 from simple_speech_synthesizer.base.load_low_level_character import load_low_level_character
 
-_DEBUG = True
-
 # This is a bit hacky, the reason I have to convert them to a pyo object here is because
 # pyo doesn't allow the creation of pyo objects unless a server is launched already
 class InitializedEnvelopesInput:
@@ -148,20 +146,11 @@ def synthesize(input: this_layer_types.Input):
     :return:
     """
 
-    pyo_server_kwargs = {
-        "sr": 48000,
-        "nchnls": 2,
-        "buffersize": 256,
-        "duplex": 0,
-        "audio": "offline" if not _DEBUG else "portaudio"
-    }
-    s = pyo.Server(**pyo_server_kwargs)
-    s.deactivateMidi()
-    s.boot()
+    s = input.server
     s.recordOptions(dur=input.duration, filename=input.output_filepath)
 
     input = InitializedEnvelopesInput(input)
-    synthesis_parameters = load_low_level_character(input.character_dir_path).synthesis_parameters
+    s_p = load_low_level_character(input.character_dir_path).synthesis_parameters
 
     ### VOICE SOURCE
     F0_freq_sway = pyo.ButLP(pyo.BrownNoise(), freq=3, mul=3 * input.F0_freq_sway)
@@ -171,10 +160,10 @@ def synthesize(input: this_layer_types.Input):
     voice_source_amp_sway = pyo.ButLP(pyo.BrownNoise(), freq=25, mul=0.03 * input.voice_source_amp_sway)
 
     raw_blit_source = pyo.Blit(freq=true_F0, harms=70, mul=1 + voice_source_amp_sway)
-    spectral_tilted_6db_rolloff_blit_source = pyo.Tone(raw_blit_source, synthesis_parameters["spectral_tilt_cutoff"] + input.Spectral_tilt_cutoff_delta, mul=1)
-    spectral_tilted_12db_rolloff_blit_source = pyo.ButLP(raw_blit_source, synthesis_parameters["spectral_tilt_cutoff"] + input.Spectral_tilt_cutoff_delta, mul=1)
-    spectral_tilted_18db_rolloff_blit_source = pyo.Tone(spectral_tilted_12db_rolloff_blit_source, synthesis_parameters["spectral_tilt_cutoff"] + input.Spectral_tilt_cutoff_delta, mul=1)
-    spectral_tilted_24db_rolloff_blit_source = pyo.MoogLP(raw_blit_source, synthesis_parameters["spectral_tilt_cutoff"] + input.Spectral_tilt_cutoff_delta, mul=1)
+    spectral_tilted_6db_rolloff_blit_source = pyo.Tone(raw_blit_source, s_p["spectral_tilt_cutoff"] + input.Spectral_tilt_cutoff_delta, mul=1)
+    spectral_tilted_12db_rolloff_blit_source = pyo.ButLP(raw_blit_source, s_p["spectral_tilt_cutoff"] + input.Spectral_tilt_cutoff_delta, mul=1)
+    spectral_tilted_18db_rolloff_blit_source = pyo.Tone(spectral_tilted_12db_rolloff_blit_source, s_p["spectral_tilt_cutoff"] + input.Spectral_tilt_cutoff_delta, mul=1)
+    spectral_tilted_24db_rolloff_blit_source = pyo.MoogLP(raw_blit_source, s_p["spectral_tilt_cutoff"] + input.Spectral_tilt_cutoff_delta, mul=1)
     # TODO: decide if the MoogLP and ButLP should be Tone(Tone(...)) (of previous layers etc.) instead
 
     #  OLD CROSSFADE: spectral_tilted_blit_source = (spectral_tilted_12db_rolloff_blit_source * (1-input.Spectral_tilt_tension)) + (spectral_tilted_6db_rolloff_blit_source * input.Spectral_tilt_tension)
@@ -186,10 +175,10 @@ def synthesize(input: this_layer_types.Input):
     high_freq_retention_blit_source = pyo.ButHP(raw_blit_source, 3000, mul=0.005)
     partial_voice_source = spectral_tilted_blit_source + high_freq_retention_blit_source
     unbalanced_voice_source = pyo.EQ(partial_voice_source,
-                                     freq=synthesis_parameters["spectral_hill_freq"],  # SPECTRAL HILL DELTAFACTOR REMOVED
-                                     q=synthesis_parameters["spectral_hill_freq"] / synthesis_parameters["spectral_hill_bandwidth"],
+                                     freq=s_p["spectral_hill_freq"],  # SPECTRAL HILL DELTAFACTOR REMOVED
+                                     q=s_p["spectral_hill_freq"] / s_p["spectral_hill_bandwidth"],
                                      # TODO that spectral_hill_bandwidth was just a quick fix, that may not be the best implementation method
-                                     boost=synthesis_parameters["spectral_hill_boost"] + input.Spectral_hill_boost_delta)
+                                     boost=s_p["spectral_hill_boost"] + input.Spectral_hill_boost_delta)
     amp_multiplier = pyo.DBToA(input.Volume)
     voice_source = pyo.Balance(unbalanced_voice_source, pyo.FastSine(true_F0, mul=amp_multiplier))
 
@@ -197,39 +186,39 @@ def synthesize(input: this_layer_types.Input):
 
     ### VOICE FILTER
     vowel_f0 = pyo.ButLP(
-        pyo.Reson(voice_source, true_F0, 1, mul=synthesis_parameters["FO_mul"]),
-            true_F0 * synthesis_parameters["H1_H2_balance"]
+        pyo.Reson(voice_source, true_F0, 1, mul=s_p["FO_mul"]),
+            true_F0 * s_p["H1_H2_balance"]
     )  # TODO implement H1_H2_balance correctly (there are weird cancelling artifacts...
     vowel_formants = list()
     for j, freq in enumerate(input.Vowel_formant_freqs):
         calculated_freq = freq
         if j == 0:
-            calculated_freq = pyo.Max(calculated_freq, true_F0 + synthesis_parameters["F0_F1_min_difference"])
+            calculated_freq = pyo.Max(calculated_freq, true_F0 + s_p["F0_F1_min_difference"])
         vowel_formants.append(
             pyo.Reson(voice_source,
                       freq=calculated_freq,
-                      q=calculate_q(freq, synthesis_parameters["vowel_Q_floor"], synthesis_parameters["vowel_Q_slope"]) * input.Vowel_Q_multiplier,
+                      q=calculate_q(freq, s_p["vowel_Q_floor"], s_p["vowel_Q_slope"]) * input.Vowel_Q_multiplier,
                       mul=1)
         )
     ##### NASAL MURMUR "FORMANT"
-    nasal_murmur_freq = synthesis_parameters["nasal_murmur"]
+    nasal_murmur_freq = s_p["nasal_murmur"]
     vowel_formants.append(
         pyo.Reson(voice_source,
                   freq=nasal_murmur_freq,
-                  q=calculate_q(nasal_murmur_freq, synthesis_parameters["vowel_Q_floor"], synthesis_parameters["vowel_Q_slope"]) * input.Vowel_Q_multiplier,
+                  q=calculate_q(nasal_murmur_freq, s_p["vowel_Q_floor"], s_p["vowel_Q_slope"]) * input.Vowel_Q_multiplier,
                   mul=input.Nasal_murmur_importance)
     )
 
     voiced_component_without_nasal_component = vowel_f0 + sum(vowel_formants)
     ##### NASAL LP AND ANTIFORMANT
     nasal_lp_applied = pyo.MoogLP(voiced_component_without_nasal_component,
-                                freq=synthesis_parameters["nasal_LP_freq"])
+                                freq=s_p["nasal_LP_freq"])
     nasal_lp_crossfade = pyo.Selector([voiced_component_without_nasal_component,
                                        nasal_lp_applied],
                                       voice=input.Nasality_LP_strength)
     voiced_component = pyo.EQ(nasal_lp_crossfade,
-                              freq=synthesis_parameters["nasal_antiformant_freq"],
-                              q=synthesis_parameters["nasal_antiformant_freq"] / synthesis_parameters["nasal_antiformant_bandwidth"],
+                              freq=s_p["nasal_antiformant_freq"],
+                              q=s_p["nasal_antiformant_freq"] / s_p["nasal_antiformant_bandwidth"],
                               boost=input.Nasality_antiformant_boost)
 
     ### VOWEL + NASALITY OUTPUT
@@ -241,9 +230,9 @@ def synthesize(input: this_layer_types.Input):
     ### ASPIRATION SOURCE (this is also passed to the same filters for efficiency)
     raw_noise_source = pyo.Noise()
     # aspiration has less spectral tilt
-    spectral_tilted_6db_rolloff_noise_source = pyo.Tone(raw_noise_source, synthesis_parameters["spectral_tilt_cutoff"] + input.Spectral_tilt_cutoff_delta, mul=1)
-    spectral_tilted_12db_rolloff_noise_source = pyo.ButLP(raw_noise_source, synthesis_parameters["spectral_tilt_cutoff"] + input.Spectral_tilt_cutoff_delta, mul=1)
-    spectral_tilted_18db_rolloff_noise_source = pyo.Tone(spectral_tilted_12db_rolloff_noise_source, synthesis_parameters["spectral_tilt_cutoff"] + input.Spectral_tilt_cutoff_delta, mul=1)
+    spectral_tilted_6db_rolloff_noise_source = pyo.Tone(raw_noise_source, s_p["spectral_tilt_cutoff"] + input.Spectral_tilt_cutoff_delta, mul=1)
+    spectral_tilted_12db_rolloff_noise_source = pyo.ButLP(raw_noise_source, s_p["spectral_tilt_cutoff"] + input.Spectral_tilt_cutoff_delta, mul=1)
+    spectral_tilted_18db_rolloff_noise_source = pyo.Tone(spectral_tilted_12db_rolloff_noise_source, s_p["spectral_tilt_cutoff"] + input.Spectral_tilt_cutoff_delta, mul=1)
 
     spectral_tilted_noise_source = pyo.Selector([spectral_tilted_18db_rolloff_noise_source,
                                                  spectral_tilted_12db_rolloff_noise_source,
@@ -253,28 +242,28 @@ def synthesize(input: this_layer_types.Input):
     high_freq_retention_noise_source = pyo.ButHP(raw_noise_source, 3000, mul=0.005)
     partial_aspiration_source = spectral_tilted_noise_source + high_freq_retention_noise_source
     unbalanced_noise_source = pyo.EQ(partial_aspiration_source,
-                                     freq=synthesis_parameters["spectral_hill_freq"],
-                                     q=synthesis_parameters["spectral_hill_freq"] / synthesis_parameters["spectral_hill_bandwidth"],
-                                     boost=synthesis_parameters["spectral_hill_aspiration_boost"] + input.Spectral_hill_boost_delta)
+                                     freq=s_p["spectral_hill_freq"],
+                                     q=s_p["spectral_hill_freq"] / s_p["spectral_hill_bandwidth"],
+                                     boost=s_p["spectral_hill_aspiration_boost"] + input.Spectral_hill_boost_delta)
     amp_multiplier = pyo.DBToA(input.Volume) * input.Aspiration_volume_factor
     aspiration_source = pyo.Balance(unbalanced_noise_source, pyo.FastSine(true_F0, mul=amp_multiplier))
 
     ### ASPIRATION FILTER
     aspiration_f0 = pyo.ButLP(
-        pyo.Reson(aspiration_source, true_F0, 1, mul=synthesis_parameters["F0_aspiration_mul"]),
-            true_F0 * synthesis_parameters["H1_H2_balance"]
+        pyo.Reson(aspiration_source, true_F0, 1, mul=s_p["F0_aspiration_mul"]),
+            true_F0 * s_p["H1_H2_balance"]
     )  # TODO implement H1_H2_balance correctly (there are weird cancelling artifacts...
     aspiration_formants = list()
     for j, freq in enumerate(input.Vowel_formant_freqs):
         calculated_freq = freq
         if j == 0:
-            calculated_freq = pyo.Max(calculated_freq, true_F0 + synthesis_parameters["F0_F1_min_difference"])
+            calculated_freq = pyo.Max(calculated_freq, true_F0 + s_p["F0_F1_min_difference"])
         aspiration_formants.append(
             pyo.Reson(aspiration_source,
                       freq=calculated_freq,
                       q=calculate_aspiration_q(freq,
-                                               synthesis_parameters["aspiration_Q_floor"],
-                                               synthesis_parameters["aspiration_Q_slope"]),  # * input.Vowel_Q_tension_deltafactor,
+                                               s_p["aspiration_Q_floor"],
+                                               s_p["aspiration_Q_slope"]),  # * input.Vowel_Q_tension_deltafactor,
                       mul=1)
         )
 
@@ -282,10 +271,10 @@ def synthesize(input: this_layer_types.Input):
     # THIS IS PRETTY BODGY, it's based on the sound in pyo_playground_e.py
     brightness_loss_compensation = pyo.ButBP(
         raw_noise_source,
-        freq=synthesis_parameters["spectral_hill_freq"],
-        q=synthesis_parameters["spectral_hill_freq"] / synthesis_parameters["spectral_hill_bandwidth"],
+        freq=s_p["spectral_hill_freq"],
+        q=s_p["spectral_hill_freq"] / s_p["spectral_hill_bandwidth"],
         mul=1)
-    amp_multiplier = pyo.DBToA(input.Volume) * input.Aspiration_volume_factor * synthesis_parameters["aspiration_brightness_loss_compensation_factor"]
+    amp_multiplier = pyo.DBToA(input.Volume) * input.Aspiration_volume_factor * s_p["aspiration_brightness_loss_compensation_factor"]
     aspiration_component = dark_aspiration_component + pyo.Balance(brightness_loss_compensation, pyo.FastSine(mul=amp_multiplier))
 
     aspiration_component = aspiration_component * input.Aspiration_component_importance
@@ -351,7 +340,7 @@ def synthesize(input: this_layer_types.Input):
     input.Constriction_volume_factor.play()
     input.Nasal_murmur_importance.play()
     input.Nasality_LP_strength.play()
-    input.Nasality_antiformant_boost.play()"""
+    input.Nasality_antiformant_boost.play()"""  # This should be removed if the code below works
     input_all_attributes = vars(input)
     for attr in input_all_attributes.values():
         if isinstance(attr, pyo.Linseg):
@@ -360,7 +349,7 @@ def synthesize(input: this_layer_types.Input):
 
     #### RECORD
     s.start()
-    if _DEBUG:
+    if s._audio != "offline":  # hacky way to check if _DEBUG is enabled.
         pyo.Scope([audio_out])
         analyzer = pyo.Spectrum([audio_out], size=2 ** 14)
         analyzer.setFscaling(True)  # log

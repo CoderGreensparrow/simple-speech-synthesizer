@@ -22,6 +22,7 @@ class HighLevelEnvelopes:
     All envelopes come from the simulation now, even the ones with envelopes (those envelopes where "envelope targets",
     which controlled the simulation, where the simulation tried to recreate the envelopes.
     """
+    server: pyo.Server
     # Envelopes, simulated from acoustic targets
     Vowel_formant_freqs: tuple[Envelope, ...]
     Constriction_HP_freq: Envelope

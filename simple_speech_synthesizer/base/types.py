@@ -96,139 +96,142 @@ class Envelope:
         raise RuntimeError("Failed to evaluate envelope.")
 
 
-@dataclass(frozen=True)
-class NdimensionalParameterSpace:
-    """
-    Represents multiple parameters coupled together in a phase space, where each parameter is an axis.
-    Used for coarticulation simulation, where:
-    - there is a dot moving through the phase space, which represents the state of that space at a time t
-    - the dot has movement, speed, acceleration, mass, forces applied, max_speed, or other physics constructs applied to it to move it
-    to a pre-defined phase space state TARGET
-
-    Simple example:
-    - think of the vowel space. It has two axes.
-    - now imagine moving a dot through that vowel space, and the current position of the dot is output.
-    - to make a diphthong, start from one point, set a target point, and move between the two in a way that makes the point
-    seem to have physics applied to it, and it also has intent (so it doesn't just dumbly accelerate toward the point, it slows down towards the end to make sure it doesn't overshoot the target).
-    This whole class is basically this concept, generalized to any type of parameter/axis and N-dimensions.
-
-    This class only represents the "current" (at t time) state of the system.
-    To run the simulation, pass an instance of this class to the NdimensionalParameterSpaceSimulator class and let it step through the simulation in delta_t (delta time) segments.
-
-    As this phase space is basically a Euclidean space, the Euclidean magnitude is used to calculate the current velocity.
-    So it takes all the current velocities along each axis (velocity vectors), and calculates their velocity (magnitude) is calculated.
-    Each square under the root of the formula takes a weight too, see below:
-    ||v|| = sqrt(w₁ * v₁² + w₂ * v₂² + w₃ * v₃² ...)
-    This can be used to make sure that the parameters have different sense of max_velocity for each of them (which may be useful).
-    This can be set in the euclidean_magnitude_weights argument, and needs to contain all the weights for all the axes.
-    If not given, then all weights are 1 and the calculation is performed without any weights (aka. normally).
-
-    NOTE: This class is actually never modified, it's a frozen dataclass.
-    The simulation returns a new instance of this class with the new data instead. This makes saving single states easier.
-    """
-    param_names: tuple[str, ...]
-    """Each parameter name, aka. each axis name."""
-    param_pos: np.typing.NDArray[np.float64]
-    """Current values (at initialization, initial values) associated with each of the parameters.
-    A position vector in the phase space."""
-    param_vel: np.typing.NDArray[np.float64]
-    """Current parameter velocities (at initialization, initial velocities), associated with each of the parameters.
-    A velocity vector in the phase space."""
-    '''max_vel: float
-    """Maximum velocity through the n-d phase space, indicated in unit/second."""'''
-    '''max_vel: float
-    """Max velocity through the n-d phase space. (Will be reached.)"""'''  # TODO uncomment once max_vel is well-implemented
-    max_acc: float
-    """Max acceleration through the n-d phase space. (Will be reached.)"""
-    current_t: float
-    """Current t time of the simulation"""
-    euclidean_magnitude_weights: tuple[float, ...] | None = None
-    """*read class docstring for more info
-    If None, then it's treated as just no weights in the calculation."""
-
-    def __post_init__(self):
-        if not (len(self.param_names) == len(self.param_pos) == len(self.param_vel)):
-            raise ValueError(f"The number of parameters, their number of initial values, and their number of initial velocities must match upon parameter space creation. Got: {len(self.param_names)=} {len(self.param_pos)=} {len(self.param_vel)=}")
-        """for vel in self.param_vel:
-            if vel > self.max_vel:
-                raise ValueError("The initialization velocity of all parameters must be less than or equal to max_vel.")""" # TODO fix argument checking
-        if self.euclidean_magnitude_weights is not None:
-            if len(self.param_names) != len(self.euclidean_magnitude_weights):
-                raise ValueError("The number of euclidean maginute weights much match the number of axis, aka. the number of parameters.")
-            for weight in self.euclidean_magnitude_weights:
-                if weight <= 0:
-                    raise ValueError(
-                        "The weights of the euclidean magnitude calculation must be positive nonzero numbers.")
-
-@dataclass(frozen=True)
-class NdimensionalParameterSpaceTarget:
-    """
-    Read the docstring of NdimensionalParameterSpace for more info.
-
-    Represents a target of the parameter phase space.
-    """
-    param_pos: np.typing.NDArray[np.float64]
-    """Target parameter values. Make sure the length of this list matches the number of parameters in the simulation.
-    A position vector in the phase space."""
-
-
-class NdimensionalParameterSpaceSimulator:
-    """
-    Read the docstring of NdimensionalParameterSpace for more info.
-
-    Simulates the movement of the parameters through the N-dimensional parameter phase space towards a target
-    in delta_t steps.
-    """
-    def __init__(self, parameter_space: NdimensionalParameterSpace):
-        self.parameter_space = parameter_space
-
-    def get_current_parameter_space(self):
-        return self.parameter_space
-
-    def simulate(self, target_state: NdimensionalParameterSpaceTarget, delta_t: float, kp: float = 1, kd: float = 1):
-        """
-        Steps through the simulation with a time step of delta_t.
-        It modifies the original instance of NdimensionalParameterSpace.
-        kp and kd determine how acceleration is calculated. Roughly kd should be ≳ 2 * sqrt(kp) for stability. These are the controls of a PD controller.
-        """
-        # decision logic: if the remaining distance is less than the required breaking distance, then start decelerating
-        # calculate breaking distance
-        # dis = DISPLACEMENT, not distance
-        dis_target = target_state.param_pos - self.parameter_space.param_pos
-        dis_target_mag = np.linalg.norm(dis_target)
-        unit_direction = dis_target / (dis_target_mag + 1e-12)  # no division by zero ever
-
-        vel_mag = np.linalg.norm(self.parameter_space.param_vel)
-        #  breaking_distance = vel_mag ** 2 / (2 * self.parameter_space.max_acc)  ---- part of previous system
-
-        acc = unit_direction * dis_target_mag * kp - self.parameter_space.param_vel * kd  # PD controller (not full PID)
-
-        acc_norm = np.linalg.norm(acc)
-        if acc_norm > self.parameter_space.max_acc:
-            acc *= self.parameter_space.max_acc / acc_norm
-
-        # update velocity, (and hard velocity clamping later maybe)
-        new_vel = self.parameter_space.param_vel + acc * delta_t
-        '''new_vel_mag = np.linalg.norm(new_vel)
-        if new_vel_mag > self.parameter_space.max_vel:  # if new_speed > max_speed
-            new_vel = new_vel * (self.parameter_space.max_vel / new_vel_mag)  # new_speed_vec = new_speed_vec * (max_speed / new_speed)"""'''
-
-        # update position
-        new_pos = self.parameter_space.param_pos + new_vel * delta_t
-
-        # return new parameter space
-        new_parameter_space = NdimensionalParameterSpace(
-            param_names=self.parameter_space.param_names,
-            param_pos=new_pos,
-            param_vel=new_vel,
-            #  max_vel=self.parameter_space.max_vel,  # TODO maybe implement max_vel correctly, not just a hard clamp, but a soft clamp
-            max_acc=self.parameter_space.max_acc,
-            current_t=self.parameter_space.current_t + delta_t,
-            euclidean_magnitude_weights=self.parameter_space.euclidean_magnitude_weights
-        )
-        self.parameter_space = new_parameter_space
-
-        return new_parameter_space
+"""EXPLANATION: This has been replaced by pyo SigTo and Port objects for simulation.
+There is no requirement to couple together parameters in some Nd control space at the speed at which
+phonemes change about."""
+# @dataclass(frozen=True)
+# class NdimensionalParameterSpace:
+#     """
+#     Represents multiple parameters coupled together in a phase space, where each parameter is an axis.
+#     Used for coarticulation simulation, where:
+#     - there is a dot moving through the phase space, which represents the state of that space at a time t
+#     - the dot has movement, speed, acceleration, mass, forces applied, max_speed, or other physics constructs applied to it to move it
+#     to a pre-defined phase space state TARGET
+#
+#     Simple example:
+#     - think of the vowel space. It has two axes.
+#     - now imagine moving a dot through that vowel space, and the current position of the dot is output.
+#     - to make a diphthong, start from one point, set a target point, and move between the two in a way that makes the point
+#     seem to have physics applied to it, and it also has intent (so it doesn't just dumbly accelerate toward the point, it slows down towards the end to make sure it doesn't overshoot the target).
+#     This whole class is basically this concept, generalized to any type of parameter/axis and N-dimensions.
+#
+#     This class only represents the "current" (at t time) state of the system.
+#     To run the simulation, pass an instance of this class to the NdimensionalParameterSpaceSimulator class and let it step through the simulation in delta_t (delta time) segments.
+#
+#     As this phase space is basically a Euclidean space, the Euclidean magnitude is used to calculate the current velocity.
+#     So it takes all the current velocities along each axis (velocity vectors), and calculates their velocity (magnitude) is calculated.
+#     Each square under the root of the formula takes a weight too, see below:
+#     ||v|| = sqrt(w₁ * v₁² + w₂ * v₂² + w₃ * v₃² ...)
+#     This can be used to make sure that the parameters have different sense of max_velocity for each of them (which may be useful).
+#     This can be set in the euclidean_magnitude_weights argument, and needs to contain all the weights for all the axes.
+#     If not given, then all weights are 1 and the calculation is performed without any weights (aka. normally).
+#
+#     NOTE: This class is actually never modified, it's a frozen dataclass.
+#     The simulation returns a new instance of this class with the new data instead. This makes saving single states easier.
+#     """
+#     param_names: tuple[str, ...]
+#     """Each parameter name, aka. each axis name."""
+#     param_pos: np.typing.NDArray[np.float64]
+#     """Current values (at initialization, initial values) associated with each of the parameters.
+#     A position vector in the phase space."""
+#     param_vel: np.typing.NDArray[np.float64]
+#     """Current parameter velocities (at initialization, initial velocities), associated with each of the parameters.
+#     A velocity vector in the phase space."""
+#     '''max_vel: float
+#     """Maximum velocity through the n-d phase space, indicated in unit/second."""'''
+#     '''max_vel: float
+#     """Max velocity through the n-d phase space. (Will be reached.)"""'''  # TODO uncomment once max_vel is well-implemented
+#     max_acc: float
+#     """Max acceleration through the n-d phase space. (Will be reached.)"""
+#     current_t: float
+#     """Current t time of the simulation"""
+#     euclidean_magnitude_weights: tuple[float, ...] | None = None
+#     """*read class docstring for more info
+#     If None, then it's treated as just no weights in the calculation."""
+#
+#     def __post_init__(self):
+#         if not (len(self.param_names) == len(self.param_pos) == len(self.param_vel)):
+#             raise ValueError(f"The number of parameters, their number of initial values, and their number of initial velocities must match upon parameter space creation. Got: {len(self.param_names)=} {len(self.param_pos)=} {len(self.param_vel)=}")
+#         """for vel in self.param_vel:
+#             if vel > self.max_vel:
+#                 raise ValueError("The initialization velocity of all parameters must be less than or equal to max_vel.")""" # TODO fix argument checking
+#         if self.euclidean_magnitude_weights is not None:
+#             if len(self.param_names) != len(self.euclidean_magnitude_weights):
+#                 raise ValueError("The number of euclidean maginute weights much match the number of axis, aka. the number of parameters.")
+#             for weight in self.euclidean_magnitude_weights:
+#                 if weight <= 0:
+#                     raise ValueError(
+#                         "The weights of the euclidean magnitude calculation must be positive nonzero numbers.")
+#
+# @dataclass(frozen=True)
+# class NdimensionalParameterSpaceTarget:
+#     """
+#     Read the docstring of NdimensionalParameterSpace for more info.
+#
+#     Represents a target of the parameter phase space.
+#     """
+#     param_pos: np.typing.NDArray[np.float64]
+#     """Target parameter values. Make sure the length of this list matches the number of parameters in the simulation.
+#     A position vector in the phase space."""
+#
+#
+# class NdimensionalParameterSpaceSimulator:
+#     """
+#     Read the docstring of NdimensionalParameterSpace for more info.
+#
+#     Simulates the movement of the parameters through the N-dimensional parameter phase space towards a target
+#     in delta_t steps.
+#     """
+#     def __init__(self, parameter_space: NdimensionalParameterSpace):
+#         self.parameter_space = parameter_space
+#
+#     def get_current_parameter_space(self):
+#         return self.parameter_space
+#
+#     def simulate(self, target_state: NdimensionalParameterSpaceTarget, delta_t: float, kp: float = 1, kd: float = 1):
+#         """
+#         Steps through the simulation with a time step of delta_t.
+#         It modifies the original instance of NdimensionalParameterSpace.
+#         kp and kd determine how acceleration is calculated. Roughly kd should be ≳ 2 * sqrt(kp) for stability. These are the controls of a PD controller.
+#         """
+#         # decision logic: if the remaining distance is less than the required breaking distance, then start decelerating
+#         # calculate breaking distance
+#         # dis = DISPLACEMENT, not distance
+#         dis_target = target_state.param_pos - self.parameter_space.param_pos
+#         dis_target_mag = np.linalg.norm(dis_target)
+#         unit_direction = dis_target / (dis_target_mag + 1e-12)  # no division by zero ever
+#
+#         vel_mag = np.linalg.norm(self.parameter_space.param_vel)
+#         #  breaking_distance = vel_mag ** 2 / (2 * self.parameter_space.max_acc)  ---- part of previous system
+#
+#         acc = unit_direction * dis_target_mag * kp - self.parameter_space.param_vel * kd  # PD controller (not full PID)
+#
+#         acc_norm = np.linalg.norm(acc)
+#         if acc_norm > self.parameter_space.max_acc:
+#             acc *= self.parameter_space.max_acc / acc_norm
+#
+#         # update velocity, (and hard velocity clamping later maybe)
+#         new_vel = self.parameter_space.param_vel + acc * delta_t
+#         '''new_vel_mag = np.linalg.norm(new_vel)
+#         if new_vel_mag > self.parameter_space.max_vel:  # if new_speed > max_speed
+#             new_vel = new_vel * (self.parameter_space.max_vel / new_vel_mag)  # new_speed_vec = new_speed_vec * (max_speed / new_speed)"""'''
+#
+#         # update position
+#         new_pos = self.parameter_space.param_pos + new_vel * delta_t
+#
+#         # return new parameter space
+#         new_parameter_space = NdimensionalParameterSpace(
+#             param_names=self.parameter_space.param_names,
+#             param_pos=new_pos,
+#             param_vel=new_vel,
+#             #  max_vel=self.parameter_space.max_vel,  # TODO maybe implement max_vel correctly, not just a hard clamp, but a soft clamp
+#             max_acc=self.parameter_space.max_acc,
+#             current_t=self.parameter_space.current_t + delta_t,
+#             euclidean_magnitude_weights=self.parameter_space.euclidean_magnitude_weights
+#         )
+#         self.parameter_space = new_parameter_space
+#
+#         return new_parameter_space
 
 
 import matplotlib.pyplot as plt
