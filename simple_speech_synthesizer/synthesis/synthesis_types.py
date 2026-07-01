@@ -6,6 +6,7 @@ from collections.abc import Sequence
 import pyo
 
 # TODO: Rn every interpolation type is Linseg, this may stay like this
+#       NOTE: Everything WILL stay like this... I will NOT implement different interpolations, it doesn't make sense.
 
 @dataclass(frozen=True)
 class Input:
@@ -43,8 +44,8 @@ class Input:
     Nasal_murmur_importance: Sequence[tuple[float, float]]
     Nasality_LP_strength: Sequence[tuple[float, float]]
     Nasality_antiformant_boost: Sequence[tuple[float, float]]
-    # scalar parameters
-    F0_freq_sway: float  # these are percentages from 0 to 1 (unbounded)
-    F0_freq_FM_jitter: float
-    voice_source_amp_sway: float
+    # Throat jitter
+    F0_freq_sway: Sequence[tuple[float, float]]  # these are percentages from 0 to 1 (unbounded)
+    F0_freq_FM_jitter: Sequence[tuple[float, float]]
+    voice_source_amp_sway: Sequence[tuple[float, float]]
 

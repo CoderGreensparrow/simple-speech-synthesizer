@@ -2,16 +2,16 @@ from dataclasses import dataclass
 
 from simple_speech_synthesizer.base.types import Envelope
 
-@dataclass(frozen=True)
+'''@dataclass(frozen=True)
 class FormantEnvelope:
     """
-    Represents the grouping of the freq and bandw Envelopes of a formants.
+    Represents the grouping of the freq and bandwidth Envelopes of a formants.
     Technically, the two envelopes are still separate, this may just be an abstraction that will get
     unabstracted by the realization layer anyways.
     """
     freq: Envelope
     bandwidth: Envelope
-    importance: Envelope
+    importance: Envelope'''  # TODO: rewrite all code relating to this and then delete it
 
 
 @dataclass(frozen=True)
@@ -23,7 +23,7 @@ class HighLevelEnvelopes:
     which controlled the simulation, where the simulation tried to recreate the envelopes.
     """
     # Envelopes, simulated from acoustic targets
-    Vowel_formants: tuple[FormantEnvelope, ...]
+    Vowel_formant_freqs: tuple[Envelope, ...]
     Constriction_HP_freq: Envelope
     Constriction_peak_freq: Envelope
     Constriction_peak_bandwidth: Envelope
@@ -44,6 +44,8 @@ class HighLevelEnvelopes:
     MachineGrowl: Envelope  # lets the Blit run rampant
     LipRoundingDelta: Envelope  # WIP, may not be implemented; modifies the formants for liprounding
     VocalGenderDelta: Envelope  # modifies the perceived gender of the sound (similar to how other vocal synths use a gender property)
+    # Throat jitter
+    ThroatJitter: Envelope  # global multiplier for the throat jitter settings
 
 
 @dataclass(frozen=True)

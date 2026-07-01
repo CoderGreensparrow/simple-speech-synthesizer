@@ -6,7 +6,6 @@ from simple_speech_synthesizer.acoustic_state.load_low_level_character import lo
 from simple_speech_synthesizer.base.types import NdimensionalParameterSpace, NdimensionalParameterSpaceTarget, NdimensionalParameterSpaceSimulator
 
 from simple_speech_synthesizer.base.types import Envelope, Point, Segment
-from simple_speech_synthesizer.realization.types import FormantEnvelope
 
 from simple_speech_synthesizer.acoustic_state.count_formants import max_num_of_formants_in_targets
 
