@@ -1,4 +1,4 @@
-from simple_speech_synthesizer.acoustic_state.types import AcousticTarget
+from simple_speech_synthesizer.acoustic_state.OLD_ORDER_types import AcousticTarget
 
 def max_num_of_formants_in_targets(acoustic_targets: tuple[AcousticTarget, ...]):
     """

@@ -18,6 +18,9 @@ class InitializedEnvelopesInput:
         self.duration = input.duration
         # Phoneme synthesis
         self.Vowel_formant_freqs = [pyo.Linseg(raw_env) for raw_env in input.Vowel_formant_freqs]
+        self.Vowel_formant_importances = [pyo.Linseg(raw_env) for raw_env in input.Vowel_formant_freqs]
+        """Serves as a switch to turn off formants that are not given at a specific point in time.
+        Therefore, it should, at most, oscillate between 1 and 0."""
         #  self.Constriction_formant_freqs =      [pyo.Linseg(raw_env) for raw_env in input.Constriction_formant_freqs]
         #  self.Constriction_formant_bandwidths = [pyo.Linseg(raw_env) for raw_env in input.Constriction_formant_bandwidths]
         #  self.Constriction_formant_muls =       [pyo.Linseg(raw_env) for raw_env in input.Constriction_formant_muls]

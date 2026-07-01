@@ -4,7 +4,7 @@ It knows nothing about phonemes, only acousto-linguistic parameters of the mouth
 The heart of the coarticulation engine.
 """
 
-from simple_speech_synthesizer.acoustic_state import types as this_layer_types
+from simple_speech_synthesizer.acoustic_state import OLD_ORDER_types as this_layer_types
 from simple_speech_synthesizer.realization import types as next_layer_types
 
 from simple_speech_synthesizer.acoustic_state.simulate import simulate_acoustic_state

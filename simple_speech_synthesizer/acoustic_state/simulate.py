@@ -1,4 +1,4 @@
-from simple_speech_synthesizer.acoustic_state import types as this_layer_types
+from simple_speech_synthesizer.acoustic_state import OLD_ORDER_types as this_layer_types
 from simple_speech_synthesizer.realization import types as next_layer_types
 
 from simple_speech_synthesizer.acoustic_state.load_low_level_character import load_low_level_character

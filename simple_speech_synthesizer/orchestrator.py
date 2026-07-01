@@ -1,6 +1,6 @@
 from simple_speech_synthesizer.targeting.types import Input as InputTargeting
 from simple_speech_synthesizer.targeting.transform import transform as transform_targeting
-from simple_speech_synthesizer.acoustic_state.types import Input as InputAcousticState
+from simple_speech_synthesizer.acoustic_state.OLD_ORDER_types import Input as InputAcousticState
 from simple_speech_synthesizer.acoustic_state.transform import transform as transform_acoustic_state
 from simple_speech_synthesizer.realization.types import Input as InputRealization
 

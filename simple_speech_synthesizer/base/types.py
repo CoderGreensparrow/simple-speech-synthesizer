@@ -7,7 +7,37 @@ from typing import Literal
 
 import numpy as np
 
+from collections.abc import Sequence
+
 Interp = Literal["linear", "polynomial", "exponential"]
+
+@dataclass(frozen=True)
+class Targets:
+    """
+    A list of timed values.
+    Same indexed ts and vs are paired.
+    """
+    ts: Sequence[float]
+    vs: Sequence[float]
+
+    def __post_init__(self):
+        if len(self.ts) != len(self.vs):
+            raise ValueError("Targets.ts and Targets.vs must have the same length.")
+
+@dataclass(frozen=True)
+class FormantTargets:
+    """
+    A list of timed lists.
+    SPECIFICALLY used to store the Vowel_formant_freqs.
+    Same indexed ts and vs are paired.
+    """
+    ts: Sequence[float]
+    vs: Sequence[Sequence[float]]
+
+    def __post_init__(self):
+        if len(self.ts) != len(self.vs):
+            raise ValueError("Targets.ts and Targets.vs must have the same length.")
+
 
 @dataclass(frozen=True)
 class Point:

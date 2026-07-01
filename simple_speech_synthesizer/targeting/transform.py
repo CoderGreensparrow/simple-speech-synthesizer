@@ -4,7 +4,7 @@ It knows nothing about prosody. It takes prosody-included phonemic input data, a
 """
 
 from simple_speech_synthesizer.targeting import types as this_layer_types
-from simple_speech_synthesizer.acoustic_state import types as next_layer_types
+from simple_speech_synthesizer.acoustic_state import OLD_ORDER_types as next_layer_types
 
 from simple_speech_synthesizer.targeting.load_character import load_character
 from simple_speech_synthesizer.targeting.target_generator import create_acoustic_targets
