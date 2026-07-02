@@ -44,7 +44,7 @@ def _targets_to_step(targets: Targets, input_duration: float) -> pyo.Linseg:
         elif i == len(targets.ts) - 1:
             stepped_targets.append((point[0], point[1]))
             stepped_targets.append((input_duration, point[1]))  # pull the signal out till the end
-    return pyo.Linseg(tuple(stepped_targets))
+    return pyo.Linseg(stepped_targets)
 
 
 def _formant_targets_to_steps(formant_targets: FormantTargets, input_duration: float) -> tuple[list[pyo.Linseg], list[pyo.Linseg]]:
@@ -146,30 +146,35 @@ def convert_input(input_: this_layer_types.Input) -> dict:
     input_all_attrs = {f.name: getattr(input_, f.name) for f in dataclasses.fields(input_)}
     # The above code performs a manual shallow copy of a dataclass.
     # It may also be used with @dataclass(frozen=True, slots=True). That slots argument would break vars().
-    attr_overrides = {}
+    output_attrs = {}
 
     to_delete_because_of_formanttargets = []
     for key, val in input_all_attrs.items():
+        new_key = key.removesuffix("_targets")
+        new_key = new_key[0].capitalize() + new_key[1:]    # DIFFERENT FORMATTING
         if key == "vowel_formant_freqs_targets":
-            to_delete_because_of_formanttargets.append(key)
             Vowel_formant_freqs, Vowel_formant_importances = _formant_targets_to_steps(val, input_.duration)
-            attr_overrides["Vowel_formant_freqs"] = Vowel_formant_freqs
-            attr_overrides["Vowel_formant_importances"] = Vowel_formant_importances
+            output_attrs["Vowel_formant_freqs"] = Vowel_formant_freqs
+            output_attrs["Vowel_formant_importances"] = Vowel_formant_importances
         elif isinstance(val, Targets):
-            attr_overrides[key] = _targets_to_step(val, input_.duration)
+            output_attrs[new_key] = _targets_to_step(val, input_.duration)
         elif isinstance(val, Envelope):
-            attr_overrides[key] = _approximate_envelopes_with_linseg(val, input_.duration)
+            output_attrs[new_key] = _approximate_envelopes_with_linseg(val, input_.duration)
 
-    input_all_attrs.update(attr_overrides)
+    """input_all_attrs.update(attr_overrides)
     for key in to_delete_because_of_formanttargets:
-        del input_all_attrs[key]
-    return input_all_attrs
+        del input_all_attrs[key]"""
+    return output_attrs
 
 
 def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     s = start_pyo()
     input_all_attrs = convert_input(input_)
-    output = next_layer_types.Input(server=s, **input_all_attrs)
+    output = next_layer_types.Input(server=s,
+                                    character_dir_path=input_.character_dir_path,
+                                    output_filepath=input_.output_filepath,
+                                    duration=input_.duration,
+                                    **input_all_attrs)
     return output
 
 

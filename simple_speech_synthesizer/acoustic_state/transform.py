@@ -65,3 +65,5 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
         # Throat jitter
         ThroatJitter=pyo.Port(input_.ThroatJitter, pharynx_rt, pharynx_ft)
     )
+
+    return output

@@ -70,22 +70,30 @@ def process_synthesis(input: InputSynthesis):
 
 
 if __name__ == "__main__":
-    from simple_speech_synthesizer.targeting.OLD_types import Input, TimedPhoneme, GlobalEnvelopeTargets
+    from simple_speech_synthesizer.targeting.types import Input, TimedPhoneme, EnvelopeTargets
+    from simple_speech_synthesizer.base.types import Envelope, Point, Segment
+
     from simple_speech_synthesizer.base.types import Envelope, Point, Segment
 
     i = Input(
         character_dir_path=r"D:\PycharmProjects\simple-speech-synthesizer\simple_speech_synthesizer\characters\Greensparrow",
-        phonemes=(TimedPhoneme("s", 0, 0.089), TimedPhoneme("a", 0.089, 0.089+0.165), TimedPhoneme("s", 0.089+0.165, 0.089+0.165+0.11)),
-        global_envelope_targets=GlobalEnvelopeTargets(
-            F0=Envelope((Point(0, 0), Point(2, 0.5)), (Segment("polynomial", {"exponent": 1 / 2}),)),
-            NasalityDelta=Envelope((Point(0, 0), Point(2, 0.5)), (Segment("polynomial", {"exponent": 1 / 2}),)),
-            BreathinessDelta=Envelope((Point(0, 0), Point(2, 0.5)), (Segment("polynomial", {"exponent": 1 / 2}),)),
-            Tension=Envelope((Point(0, 0), Point(2, 0.5)), (Segment("polynomial", {"exponent": 1 / 2}),)),
-            VocalTilt=Envelope((Point(0, 0), Point(2, 0.5)), (Segment("polynomial", {"exponent": 1 / 2}),)),
-            LipRoundingDelta=Envelope((Point(0, 0), Point(2, 0.5)), (Segment("polynomial", {"exponent": 1 / 2}),)),
-            GenderDelta=Envelope((Point(0, 0), Point(2, 0.5)), (Segment("polynomial", {"exponent": 1 / 2}),)),
-            Volume=Envelope((Point(0, 0), Point(2, 0.5)), (Segment("polynomial", {"exponent": 1 / 2}),)),
+        output_filepath=r"D:\PycharmProjects\simple-speech-synthesizer\simple_speech_synthesizer\testaudio.wav",
+        duration=3,
+        phonemes=(
+            TimedPhoneme("hun_s", 0, 1),
+            TimedPhoneme("hun_a", 1, 2),
+            TimedPhoneme("hun_s", 2, 3),
         ),
-        duration=0.089+0.165+0.11
+        envelope_targets=EnvelopeTargets(
+            Volume=Envelope((Point(0, -6), Point(3, -6)), (Segment("linear"),)),
+            F0=Envelope((Point(0, 120), Point(3, 120)), (Segment("linear"),)),
+            NasalityDelta=Envelope((Point(0, 0), Point(3, 0)), (Segment("linear"),)),
+            BreathinessDelta=Envelope((Point(0, 0), Point(3, 0)), (Segment("linear"),)),
+            Tension=Envelope((Point(0, 0), Point(3, 0)), (Segment("linear"),)),
+            MachineGrowl=Envelope((Point(0, 0), Point(3, 0)), (Segment("linear"),)),
+            LipRoundingDelta=Envelope((Point(0, 0), Point(3, 0)), (Segment("linear"),)),
+            VocalGenderDelta=Envelope((Point(0, 0), Point(3, 0)), (Segment("linear"),)),
+            ThroatJitter=Envelope((Point(0, 1), Point(3, 1)), (Segment("linear"),))
+        )
     )
     o = process_targeting(i, full_stack=True)

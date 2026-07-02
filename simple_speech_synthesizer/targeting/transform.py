@@ -95,7 +95,6 @@ class Targeter:
                 case "flow":
                     target_dict = self._manner__flow(phoneme, prev_articulation_d, curr_articulation_d, next_articulation_d, curr_phoneme_d)
 
-            pprint(target_dict)
             for internal_name in self.all_internal_names:
                 targets[internal_name + "_ts"].append(target_dict[internal_name + "_t"])
                 targets[internal_name + "_vs"].append(target_dict[internal_name + "_v"])
