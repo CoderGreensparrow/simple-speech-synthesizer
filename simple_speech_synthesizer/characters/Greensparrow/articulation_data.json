@@ -1,5 +1,5 @@
 {
-  "i/ch/k": {
+  "PLACEHOLDER_i/ch/k": {
     "vowel_formants": [200, 300, 4000],
     "constriction": {
       "low_end": 500,
@@ -8,6 +8,28 @@
       "peak_bandwidth": 500,
       "boost": 10,
       "overtone_importance": 0.5
+    }
+  },
+  "hun_a_ch": {
+    "vowel_formants": [512, 945, 3004, 3542, 4422],
+    "constriction": {
+      "low_end": 350,
+      "high_end": 8000,
+      "peak_frequency": 1000,
+      "peak_bandwidth": 300,
+      "boost": 12,
+      "overtone_importance": 0.05
+    }
+  },
+  "hun_iy_s": {
+    "vowel_formants": [280, 2042, 2588, 3676],
+    "constriction": {
+      "low_end": 2000,
+      "high_end": 17000,
+      "peak_frequency": 3210,
+      "peak_bandwidth": 800,
+      "boost": 10,
+      "overtone_importance": 1
     }
   }
 }

@@ -1,6 +1,6 @@
 {
-  "i": {
-    "phoneme": "i/ch/k",
+  "PLACEHOLDER_i": {
+    "phoneme": "PLACEHOLDER_i/ch/k",
     "manner": "flow",
     "vowel_formants_importance": 1,
     "aspiration_importance": 0.5,
@@ -9,5 +9,25 @@
     "vowel_coarticulation_coloring": 0.4,
     "constriction_coarticulation_coloring": 0.1,
     "UNUSED_aspiration_coarticulation_coloring": 0.1
+  },
+  "hun_a": {
+    "phoneme": "hun_a_ch",
+    "manner": "flow",
+    "vowel_formants_importance": 1,
+    "aspiration_importance": 1,
+    "constriction_importance": 0,
+    "nasality": 0,
+    "vowel_coarticulation_coloring": 0,
+    "constriction_coarticulation_coloring": 0.2
+  },
+  "hun_s": {
+    "phoneme": "hun_iy_s",
+    "manner": "flow",
+    "vowel_formants_importance": 0,
+    "aspiration_importance": 1,
+    "constriction_importance": 1,
+    "nasality": 0,
+    "vowel_coarticulation_coloring": 0,
+    "constriction_coarticulation_coloring": 0.2
   }
 }

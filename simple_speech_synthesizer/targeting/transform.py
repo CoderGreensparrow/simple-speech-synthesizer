@@ -9,6 +9,7 @@ from simple_speech_synthesizer.pyo_converter import types as next_layer_types
 from simple_speech_synthesizer.base.load_character import load_character
 from simple_speech_synthesizer.base.types import Targets, FormantTargets
 
+from pprint import pprint
 
 class Targeter:
     def __init__(self, input_: this_layer_types.Input):
@@ -16,7 +17,6 @@ class Targeter:
         character = load_character(input_.character_dir_path)
         self.phoneme_d = character.phoneme_data
         self.articulation_d = character.articulation_data
-        self.simulate()
         # OUTPUTS
         self.vowel_formant_freqs_targets = None
         self.constriction_HP_freq_targets = None
@@ -31,9 +31,6 @@ class Targeter:
         self.nasality_targets = None
         self.full_closure_targets = None  # treated by manner function specifically
 
-        self.vowel_formant_parameter_names = {
-            "vowel_formants": "vowel_formant_freqs_targets"
-        }  # this is just here to have a list of all internal parameter names at any given time, if I concatenate this .values() with all below .values()
         # These contain information about
         # which constriciton parameters should be coarticulated or not (the keys).
         # And the values are the names of the parameters in the Input
@@ -55,11 +52,16 @@ class Targeter:
             "nasality": "nasality_targets"
         }
 
-        self.all_internal_names = (list(self.vowel_formant_parameter_names.values()) +
+        self.extra_parameter_names = [
+            "vowel_formant_freqs_targets", "full_closure_targets"
+        ]  # this is just here to have a list of all internal parameter names at any given time, if I concatenate this with all above .values()
+        self.all_internal_names = (list(self.extra_parameter_names) +
                                    list(self.coarticulated_constriction_parameter_names.values()) +
                                    list(self.non_coarticulated_constriction_parameter_names.values()) +
                                    list(self.passthrough_phoneme_parameter_names.values()))
         # TODO: Potentially implement aspiration coarticulation coloring?
+
+        self.simulate()
 
     def simulate(self):
         targets = {}
@@ -93,6 +95,7 @@ class Targeter:
                 case "flow":
                     target_dict = self._manner__flow(phoneme, prev_articulation_d, curr_articulation_d, next_articulation_d, curr_phoneme_d)
 
+            pprint(target_dict)
             for internal_name in self.all_internal_names:
                 targets[internal_name + "_ts"].append(target_dict[internal_name + "_t"])
                 targets[internal_name + "_vs"].append(target_dict[internal_name + "_v"])
@@ -136,8 +139,7 @@ class Targeter:
 
         coarticulated_vowel_formants = []
 
-        for formant_i in range(
-                len(curr_vowel_formants)):  # we only need to coarticulate as much as the current vowel supports
+        for formant_i in range(len(curr_vowel_formants)):  # we only need to coarticulate as much as the current vowel supports
             if formant_i < len(prev_vowel_formants) and formant_i < len(next_vowel_formants):
                 # both-neighbor coarticulation
                 coarticulated_vowel_formants.append(
@@ -184,6 +186,29 @@ class Targeter:
         :param coloring: same
         :return: A t and a v.
         """
+        coarticulated_datapoints = (
+            ((coloring / 2) * prev_datapoint) +
+            ((1 - coloring) * curr_datapoint) +
+            ((coloring / 2) * next_datapoint)
+        )
+        return phoneme.start, coarticulated_datapoints
+
+    def _passthrough_non_coarticulated_constriction_parameters(
+            self, phoneme: this_layer_types.TimedPhoneme, curr_articulation_d) -> dict:
+        """
+        Calculates all the t and v of all NON-COARTICULATED CONSTRICTION parameters.
+        The list of these parameters, along with the mapping to internal names, is found in __init__() under self.non_coarticulated_constriction_parameter_names.
+        :param phoneme: The current TimedPhoneme.
+        :param curr_articulation_d:
+        :return: All the passthrough values with correct internal naming in a dict.
+        """
+        target_passthroughs = dict()
+        for json_parameter_name, internal_parameter_name in self.non_coarticulated_constriction_parameter_names.items():
+            t = phoneme.start
+            v = curr_articulation_d["constriction"][json_parameter_name]
+            target_passthroughs[internal_parameter_name + "_t"] = t
+            target_passthroughs[internal_parameter_name + "_v"] = v
+        return target_passthroughs
 
     def _passthrough_phoneme_parameters(
             self, phoneme: this_layer_types.TimedPhoneme, curr_phoneme_d) -> dict:
@@ -192,7 +217,6 @@ class Targeter:
         vowel_formants_importance, constriction_importance etc.
         The list of these parameters, along with the mapping to internal names, is found in __init__() under self.passthrough_phoneme_parameter_names.
         :param phoneme: The current TimedPhoneme.
-        :param curr_articulation_d:
         :param curr_phoneme_d:
         :return: All the passthrough values with correct internal naming in a dict.
         """
@@ -224,6 +248,10 @@ class Targeter:
             )
             target[internal_parameter_name + "_t"] = t
             target[internal_parameter_name + "_v"] = v
+        # passthrough non-coarticulated constriciton parameters
+        target.update(
+            self._passthrough_non_coarticulated_constriction_parameters(phoneme, curr_articulation_d)
+        )
         # phoneme_data.json parameters (removed for DRY-ness)
         target.update(
             self._passthrough_phoneme_parameters(phoneme, curr_phoneme_d)
@@ -284,4 +312,27 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
 
 
 if __name__ == "__main__":
-    pass
+    from simple_speech_synthesizer.base.types import Envelope, Point, Segment
+    i = this_layer_types.Input(
+        character_dir_path=r"../characters/Greensparrow",
+        output_filepath=r"../testaudio.wav",
+        duration=3,
+        phonemes=(
+            this_layer_types.TimedPhoneme("hun_s", 0, 1),
+            this_layer_types.TimedPhoneme("hun_a", 1, 2),
+            this_layer_types.TimedPhoneme("hun_s", 2, 3),
+        ),
+        envelope_targets=this_layer_types.EnvelopeTargets(
+            Volume=Envelope((Point(0, -6), Point(3, -6)), (Segment("linear"),)),
+            F0=Envelope((Point(0, 120), Point(3, 120)), (Segment("linear"),)),
+            NasalityDelta=Envelope((Point(0, 0), Point(3, 0)), (Segment("linear"),)),
+            BreathinessDelta=Envelope((Point(0, 0), Point(3, 0)), (Segment("linear"),)),
+            Tension=Envelope((Point(0, 0), Point(3, 0)), (Segment("linear"),)),
+            MachineGrowl=Envelope((Point(0, 0), Point(3, 0)), (Segment("linear"),)),
+            LipRoundingDelta=Envelope((Point(0, 0), Point(3, 0)), (Segment("linear"),)),
+            VocalGenderDelta=Envelope((Point(0, 0), Point(3, 0)), (Segment("linear"),)),
+            ThroatJitter=Envelope((Point(0, 1), Point(3, 1)), (Segment("linear"),))
+        )
+    )
+    o = transform(i)
+    pprint(o)
