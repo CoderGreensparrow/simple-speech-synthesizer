@@ -9,9 +9,11 @@ The actual conversion from custom types (Envelope) to pyo's types happens in the
 
 from simple_speech_synthesizer.realization import types as this_layer_types
 from simple_speech_synthesizer.synthesis import synthesis_types as next_layer_types
+from simple_speech_synthesizer.base.activate_play_on_input import activate_layer_inputs
+
 from simple_speech_synthesizer.base.load_low_level_character import load_low_level_character
 
-from pyo import Max, Min
+from pyo import Max, Min, Sig
 
 def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     """
@@ -19,6 +21,8 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     :param input:
     :return:
     """
+    activate_layer_inputs(input_)
+
     s_p = load_low_level_character(input_.character_dir_path).synthesis_parameters
 
     ### INPUTS
@@ -91,15 +95,15 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
                                  + tension * s_p["tension_induced_spectral_hill_boost"]
                                  + gender_hill_boost_factor)
     Vowel_Q_multiplier = Max(1 - (0.5 * true_nasality), 0.0001)  # failsafe: don't get Q to 0
-    Aspiration_volume_factor = s_p["default_Vowel_aspiration_as_a_factor_of_volume"]
-    Constriction_volume_factor = s_p["default_Constriction_volume_as_a_factor_of_volume"]
+    Aspiration_volume_factor = Sig(s_p["default_Vowel_aspiration_as_a_factor_of_volume"])
+    Constriction_volume_factor = Sig(s_p["default_Constriction_volume_as_a_factor_of_volume"])
     Nasal_murmur_importance = true_nasality * s_p["default_nasal_murmur_importance"]
     Nasality_LP_strength = true_nasality
     Nasality_antiformant_boost = true_nasality * s_p["default_nasal_antiformant_boost"]
 
-    F0_freq_sway = throat_jitter  # magic numbers in synthesizer, these are just factors
-    F0_freq_FM_jitter = throat_jitter
-    voice_source_amp_sway = throat_jitter
+    F0_freq_sway = Sig(throat_jitter)  # magic numbers in synthesizer, these are just factors
+    F0_freq_FM_jitter = Sig(throat_jitter)
+    voice_source_amp_sway = Sig(throat_jitter)
 
 
     ### OUTPUT

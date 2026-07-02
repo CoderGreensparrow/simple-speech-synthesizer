@@ -1,9 +1,12 @@
 from simple_speech_synthesizer.acoustic_state import types as this_layer_types
 from simple_speech_synthesizer.realization import types as next_layer_types
+from simple_speech_synthesizer.base.activate_play_on_input import activate_layer_inputs
 
 from simple_speech_synthesizer.base.load_low_level_character import load_low_level_character
 
 import pyo
+
+from simple_speech_synthesizer.global_debug_vars import _DEBUG_SYNTHESIS
 
 def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     """
@@ -11,6 +14,8 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     :param input_: This layer's Input.
     :return: The next layer's Input.
     """
+    activate_layer_inputs(input_)
+
     s_p = load_low_level_character(input_.character_dir_path).synthesis_parameters
     tongue_rt = s_p["acoustic_simulation_tongue_risetime"]
     tongue_ft = s_p["acoustic_simulation_tongue_falltime"]
@@ -37,7 +42,7 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
         output_filepath=input_.output_filepath,
         duration=input_.duration,
         # Envelopes, simulated from acoustic targets
-        Vowel_formant_freqs=[pyo.Port(seg, tongue_rt, tongue_ft) for seg in input_.Vowel_formant_freqs],
+        Vowel_formant_freqs=(debug_walrus:=[pyo.Port(seg, tongue_rt, tongue_ft) for seg in input_.Vowel_formant_freqs]),
         Vowel_formant_importances=[pyo.Port(seg, tongue_rt, tongue_ft) for seg in input_.Vowel_formant_freqs],
         Constriction_HP_freq=pyo.Port(input_.Constriction_HP_freq, tongue_rt, tongue_ft),
         Constriction_peak_freq=pyo.Port(input_.Constriction_peak_freq, tongue_rt, tongue_ft),
@@ -65,5 +70,8 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
         # Throat jitter
         ThroatJitter=pyo.Port(input_.ThroatJitter, pharynx_rt, pharynx_ft)
     )
+
+    debug_walrus[0].play()
+    pyo.Scope(debug_walrus[0])
 
     return output

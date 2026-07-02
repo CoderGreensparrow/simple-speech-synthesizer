@@ -1,7 +1,11 @@
 import pyo
 
 from simple_speech_synthesizer.synthesis import synthesis_types as this_layer_types
+from simple_speech_synthesizer.base.activate_play_on_input import activate_layer_inputs
+
 from simple_speech_synthesizer.base.load_low_level_character import load_low_level_character
+
+from simple_speech_synthesizer.global_debug_vars import _DEBUG_SYNTHESIS
 
 AMPLITUDE_CORRECTION = -9
 
@@ -44,7 +48,6 @@ def synthesize(input: this_layer_types.Input):
     """
 
     s = input.server
-    s.recordOptions(dur=input.duration, filename=input.output_filepath)
 
     s_p = load_low_level_character(input.character_dir_path).synthesis_parameters
 
@@ -217,7 +220,8 @@ def synthesize(input: this_layer_types.Input):
     audio_out_2.out(1)
 
     #### PLAY ALL THE ENVELOPES
-    for env in input.Vowel_formant_freqs: env.play()
+    '''for env in input.Vowel_formant_freqs: env.play()
+    for env in input.Vowel_formant_importances: env.play()
     """input.Constriction_HP_freq.play()
     input.Constriction_peak_freq.play()
     input.Constriction_peak_bandwidth.play()
@@ -238,16 +242,20 @@ def synthesize(input: this_layer_types.Input):
     input.Constriction_volume_factor.play()
     input.Nasal_murmur_importance.play()
     input.Nasality_LP_strength.play()
-    input.Nasality_antiformant_boost.play()"""  # This should be removed if the code below works
+    input.Nasality_antiformant_boost.play()  # This should be removed if the code below works
+    input.F0_freq_sway.play()
+    input.F0_freq_FM_jitter.play()
+    input.voice_source_amp_sway.play()"""
     input_all_attributes = vars(input)
-    for attr in input_all_attributes.values():
-        if isinstance(attr, pyo.Linseg):
-            attr.play()
-
+    for key, attr in input_all_attributes.items():
+        if isinstance(attr, pyo.PyoObject):
+            attr.play()'''
+    activate_layer_inputs(input)
 
     #### RECORD
+    s.recordOptions(dur=input.duration, filename=input.output_filepath)
     s.start()
-    if s._audio != "offline":  # hacky way to check if _DEBUG is enabled.
+    if _DEBUG_SYNTHESIS:
         pyo.Scope([audio_out])
         analyzer = pyo.Spectrum([audio_out], size=2 ** 14)
         analyzer.setFscaling(True)  # log
