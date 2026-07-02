@@ -43,6 +43,8 @@ class Input:
     Aspiration_importance: PyoObject
     Constriction_importance: PyoObject
     Nasality: PyoObject
+    Full_closure: PyoObject
+    Stop_amp: PyoObject
     # Global envelopes
     Volume: PyoObject  # general singing volume in dB (0 means maximum, negatives count down)
     F0: PyoObject  # fundamental pitch

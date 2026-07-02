@@ -40,5 +40,9 @@
   "acoustic_simulation_pharynx_risetime": 0.2,
   "acoustic_simulation_pharynx_falltime": 0.2,
   "acoustic_simulation_lip_risetime": 0.2,
-  "acoustic_simulation_lip_falltime": 0.2
+  "acoustic_simulation_lip_falltime": 0.2,
+  "max_stop_amp": 1.5,
+  "stop_amp_risetime": 0.3,
+  "stop_amp_falltime": 0.05,
+  "stop_amp_should_rise_after_full_closure_hits_this": 0.8
 }

@@ -35,7 +35,10 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     constriction_importance = input_.Constriction_importance
 
     true_nasality = input_.Nasality + input_.NasalityDelta
-    true_aspiration = input_.Aspiration_importance + input_.BreathinessDelta
+    true_aspiration = (input_.Aspiration_importance + input_.BreathinessDelta)
+
+    full_closure = input_.Full_closure
+    stop_amp = input_.Stop_amp
 
     volume = input_.Volume
     f0 = input_.F0
@@ -52,10 +55,19 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     # This architecture was chosen because everything affects everything.
     # To make it more readable, every time some modifier is applied, the following order must be used:
     # Nasality + Tension + Gender + Whatever else
+
     true_lip_rounding_factor = 1 + (lip_rounding_delta * s_p["lip_rounding_formant_effect_factor"])
     gender_formant_factor = 1 + (vocal_gender_delta * 0.5)  # -1 ultra-masculine, 1 ultra-feminine, 0 natural
     gender_hill_boost_factor = vocal_gender_delta * s_p["tension_induced_spectral_hill_boost"] * 0.5
     # TODO: These numbers here for gender shifting are just off the top of my head
+
+    ### ADD IN FULL_CLOSURE & STOP_AMP
+    true_nasality *= full_closure
+    true_aspiration *= 1-full_closure
+    true_constriction_importance = constriction_importance * (1-full_closure)
+    true_vowel_importance = vowel_importance * (1-full_closure)
+    true_volume = volume * stop_amp
+
 
     Vowel_formant_freqs = [sig * gender_formant_factor * true_lip_rounding_factor
                            for sig in vowel_formant_freqs]
@@ -66,11 +78,11 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     Constriction_peak_boost = constriction_peak_boost
     Constriction_peak_overtone_importance = constriction_peak_overtone_importance
     Constriction_LP_freq = constriction_LP_freq * gender_formant_factor * true_lip_rounding_factor
-    Voiced_component_importance = vowel_importance
-    Constriction_component_importance = constriction_importance
+    Voiced_component_importance = true_vowel_importance
+    Constriction_component_importance = true_constriction_importance
     Aspiration_component_importance = true_aspiration
 
-    Volume = volume
+    Volume = true_volume
     F0 = f0  # tension not added for correct singing
     Spectral_tilt_cutoff_delta = 0 + tension * s_p["tension_induced_spectral_tilt_freq_delta"]
     Spectral_tilt_tension = (0 + true_aspiration * s_p["aspiration_tension_scaling_factor"]

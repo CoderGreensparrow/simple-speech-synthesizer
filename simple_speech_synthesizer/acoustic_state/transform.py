@@ -20,6 +20,17 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     pharynx_ft = s_p["acoustic_simulation_pharynx_falltime"]
     lip_rt = s_p["acoustic_simulation_lip_risetime"]
     lip_ft = s_p["acoustic_simulation_lip_falltime"]
+
+    # ADDITIONAL COMPUTED VALUES
+    Stop_amp = pyo.Port(
+        # calculation: map range [0; 1] to [stop_amp_should_rise_after...; 1] then map the [0; 1] range of that to [1; max_stop_amp]
+        pyo.Clip((input_.Full_closure / (1-s_p["stop_amp_should_rise_after_full_closure_hits_this"]) - 1/(1-s_p["stop_amp_should_rise_after_full_closure_hits_this"]) + 1)
+                 * (1-s_p["max_stop_amp"]) + 1,
+                 min=1, max=s_p["max_stop_amp"]),
+        risetime=s_p["stop_amp_risetime"],
+        falltime=s_p["stop_amp_falltime"],
+    )
+
     output = next_layer_types.Input(
         server=input_.server,
         character_dir_path=input_.character_dir_path,
@@ -39,6 +50,8 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
         Aspiration_importance=pyo.Port(input_.Aspiration_importance, pharynx_rt, pharynx_ft),
         Constriction_importance=pyo.Port(input_.Constriction_importance, tongue_rt, tongue_ft),
         Nasality=pyo.Port(input_.Nasality, larynx_rt, larynx_ft),
+        Full_closure=pyo.Port(input_.Full_closure, tongue_rt, tongue_ft),
+        Stop_amp=Stop_amp,
         # Global envelopes
         Volume=pyo.Port(input_.Volume, pharynx_rt, pharynx_ft),
         F0=pyo.Port(input_.F0, pharynx_rt, pharynx_ft),

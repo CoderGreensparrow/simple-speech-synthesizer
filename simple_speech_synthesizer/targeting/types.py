@@ -17,6 +17,24 @@ class TimedPhoneme:
         if self.start >= self.end:
             raise ValueError("The start and end of a TimePhoneme must be in order in time and not be equal. (start < end)")
 
+
+@dataclass(frozen=True)
+class EnvelopeTargets:
+    """
+    All targets that are stored as Envelopes.
+    """
+    Volume: Envelope  # general singing volume in dB (0 means maximum, negatives count down)
+    F0: Envelope  # fundamental pitch
+    NasalityDelta: Envelope  # modifies the original nasality (since each phoneme has different levels of it by default)
+    BreathinessDelta: Envelope  # modifies the original breathiness
+    Tension: Envelope  # softness - hardness modifier
+    MachineGrowl: Envelope  # lets the Blit run rampant
+    LipRoundingDelta: Envelope  # WIP, may not be implemented; modifies the formants for liprounding
+    VocalGenderDelta: Envelope  # modifies the perceived gender of the sound (similar to how other vocal synths use a gender property)
+    # Throat jitter
+    ThroatJitter: Envelope  # global multiplier for the throat jitter settings
+
+
 @dataclass(frozen=True)
 class Input:
     """
@@ -24,14 +42,14 @@ class Input:
     The time t of each parameter is a float from 0 to `duration`, measured in elapsed seconds since the start of the utterance.
     :param character_dir_path: The path to the character's directory with the phoneme_data.json and manner_template.json (etc. if there are more) files.
     :param phonemes: All the phonemes as TimedPhoneme objects.
-    :param global_envelope_targets: All the global envelopes as a single GlobalEnvelopeTargets object.
+    :param envelope_targets: All the envelope targets as a single EnvelopeTargets object. THESE ARE PASSED DOWN WITHOUT MODIFICATION
     :param duration: The duration of the whole utterance, which is fixed by this point.
     """
     character_dir_path: str
     output_filepath: str
     duration: float
     phonemes: tuple[TimedPhoneme, ...]
-    global_envelope_targets: GlobalEnvelopeTargets
+    envelope_targets: EnvelopeTargets
 
     def __post_init__(self):
         for phoneme in self.phonemes:
@@ -41,20 +59,3 @@ class Input:
             if not(0 <= envelope.min_t < envelope.max_t <= self.duration):
                 raise ValueError("Envelope out of range from [0, duration] in TARGETING LAYER Input.")"""
         ## implement later
-
-
-if __name__ == "__main__":
-    i = Input(
-        phonemes=(TimedPhoneme("t", 0, 0.1), TimedPhoneme("a", 0.1, 0.7), TimedPhoneme("s", 0.7, 0.8)),
-        global_envelope_targets=GlobalEnvelopeTargets(
-            F0=Envelope((Point(0, 0), Point(2, 0.5)), (Segment("polynomial", {"exponent": 1/2}),)),
-            NasalityDelta=Envelope((Point(0, 0), Point(2, 0.5)), (Segment("polynomial", {"exponent": 1/2}),)),
-            BreathinessDelta=Envelope((Point(0, 0), Point(2, 0.5)), (Segment("polynomial", {"exponent": 1/2}),)),
-            Tension=Envelope((Point(0, 0), Point(2, 0.5)), (Segment("polynomial", {"exponent": 1/2}),)),
-            VocalTilt=Envelope((Point(0, 0), Point(2, 0.5)), (Segment("polynomial", {"exponent": 1/2}),)),
-            LipRoundingDelta=Envelope((Point(0, 0), Point(2, 0.5)), (Segment("polynomial", {"exponent": 1/2}),)),
-            GenderDelta=Envelope((Point(0, 0), Point(2, 0.5)), (Segment("polynomial", {"exponent": 1/2}),))
-        ),
-        duration=0.8
-    )
-    print(i)
