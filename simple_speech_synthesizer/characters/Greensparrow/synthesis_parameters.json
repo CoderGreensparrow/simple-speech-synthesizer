@@ -7,6 +7,9 @@
   "spectral_hill_freq": 3000,
   "spectral_hill_boost": 0,
   "spectral_hill_bandwidth": 1000,
+  "tension_induced_spectral_tilt_scaling_factor": 0.2,
+  "tension_induced_spectral_tilt_freq_delta": 50,
+  "tension_induced_spectral_hill_boost": 10,
   "vowel_Q_floor": 50,
   "vowel_Q_slope": 0.05,
   "aspiration_Q_floor": 50,
@@ -14,7 +17,7 @@
   "spectral_hill_aspiration_boost": 0,
   "aspiration_brightness_loss_compensation_factor": 0.02,
   "default_Vowel_aspiration_as_a_factor_of_volume": 0.4,
-  "aspiration_tension_scaling_factor": "unknown",
+  "aspiration_tension_scaling_factor": -0.2,
   "aspiration_F0_scaling_factor": "unknown",
 
   "nasal_murmur": 250,
@@ -25,6 +28,8 @@
   "default_nasal_antiformant_boost": -12,
 
   "default_Constriction_volume_as_a_factor_of_volume": 0.4,
+
+  "lip_rounding_formant_effect_factor": -0.5,
 
   "voiced_frication_constriction_component_importance": 0.1,
 

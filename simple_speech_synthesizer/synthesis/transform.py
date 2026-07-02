@@ -298,12 +298,16 @@ if __name__ == "__main__":
     # 538, 1779, 2751
     # parameters adapted from pyo_playground_e.py
     i = this_layer_types.Input(
+        server=pyo.Server(),
         character_dir_path=r"..\characters\Greensparrow",
         output_filepath=r"testaudio.wav",
         duration=3.0,
         Vowel_formant_freqs=[[(0, F1), (3, F1)],  # it's <a> rn
                              [(0, F2), (3, F2)],
                              [(0, F3), (3, F3)]],
+        Vowel_formant_importances=[[(0, 1), (3, 1)],
+                                   [(0, 1), (3, 1)],
+                                   [(0, 1), (3, 1)],],
         Constriction_HP_freq=[(0, 1500), (3, 1500)],
         Constriction_LP_freq=[(0, 14000), (3, 14000)],
         Constriction_peak_freq=[(0, 3400), (3, 3400)],
