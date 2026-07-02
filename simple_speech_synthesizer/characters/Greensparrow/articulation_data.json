@@ -1,0 +1,13 @@
+{
+  "i/ch/k": {
+    "vowel_formants": [200, 300, 4000],
+    "constriction": {
+      "low_end": 500,
+      "high_end": 1500,
+      "peak_frequency": 800,
+      "peak_bandwidth": 500,
+      "boost": 10,
+      "overtone_importance": 0.5
+    }
+  }
+}

@@ -1,10 +1,13 @@
 {
-  "s": {
-    "acoustic_parameter": "s",
-    "manner": "voiceless_fricative"
-  },
-  "a": {
-    "acoustic_parameter": "a",
-    "manner": "vowel"
+  "i": {
+    "phoneme": "i/ch/k",
+    "manner": "flow",
+    "vowel_formants_importance": 1,
+    "aspiration_importance": 0.5,
+    "constriction_importance": 0,
+    "nasality": 0,
+    "vowel_coarticulation_coloring": 0.4,
+    "constriction_coarticulation_coloring": 0.1,
+    "UNUSED_aspiration_coarticulation_coloring": 0.1
   }
 }

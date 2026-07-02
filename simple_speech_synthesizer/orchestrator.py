@@ -28,7 +28,7 @@ def process_pyo_converter(input: InputPyoConverter, full_stack: bool = True):
     :param full_stack: Whether (TRUE case:) to run through the input the full stack of layers, and output TTS audio, or (FALSE case:) to only process this layer.
     :return:
     """
-    output = transform_targeting(input)
+    output = transform_pyo_converter(input)
     if full_stack:
         output = process_acoustic_state(output, full_stack=True)
     return output
@@ -52,12 +52,12 @@ def process_realization(input: InputRealization, full_stack: bool = True):
     :param full_stack: Whether (TRUE case:) to run through the input the full stack of layers, and output TTS audio, or (FALSE case:) to only process this layer.
     :return:
     """
-    output = transform_acoustic_state(input)
+    output = transform_realization(input)
     if full_stack:
         output = process_synthesis(output)
     return output
 
-def process_synthesis(input: InputRealization):
+def process_synthesis(input: InputSynthesis):
     """
     Process the SYNTHESIS (last) layer.
     :param input: Input of the layer with the layer's own Input class.

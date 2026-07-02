@@ -60,7 +60,7 @@ def create_one_phoneme(prev_phoneme_ID: str | None, curr_phoneme_ID: str, next_p
 
     ##### COARTICULATION CALCULATION ON FORMANT LEVEL
     # Each formant is averaged, which means that for each corresponding F1, F2, F3,
-    # the frequencies, bandwidths and importances are taken with a mathematical weighted average.
+    # the frequencies, bandwidths and importances are taken with a mathematical weighted average. CORRECTION LATER (non-implemented: GEOMETRIC MEAN)
     # The weight is determined by the vowel_coarticulation_coloring (V) and constriction_coarticulation_coloring (C) parameters.
     # Prev, curr, next weigths in order: V/2, 1-V, V/2
     # Since vowel_formants and constriction_formants' lengths are variable,

@@ -52,6 +52,7 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
         Nasality=pyo.Port(input_.Nasality, larynx_rt, larynx_ft),
         Full_closure=pyo.Port(input_.Full_closure, tongue_rt, tongue_ft),
         Stop_amp=Stop_amp,
+        # TODO Maybe there should be a max_stop_amp slider, and not just a constant
         # Global envelopes
         Volume=pyo.Port(input_.Volume, pharynx_rt, pharynx_ft),
         F0=pyo.Port(input_.F0, pharynx_rt, pharynx_ft),

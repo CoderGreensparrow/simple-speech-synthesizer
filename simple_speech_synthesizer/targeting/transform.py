@@ -10,33 +10,261 @@ from simple_speech_synthesizer.base.load_character import load_character
 from simple_speech_synthesizer.base.types import Targets, FormantTargets
 
 
+class Targeter:
+    def __init__(self, input_: this_layer_types.Input):
+        self.in_ = input_
+        character = load_character(input_.character_dir_path)
+        self.phoneme_d = character.phoneme_data
+        self.articulation_d = character.articulation_data
+        self.simulate()
+        # OUTPUTS
+        self.vowel_formant_freqs_targets = None
+        self.constriction_HP_freq_targets = None
+        self.constriction_peak_freq_targets = None
+        self.constriction_peak_bandwidth_targets = None
+        self.constriction_peak_boost_targets = None
+        self.constriction_peak_overtone_importance_targets = None
+        self.constriction_LP_freq_targets = None
+        self.vowel_importance_targets = None
+        self.aspiration_importance_targets = None
+        self.constriction_importance_targets = None
+        self.nasality_targets = None
+        self.full_closure_targets = None  # treated by manner function specifically
+
+        self.vowel_formant_parameter_names = {
+            "vowel_formants": "vowel_formant_freqs_targets"
+        }  # this is just here to have a list of all internal parameter names at any given time, if I concatenate this .values() with all below .values()
+        # These contain information about
+        # which constriciton parameters should be coarticulated or not (the keys).
+        # And the values are the names of the parameters in the Input
+        # (because the parameter names in the json and the Input are different).
+        self.coarticulated_constriction_parameter_names = {
+            "low_end": "constriction_HP_freq_targets",
+            "high_end": "constriction_LP_freq_targets",
+            "peak_frequency": "constriction_peak_freq_targets",
+            "peak_bandwidth": "constriction_peak_bandwidth_targets"
+        }
+        self.non_coarticulated_constriction_parameter_names = {
+            "boost": "constriction_peak_boost_targets",
+            "overtone_importance": "constriction_peak_overtone_importance_targets"
+        }
+        self.passthrough_phoneme_parameter_names = {
+            "vowel_formants_importance": "vowel_importance_targets",
+            "aspiration_importance": "aspiration_importance_targets",
+            "constriction_importance": "constriction_importance_targets",
+            "nasality": "nasality_targets"
+        }
+
+        self.all_internal_names = (list(self.vowel_formant_parameter_names.values()) +
+                                   list(self.coarticulated_constriction_parameter_names.values()) +
+                                   list(self.non_coarticulated_constriction_parameter_names.values()) +
+                                   list(self.passthrough_phoneme_parameter_names.values()))
+        # TODO: Potentially implement aspiration coarticulation coloring?
+
+    def simulate(self):
+        targets = {}
+        for internal_name in self.all_internal_names:
+            targets[internal_name + "_ts"] = list()
+            targets[internal_name + "_vs"] = list()
+
+        for phoneme_i, phoneme in enumerate(self.in_.phonemes):
+            prev_phoneme_d = self.phoneme_d[self.in_.phonemes[phoneme_i - 1].ID] if phoneme_i - 1 >= 0 else None
+            prev_articulation_d = self.articulation_d[prev_phoneme_d["phoneme"]] if prev_phoneme_d else None
+            curr_phoneme_d = self.phoneme_d[phoneme.ID]
+            curr_articulation_d = self.articulation_d[curr_phoneme_d["phoneme"]]
+            next_phoneme_d = self.phoneme_d[self.in_.phonemes[phoneme_i + 1].ID] if phoneme_i + 1 < len(self.in_.phonemes) else None
+            next_articulation_d = self.articulation_d[next_phoneme_d["phoneme"]] if next_phoneme_d else None
+
+            # if some neighboring phonemes are missing, then they will be substituted in the calculation like so:
+            # if one of them is missing, the neighbor that exists will function as both neighbors.
+            # if both neighbors are missing, then the curr one will function as all 3, effectively cancelling coarticulation (with a bunch of extra steps)
+            # this can be optimized later.
+            if prev_phoneme_d and not next_phoneme_d:
+                next_phoneme_d = prev_phoneme_d
+                next_articulation_d = prev_articulation_d
+            elif not prev_phoneme_d and next_phoneme_d:
+                prev_phoneme_d = next_phoneme_d
+                prev_articulation_d = next_articulation_d
+            elif not prev_phoneme_d and not next_phoneme_d:
+                prev_phoneme_d = next_phoneme_d = curr_phoneme_d
+                prev_articulation_d = next_articulation_d = curr_articulation_d
+
+            match curr_phoneme_d["manner"]:
+                case "flow":
+                    target_dict = self._manner__flow(phoneme, prev_articulation_d, curr_articulation_d, next_articulation_d, curr_phoneme_d)
+
+            for internal_name in self.all_internal_names:
+                targets[internal_name + "_ts"].append(target_dict[internal_name + "_t"])
+                targets[internal_name + "_vs"].append(target_dict[internal_name + "_v"])
+
+
+        ### OUTPUTS
+        self.vowel_formant_freqs_targets = FormantTargets(targets["vowel_formant_freqs_targets_ts"], targets["vowel_formant_freqs_targets_vs"])
+        self.constriction_HP_freq_targets = Targets(targets["constriction_HP_freq_targets_ts"], targets["constriction_HP_freq_targets_vs"])
+        self.constriction_peak_freq_targets = Targets(targets["constriction_peak_freq_targets_ts"], targets["constriction_peak_freq_targets_vs"])
+        self.constriction_peak_bandwidth_targets = Targets(targets["constriction_peak_bandwidth_targets_ts"], targets["constriction_peak_bandwidth_targets_vs"])
+        self.constriction_peak_boost_targets = Targets(targets["constriction_peak_boost_targets_ts"], targets["constriction_peak_boost_targets_vs"])
+        self.constriction_peak_overtone_importance_targets = Targets(targets["constriction_peak_overtone_importance_targets_ts"], targets["constriction_peak_overtone_importance_targets_vs"])
+        self.constriction_LP_freq_targets = Targets(targets["constriction_LP_freq_targets_ts"], targets["constriction_LP_freq_targets_vs"])
+        self.vowel_importance_targets = Targets(targets["vowel_importance_targets_ts"], targets["vowel_importance_targets_vs"])
+        self.aspiration_importance_targets = Targets(targets["aspiration_importance_targets_ts"], targets["aspiration_importance_targets_vs"])
+        self.constriction_importance_targets = Targets(targets["constriction_importance_targets_ts"], targets["constriction_importance_targets_vs"])
+        self.nasality_targets = Targets(targets["nasality_targets_ts"], targets["nasality_targets_vs"])
+        self.full_closure_targets = Targets(targets["full_closure_targets_ts"], targets["full_closure_targets_vs"])
+
+
+    def _simple_vowel_formant_freqs_targets_coarticulator(
+            self, phoneme: this_layer_types.TimedPhoneme,
+            prev_articulation_d, curr_articulation_d, next_articulation_d,
+            curr_phoneme_d) -> tuple[float, list]:
+        """
+        Code excerpt for DRY.
+        SPECIFICALLY coarticulates the vowel_formant_freqs, because they use FormantTargets.
+        Outputs one FormantTarget (this is not a real data structure, just the name of a column of data in FormantTargets.)
+        :param phoneme: The "phoneme" variable of the loop with phoneme_i and phoneme. The current TimedPhoneme.
+        :param prev_articulation_d:
+        :param curr_articulation_d:
+        :param next_articulation_d:
+        :param curr_phoneme_d:
+        :return: Returns the NEW ITEMS OF vowel_formant_freqs_targets_ts, and vowel_formant_freqs_targets_vs that should be APPENDED TO A LIST OF THEM.
+        """
+        ### region vowel formants
+        prev_vowel_formants = prev_articulation_d["vowel_formants"]
+        curr_vowel_formants = curr_articulation_d["vowel_formants"]
+        next_vowel_formants = next_articulation_d["vowel_formants"]
+        coloring = curr_phoneme_d["vowel_coarticulation_coloring"]
+
+        coarticulated_vowel_formants = []
+
+        for formant_i in range(
+                len(curr_vowel_formants)):  # we only need to coarticulate as much as the current vowel supports
+            if formant_i < len(prev_vowel_formants) and formant_i < len(next_vowel_formants):
+                # both-neighbor coarticulation
+                coarticulated_vowel_formants.append(
+                    ((coloring / 2) * prev_vowel_formants[formant_i]) +
+                    ((1 - coloring) * curr_vowel_formants[formant_i]) +
+                    ((coloring / 2) * next_vowel_formants[formant_i])
+                )
+            elif formant_i < len(prev_vowel_formants) and formant_i >= len(next_vowel_formants):
+                # previous neighbor exists (prev taken twice)
+                coarticulated_vowel_formants.append(
+                    ((coloring / 2) * prev_vowel_formants[formant_i]) +
+                    ((1 - coloring) * curr_vowel_formants[formant_i]) +
+                    ((coloring / 2) * prev_vowel_formants[formant_i])
+                )
+            elif formant_i >= len(prev_vowel_formants) and formant_i < len(next_vowel_formants):
+                # next neighbor exists (next taken twice)
+                coarticulated_vowel_formants.append(
+                    ((coloring / 2) * next_vowel_formants[formant_i]) +
+                    ((1 - coloring) * curr_vowel_formants[formant_i]) +
+                    ((coloring / 2) * next_vowel_formants[formant_i])
+                )
+            else:
+                # no coarticulation
+                coarticulated_vowel_formants.append(
+                    curr_vowel_formants[formant_i]
+                )
+
+        """vowel_formant_freqs_targets_ts.append(phoneme.start)
+        vowel_formant_freqs_targets_vs.append(coarticulated_vowel_formants)"""
+        return phoneme.start, coarticulated_vowel_formants
+        # endregion
+
+    def _simple_target_coarticulator(
+            self, phoneme: this_layer_types.TimedPhoneme,
+            prev_datapoint, curr_datapoint, next_datapoint,
+            coloring) -> tuple[float, float]:
+        """
+        Coarticulates everything that should have Targets as output.
+        Outputs exactly one target (for use in a Targets class).
+        :param phoneme: The current TImedPhoneme.
+        :param prev_datapoint: Similar to its use in _simple_vowel_formant_freqs_targets_coarticulator, but it has to be given by the outside function, because this is a general function.
+        :param curr_datapoint: same
+        :param next_datapoint: same
+        :param coloring: same
+        :return: A t and a v.
+        """
+
+    def _passthrough_phoneme_parameters(
+            self, phoneme: this_layer_types.TimedPhoneme, curr_phoneme_d) -> dict:
+        """
+        Calculates all the t and v of all PHONEME (so phoneme_data.json) parameters that don't have any coarticulation, like
+        vowel_formants_importance, constriction_importance etc.
+        The list of these parameters, along with the mapping to internal names, is found in __init__() under self.passthrough_phoneme_parameter_names.
+        :param phoneme: The current TimedPhoneme.
+        :param curr_articulation_d:
+        :param curr_phoneme_d:
+        :return: All the passthrough values with correct internal naming in a dict.
+        """
+        target_passthroughs = dict()
+        for json_parameter_name, internal_parameter_name in self.passthrough_phoneme_parameter_names.items():
+            t = phoneme.start
+            v = curr_phoneme_d[json_parameter_name]
+            target_passthroughs[internal_parameter_name + "_t"] = t
+            target_passthroughs[internal_parameter_name + "_v"] = v
+        return target_passthroughs
+
+    def _manner__flow(
+            self, phoneme, prev_articulation_d, curr_articulation_d, next_articulation_d,
+            curr_phoneme_d):
+        target = dict()
+
+        # vowel formants
+        t, v = self._simple_vowel_formant_freqs_targets_coarticulator(phoneme, prev_articulation_d, curr_articulation_d, next_articulation_d, curr_phoneme_d)
+        target["vowel_formant_freqs_targets_t"] = t
+        target["vowel_formant_freqs_targets_v"] = v
+        # constriction parameters (generalized)
+        for json_parameter_name, internal_parameter_name in self.coarticulated_constriction_parameter_names.items():
+            t, v = self._simple_target_coarticulator(
+                phoneme,
+                prev_articulation_d["constriction"][json_parameter_name],
+                curr_articulation_d["constriction"][json_parameter_name],
+                next_articulation_d["constriction"][json_parameter_name],
+                curr_phoneme_d["constriction_coarticulation_coloring"]
+            )
+            target[internal_parameter_name + "_t"] = t
+            target[internal_parameter_name + "_v"] = v
+        # phoneme_data.json parameters (removed for DRY-ness)
+        target.update(
+            self._passthrough_phoneme_parameters(phoneme, curr_phoneme_d)
+        )
+
+        # HANDLE MANNER-SPECIFIC FULL_CLOSURE
+        # There is no one here though, because flow is for vowels, fricatives, liquids etc.
+        target["full_closure_targets_t"] = phoneme.start
+        target["full_closure_targets_v"] = 0
+
+        # DICTIONARIFY OUTPUTS TO PASS THEM CLEANLY
+        return target
+
+
+
 def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     """
     Entry point, transform function for the TARGETING layer.
     :param input: layer input specified in the layer's types.
     :return: next layer input.
     """
-    character = load_character(input_.character_dir_path)
 
-    # magic
+    targets = Targeter(input_)
 
     output = next_layer_types.Input(
         character_dir_path=input_.character_dir_path,
         output_filepath=input_.output_filepath,
         duration=input_.duration,
         # Phoneme targets
-        vowel_formant_freqs_targets=,
-        constriction_HP_freq_targets=,
-        constriction_peak_freq_targets=,
-        constriction_peak_bandwidth_targets=,
-        constriction_peak_boost_targets=,
-        constriction_peak_overtone_importance_targets=,
-        constriction_LP_freq_targets=,
-        vowel_importance_targets=,
-        aspiration_importance_targets=,
-        constriction_importance_targets=,
-        nasality_targets=,
-        full_closure_targets=,
+        vowel_formant_freqs_targets=targets.vowel_formant_freqs_targets,
+        constriction_HP_freq_targets=targets.constriction_HP_freq_targets,
+        constriction_peak_freq_targets=targets.constriction_peak_freq_targets,
+        constriction_peak_bandwidth_targets=targets.constriction_peak_bandwidth_targets,
+        constriction_peak_boost_targets=targets.constriction_peak_boost_targets,
+        constriction_peak_overtone_importance_targets=targets.constriction_peak_overtone_importance_targets,
+        constriction_LP_freq_targets=targets.constriction_LP_freq_targets,
+        vowel_importance_targets=targets.vowel_importance_targets,
+        aspiration_importance_targets=targets.aspiration_importance_targets,
+        constriction_importance_targets=targets.constriction_importance_targets,
+        nasality_targets=targets.nasality_targets,
+        full_closure_targets=targets.full_closure_targets,
         # Global envelopes
         Volume=input_.envelope_targets.Volume,
         F0=input_.envelope_targets.F0,
@@ -56,23 +284,4 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
 
 
 if __name__ == "__main__":
-    from simple_speech_synthesizer.targeting.OLD_types import Input, TimedPhoneme, GlobalEnvelopeTargets
-    from simple_speech_synthesizer.base.types import Envelope, Point, Segment
-    i = Input(
-        character_dir_path=r"D:\PycharmProjects\simple-speech-synthesizer\simple_speech_synthesizer\characters\Greensparrow",
-        phonemes=(TimedPhoneme("s", 0, 0.1), TimedPhoneme("a", 0.1, 0.7), TimedPhoneme("s", 0.7, 0.8)),
-        global_envelope_targets=GlobalEnvelopeTargets(
-            F0=Envelope((Point(0, 0), Point(2, 0.5)), (Segment("polynomial", {"exponent": 1/2}),)),
-            NasalityDelta=Envelope((Point(0, 0), Point(2, 0.5)), (Segment("polynomial", {"exponent": 1/2}),)),
-            BreathinessDelta=Envelope((Point(0, 0), Point(2, 0.5)), (Segment("polynomial", {"exponent": 1/2}),)),
-            Tension=Envelope((Point(0, 0), Point(2, 0.5)), (Segment("polynomial", {"exponent": 1/2}),)),
-            VocalTilt=Envelope((Point(0, 0), Point(2, 0.5)), (Segment("polynomial", {"exponent": 1/2}),)),
-            LipRoundingDelta=Envelope((Point(0, 0), Point(2, 0.5)), (Segment("polynomial", {"exponent": 1/2}),)),
-            GenderDelta=Envelope((Point(0, 0), Point(2, 0.5)), (Segment("polynomial", {"exponent": 1/2}),)),
-            Volume=Envelope((Point(0, 0), Point(2, 0.5)), (Segment("polynomial", {"exponent": 1/2}),)),
-        ),
-        duration=0.8
-    )
-    t = transform(i)
-    for j in t.acoustic_targets:
-        print(j)
+    pass
