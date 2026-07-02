@@ -96,7 +96,7 @@ def synthesize(input: this_layer_types.Input):
             pyo.Reson(voice_source,
                       freq=calculated_freq,
                       q=calculate_q(freq, s_p["vowel_Q_floor"], s_p["vowel_Q_slope"]) * input.Vowel_Q_multiplier,
-                      mul=1)
+                      mul=input.Vowel_formant_importances[j])
         )
     ##### NASAL MURMUR "FORMANT"
     nasal_murmur_freq = s_p["nasal_murmur"]

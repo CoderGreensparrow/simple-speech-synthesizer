@@ -22,7 +22,7 @@
   "nasal_LP_freq": 1300,
   "nasal_antiformant_freq": 500,
   "nasal_antiformant_bandwidth": 500,
-  "default_nasal_antiformant_boost": -10,
+  "default_nasal_antiformant_boost": -12,
 
   "default_Constriction_volume_as_a_factor_of_volume": 0.4,
 
