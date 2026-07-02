@@ -12,7 +12,7 @@ import pyo
 import dataclasses
 
 from simple_speech_synthesizer.pyo_converter import types as this_layer_types
-from simple_speech_synthesizer.acoustic_state import synthesis_types as next_layer_types
+from simple_speech_synthesizer.acoustic_state import types as next_layer_types
 
 from simple_speech_synthesizer.base.types import FormantTargets, Targets, Envelope
 

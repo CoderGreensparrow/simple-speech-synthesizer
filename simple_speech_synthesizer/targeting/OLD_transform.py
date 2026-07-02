@@ -3,11 +3,11 @@ SYNTHESIS LAYER 2: Creates the acoustic targets for the nonexistent mouth.
 It knows nothing about prosody. It takes prosody-included phonemic input data, and converts that to formant parameters and vocal amplitudes.
 """
 
-from simple_speech_synthesizer.targeting import types as this_layer_types
+from simple_speech_synthesizer.targeting import OLD_types as this_layer_types
 from simple_speech_synthesizer.acoustic_state import OLD_ORDER_types as next_layer_types
 
-from simple_speech_synthesizer.targeting.load_character import load_character
-from simple_speech_synthesizer.targeting.target_generator import create_acoustic_targets
+from simple_speech_synthesizer.base.load_character import load_character
+from simple_speech_synthesizer.targeting.OLD_target_generator import create_acoustic_targets
 
 
 def transform(input: this_layer_types.Input) -> next_layer_types.Input:
@@ -31,7 +31,7 @@ def transform(input: this_layer_types.Input) -> next_layer_types.Input:
 
 
 if __name__ == "__main__":
-    from simple_speech_synthesizer.targeting.types import Input, TimedPhoneme, GlobalEnvelopeTargets
+    from simple_speech_synthesizer.targeting.OLD_types import Input, TimedPhoneme, GlobalEnvelopeTargets
     from simple_speech_synthesizer.base.types import Envelope, Point, Segment
     i = Input(
         character_dir_path=r"D:\PycharmProjects\simple-speech-synthesizer\simple_speech_synthesizer\characters\Greensparrow",

@@ -1,10 +1,27 @@
 from simple_speech_synthesizer.targeting.types import Input as InputTargeting
 from simple_speech_synthesizer.targeting.transform import transform as transform_targeting
-from simple_speech_synthesizer.acoustic_state.OLD_ORDER_types import Input as InputAcousticState
-from simple_speech_synthesizer.acoustic_state.OLD_transform import transform as transform_acoustic_state
+from simple_speech_synthesizer.pyo_converter.types import Input as InputPyoConverter
+from simple_speech_synthesizer.pyo_converter.transform import transform as transform_pyo_converter
+from simple_speech_synthesizer.acoustic_state.types import Input as InputAcousticState
+from simple_speech_synthesizer.acoustic_state.transform import transform as transform_acoustic_state
 from simple_speech_synthesizer.realization.types import Input as InputRealization
+from simple_speech_synthesizer.realization.transform import transform as transform_realization
+from simple_speech_synthesizer.synthesis.synthesis_types import Input as InputSynthesis
+from simple_speech_synthesizer.synthesis.transform import transform as transform_synthesis
 
 def process_targeting(input: InputTargeting, full_stack: bool = True):
+    """
+    Process the TARGETING layer.
+    :param input: Input of the layer with the layer's own Input class.
+    :param full_stack: Whether (TRUE case:) to run through the input the full stack of layers, and output TTS audio, or (FALSE case:) to only process this layer.
+    :return:
+    """
+    output = transform_targeting(input)
+    if full_stack:
+        output = process_pyo_converter(output, full_stack=True)
+    return output
+
+def process_pyo_converter(input: InputPyoConverter, full_stack: bool = True):
     """
     Process the TARGETING layer.
     :param input: Input of the layer with the layer's own Input class.
@@ -25,15 +42,35 @@ def process_acoustic_state(input: InputAcousticState, full_stack: bool = True):
     """
     output = transform_acoustic_state(input)
     if full_stack:
-        ...
-        #  output = process_realization(output, full_stack=True)
+        output = process_realization(output, full_stack=True)
+    return output
+
+def process_realization(input: InputRealization, full_stack: bool = True):
+    """
+    Process the REALIZATION (middle-level parameter to synthesizer-level parameter converter) layer.
+    :param input: Input of the layer with the layer's own Input class.
+    :param full_stack: Whether (TRUE case:) to run through the input the full stack of layers, and output TTS audio, or (FALSE case:) to only process this layer.
+    :return:
+    """
+    output = transform_acoustic_state(input)
+    if full_stack:
+        output = process_synthesis(output)
+    return output
+
+def process_synthesis(input: InputRealization):
+    """
+    Process the SYNTHESIS (last) layer.
+    :param input: Input of the layer with the layer's own Input class.
+    :param full_stack: Whether (TRUE case:) to run through the input the full stack of layers, and output TTS audio, or (FALSE case:) to only process this layer.
+    :return: The filepath of the outputted audio file
+    """
+    output = transform_synthesis(input)
     return output
 
 
 
-
 if __name__ == "__main__":
-    from simple_speech_synthesizer.targeting.types import Input, TimedPhoneme, GlobalEnvelopeTargets
+    from simple_speech_synthesizer.targeting.OLD_types import Input, TimedPhoneme, GlobalEnvelopeTargets
     from simple_speech_synthesizer.base.types import Envelope, Point, Segment
 
     i = Input(
@@ -52,16 +89,3 @@ if __name__ == "__main__":
         duration=0.089+0.165+0.11
     )
     o = process_targeting(i, full_stack=True)
-
-    import matplotlib.pyplot as plt
-
-    for i in range(len(o.high_level_envelopes.Vowel_formants)):
-        x = [point.t for point in o.high_level_envelopes.Vowel_formants[i].freq.points]
-        y = [point.v for point in o.high_level_envelopes.Vowel_formants[i].freq.points]
-        plt.scatter(x, y)
-
-    x = [point.t for point in o.high_level_envelopes.Constriction.points]
-    y = [point.v for point in o.high_level_envelopes.Constriction.points]
-    plt.scatter(x, y)
-
-    plt.show()

@@ -4,12 +4,12 @@ Functions for generating the subtargets for different manners of articulation wi
 The functions are organized under a single class that can generate each manner of articulation by just selecting the right base_function.
 """
 
-from simple_speech_synthesizer.targeting import types as this_layer_types
+from simple_speech_synthesizer.targeting import OLD_types as this_layer_types
 from simple_speech_synthesizer.acoustic_state import OLD_ORDER_types as next_layer_types
 
 from simple_speech_synthesizer.acoustic_state.OLD_ORDER_types import AcousticTarget, SimplifiedFormant
 
-from simple_speech_synthesizer.targeting.load_character import Character
+from simple_speech_synthesizer.base.load_character import Character
 
 
 def create_acoustic_targets(input: this_layer_types.Input, character: Character) -> tuple[next_layer_types.AcousticTarget, ...]:
