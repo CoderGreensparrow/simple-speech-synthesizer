@@ -5,10 +5,10 @@ from simple_speech_synthesizer.base.garbage_collection_prevention_helpers import
 
 from simple_speech_synthesizer.base.load_low_level_character import load_low_level_character
 
-from simple_speech_synthesizer.global_debug_vars import _DEBUG_SYNTHESIS
+from simple_speech_synthesizer.global_debug_vars import _DEBUG_SYNTHESIS, _DEBUG_SYNTHESIS_NAN_SEARCH, SEND_TO_THE_SCOPE, SEND_TO_THE_SPECTRUM
+from simple_speech_synthesizer.garbage_collection_prevention import anchor_pyo_objects, GLOBAL_AUDIO_FORTRESS
 
-from simple_speech_synthesizer.garbage_collection_prevention import anchor_pyo_objects, SEND_TO_THE_SCOPE
-
+import time, math
 
 AMPLITUDE_CORRECTION = -9
 
@@ -222,7 +222,9 @@ def synthesize(input: this_layer_types.Input):
     )
 
     #### ROUTE OUTPUT
+    audio_out.out(0)
     audio_out_2 = audio_out * 1
+    audio_out_2.out(1)
 
     #### PLAY ALL THE ENVELOPES
     '''for env in input.Vowel_formant_freqs: env.play()
@@ -259,26 +261,80 @@ def synthesize(input: this_layer_types.Input):
 
     #### RECORD
     s.recordOptions(dur=input.duration, filename=input.output_filepath)
+    s.start()
 
-    return audio_out, audio_out_2
+    ###### DEBUG
+    if _DEBUG_SYNTHESIS:
+        print("=== RUNNING SYNTHESIS DEBUG ===")
+        print("Length of collected PyoObjectBases:", len(GLOBAL_AUDIO_FORTRESS))
+    if _DEBUG_SYNTHESIS and not _DEBUG_SYNTHESIS_NAN_SEARCH:
+        GUI_debug(s, audio_out)
+    elif _DEBUG_SYNTHESIS and _DEBUG_SYNTHESIS_NAN_SEARCH:
+        NAN_search(s)
+
+    return input.output_filepath
 
     # TODO: there are still some magic numbers left in the synth (like the F0 multiplier is just... a character trait?
     #       and there are even more things, like how the multiplier of the F0noise is just... 1, and its Q value is fixed...
 
 @anchor_pyo_objects
-def transform(input: this_layer_types.Input) -> tuple[pyo.PyoObject, pyo.PyoObject]:
+def transform(input: this_layer_types.Input) -> str:
     """
     The final layer in the synthesis stack.
     :param input: This layer's Input.
     :return: The audio_out and audio_out_2, which will be anchored to the global execution layer in orchestrator.py to prevent Python garbage collection.
     """
-    audio_out, audio_out_2 = synthesize(input)
-    return audio_out, audio_out_2
+    output_filepath = synthesize(input)
+    return output_filepath
 
 
+def GUI_debug(s: pyo.Server, audio_out):
+    to_scope = [audio_out] + SEND_TO_THE_SCOPE
+    to_spectrum = [audio_out] + SEND_TO_THE_SPECTRUM
+    scope = pyo.Scope(to_scope, length=0.75)
+    analyzer = pyo.Spectrum(to_spectrum, size=2 ** 14)
+    analyzer.setFscaling(True)  # log
+    analyzer.setLowFreq(0)
+    analyzer.setHighFreq(10000)
+    analyzer.setGain(0)
+    s.gui(locals())
 
+def NAN_search(s: pyo.Server):
+    # Gemini code
+    print("=== NaN Tracker Active. Watching the DSP graph... ===")
+    try:
+        while True:
+            time.sleep(0.1)  # Sample frequently to catch it early
 
+            found_bad_obj = False
+            for obj in GLOBAL_AUDIO_FORTRESS:
+                try:
+                    # Read the current buffer value of the node
+                    val = obj.get()
 
+                    # Check if this specific node has collapsed into NaN or Infinity
+                    if math.isnan(val) or math.isinf(val):
+                        found_bad_obj = True
+                        print(f"\n=== MATH EXPLOSION DETECTED! ===")
+                        print(f"Node Type: {type(obj).__name__}")
+                        print(f"Memory Address: {hex(id(obj))}")
+
+                        # If the object has parameters you can read, print them:
+                        if hasattr(obj, 'freq'):
+                            print(f" -> Current Freq Parameter: {obj.freq}")
+                        if hasattr(obj, 'mul'):
+                            print(f" -> Current Mul Parameter: {obj.mul}")
+
+                except Exception:
+                    # Some internal structural base objects might not support .get(), skip them safely
+                    continue
+            if found_bad_obj:
+                print("\nHalting synthesis.")
+                return  # Exit the program immediately
+
+    except KeyboardInterrupt:
+        print("\nStopping audio server gracefully...")
+        s.stop()
 
 
 

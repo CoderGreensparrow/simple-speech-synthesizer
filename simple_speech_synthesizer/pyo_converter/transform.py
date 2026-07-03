@@ -21,6 +21,20 @@ from simple_speech_synthesizer.global_debug_vars import _DEBUG_SYNTHESIS
 from simple_speech_synthesizer.garbage_collection_prevention import anchor_pyo_objects
 
 @anchor_pyo_objects
+def start_pyo() -> pyo.Server:
+    pyo_server_kwargs = {
+        "sr": 48000,
+        "nchnls": 2,
+        "buffersize": 256,
+        "duplex": 0,
+        "audio": "offline" if not _DEBUG_SYNTHESIS else "portaudio"
+    }
+    s = pyo.Server(**pyo_server_kwargs)
+    s.deactivateMidi()
+    s.boot()
+    return s
+
+@anchor_pyo_objects
 def _targets_to_step(targets: Targets, input_duration: float) -> pyo.Linseg:
     stepped_targets = []
     for i, point in enumerate(zip(targets.ts, targets.vs)):
@@ -156,8 +170,8 @@ def convert_input(input_: this_layer_types.Input) -> dict:
     return output_attrs
 
 @anchor_pyo_objects
-def transform(orchestrator_server: pyo.Server, input_: this_layer_types.Input) -> next_layer_types.Input:
-    s = orchestrator_server
+def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
+    s = start_pyo()
     input_all_attrs = convert_input(input_)
     output = next_layer_types.Input(server=s,
                                     character_dir_path=input_.character_dir_path,

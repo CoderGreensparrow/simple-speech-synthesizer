@@ -274,7 +274,6 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     """
 
     targets = Targeter(input_)
-
     output = next_layer_types.Input(
         character_dir_path=input_.character_dir_path,
         output_filepath=input_.output_filepath,

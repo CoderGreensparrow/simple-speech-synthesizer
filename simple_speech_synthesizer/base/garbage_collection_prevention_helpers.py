@@ -1,5 +1,6 @@
 from pyo import PyoObject, Server
 from typing import Any
+from simple_speech_synthesizer.global_debug_vars import _PRINT_ACTIVATE_LAYER_INPUTS
 
 # Gemini code that I've looked through and it should be fine
 def activate_layer_inputs(input_dataclass: Any) -> None:
@@ -13,12 +14,12 @@ def activate_layer_inputs(input_dataclass: Any) -> None:
     for attr_name, value in vars(input_dataclass).items():
         # Case 1: The attribute itself is a pyo signal/object
         if isinstance(value, PyoObject):
-            print(attr_name, value)
+            if _PRINT_ACTIVATE_LAYER_INPUTS: print(attr_name, value)
             value.play()
 
         # Case 2: The attribute is a list/tuple of pyo signals (like formant frequencies)
         elif isinstance(value, (list, tuple)):
             for item in value:
                 if isinstance(item, PyoObject):
-                    print(attr_name, type(value), item)
+                    if _PRINT_ACTIVATE_LAYER_INPUTS: print(attr_name, type(value), item)
                     item.play()

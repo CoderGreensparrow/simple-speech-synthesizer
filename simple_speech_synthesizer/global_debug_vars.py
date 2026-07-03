@@ -1,1 +1,8 @@
-_DEBUG_SYNTHESIS = False
+_DEBUG_SYNTHESIS = True
+_DEBUG_SYNTHESIS_NAN_SEARCH = False
+"""If False, runs GUI. If True, runs manual NaN search on all PyoObjects collected at runtime."""
+_PRINT_ACTIVATE_LAYER_INPUTS = False
+
+# THESE ARE PROJECT-WIDE VARIABLES THAT CAN BE FILLED WITH NEEDED INFO
+SEND_TO_THE_SCOPE = list()
+SEND_TO_THE_SPECTRUM = list()
