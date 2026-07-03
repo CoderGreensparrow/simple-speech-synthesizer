@@ -1,4 +1,4 @@
-from pyo import PyoObject
+from pyo import PyoObject, Server
 from typing import Any
 
 # Gemini code that I've looked through and it should be fine

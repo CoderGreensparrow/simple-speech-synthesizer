@@ -61,6 +61,8 @@ print(out_index)
 s.setOutputDevice(out_index)
 s.boot().start()
 
+linseg = Linseg([(0, 1), (1, 1), (1, 2), (2, 2), (2, 0), (3, 0), (3, -1), (4, -1)])
+linseg.play()
 source = Round(Sine(1/0.02, mul=0.5, add=0.5))
 risetime = Sig(0.25, mul=0.01)
 falltime = Sig(0.25, mul=0.01)
@@ -72,7 +74,7 @@ port = Port(source, risetime=risetime, falltime=falltime)
 sigtochain = SigTo(SigTo(SigTo(SigTo(port, time=time), time=time), time=time), time=time)
 out = sigtochain
 
-scope = Scope([out, source])
+scope = Scope([out, linseg])
 scope.setLength(0.1)
 analyzer = Spectrum([out], size=2**14)
 analyzer.setFscaling(True)  # log

@@ -9,12 +9,15 @@ The actual conversion from custom types (Envelope) to pyo's types happens in the
 
 from simple_speech_synthesizer.realization import types as this_layer_types
 from simple_speech_synthesizer.synthesis import synthesis_types as next_layer_types
-from simple_speech_synthesizer.base.activate_play_on_input import activate_layer_inputs
+from simple_speech_synthesizer.base.garbage_collection_prevention_helpers import activate_layer_inputs
 
 from simple_speech_synthesizer.base.load_low_level_character import load_low_level_character
 
 from pyo import Max, Min, Sig
 
+from simple_speech_synthesizer.garbage_collection_prevention import anchor_pyo_objects
+
+@anchor_pyo_objects
 def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     """
     This layer applies the middle-level parameters to the low-level ones.
@@ -53,6 +56,35 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
 
     throat_jitter = input_.ThroatJitter
 
+    ### PLAY INPUTS
+    #  vowel_formant_freqs is a list, it's played in the calculation for conciseness
+    #  vowel_formant_importances similarly
+    constriction_HP_freq.play()
+    constriction_peak_freq.play()
+    constriction_peak_bandwidth.play()
+    constriction_peak_boost.play()
+    constriction_peak_overtone_importance.play()
+    constriction_LP_freq.play()
+
+    vowel_importance.play()
+    constriction_importance.play()
+
+    true_nasality.play()
+    true_aspiration.play()
+
+    full_closure.play()
+    stop_amp.play()
+
+    volume.play()
+    f0.play()
+    tension.play()
+    machine_growl.play()
+    lip_rounding_delta.play()
+    vocal_gender_delta.play()
+
+    throat_jitter.play()
+    ### endregion
+
 
     ### TRANSFORM
     # Whatever these equal to will be the output of this layer.
@@ -72,10 +104,21 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     true_vowel_importance = vowel_importance * (1-full_closure)
     true_volume = volume * stop_amp
 
+    ### region PLAY ABOVE
+    true_lip_rounding_factor.play()
+    gender_formant_factor.play()
+    gender_hill_boost_factor.play()
+    true_nasality.play()
+    true_aspiration.play()
+    true_constriction_importance.play()
+    true_vowel_importance.play()
+    true_volume.play()
+    ### endregion
 
-    Vowel_formant_freqs = [sig * gender_formant_factor * true_lip_rounding_factor
+    Vowel_formant_freqs = [sig.play() * gender_formant_factor * true_lip_rounding_factor
                            for sig in vowel_formant_freqs]
-    Vowel_formant_importances = vowel_formant_importances
+    Vowel_formant_importances = [sig.play()
+                           for sig in vowel_formant_importances]
     Constriction_HP_freq = constriction_HP_freq * gender_formant_factor * true_lip_rounding_factor
     Constriction_peak_freq = constriction_peak_freq * gender_formant_factor * true_lip_rounding_factor
     Constriction_peak_bandwidth = constriction_peak_bandwidth
@@ -112,7 +155,6 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
         character_dir_path=input_.character_dir_path,
         output_filepath=input_.output_filepath,
         duration=input_.duration,
-
         Vowel_formant_freqs=Vowel_formant_freqs,
         Vowel_formant_importances=Vowel_formant_importances,
         Constriction_HP_freq=Constriction_HP_freq,

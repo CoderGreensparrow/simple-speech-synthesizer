@@ -18,20 +18,9 @@ from simple_speech_synthesizer.base.types import FormantTargets, Targets, Envelo
 
 from simple_speech_synthesizer.global_debug_vars import _DEBUG_SYNTHESIS
 
+from simple_speech_synthesizer.garbage_collection_prevention import anchor_pyo_objects
 
-def start_pyo() -> pyo.Server:
-    pyo_server_kwargs = {
-        "sr": 48000,
-        "nchnls": 2,
-        "buffersize": 256,
-        "duplex": 0,
-        "audio": "offline" if not _DEBUG_SYNTHESIS else "portaudio"
-    }
-    s = pyo.Server(**pyo_server_kwargs)
-    s.deactivateMidi()
-    s.boot()
-    return s
-
+@anchor_pyo_objects
 def _targets_to_step(targets: Targets, input_duration: float) -> pyo.Linseg:
     stepped_targets = []
     for i, point in enumerate(zip(targets.ts, targets.vs)):
@@ -46,7 +35,7 @@ def _targets_to_step(targets: Targets, input_duration: float) -> pyo.Linseg:
             stepped_targets.append((input_duration, point[1]))  # pull the signal out till the end
     return pyo.Linseg(stepped_targets)
 
-
+@anchor_pyo_objects
 def _formant_targets_to_steps(formant_targets: FormantTargets, input_duration: float) -> tuple[list[pyo.Linseg], list[pyo.Linseg]]:
     """
     Converts the FormantTargets to step function control signal lists.
@@ -127,7 +116,7 @@ def _formant_targets_to_steps(formant_targets: FormantTargets, input_duration: f
     debug_return = (stepped_formant_targets, stepped_formant_importances)
     return normal_return if not _DEBUG_RETURN else debug_return
 
-
+@anchor_pyo_objects
 def _approximate_envelopes_with_linseg(envelope: Envelope, dt: float = 1/100) -> pyo.Linseg:
     t = envelope.min_t
     points = []
@@ -136,7 +125,7 @@ def _approximate_envelopes_with_linseg(envelope: Envelope, dt: float = 1/100) ->
         t += dt
     return pyo.Linseg(points)
 
-
+@anchor_pyo_objects
 def convert_input(input_: this_layer_types.Input) -> dict:
     """
     Generate a pyo step function control signal from the targets.
@@ -166,9 +155,9 @@ def convert_input(input_: this_layer_types.Input) -> dict:
         del input_all_attrs[key]"""
     return output_attrs
 
-
-def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
-    s = start_pyo()
+@anchor_pyo_objects
+def transform(orchestrator_server: pyo.Server, input_: this_layer_types.Input) -> next_layer_types.Input:
+    s = orchestrator_server
     input_all_attrs = convert_input(input_)
     output = next_layer_types.Input(server=s,
                                     character_dir_path=input_.character_dir_path,
