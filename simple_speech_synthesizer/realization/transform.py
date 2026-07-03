@@ -15,7 +15,7 @@ from simple_speech_synthesizer.base.load_low_level_character import load_low_lev
 
 from pyo import Max, Min, Sig
 
-from simple_speech_synthesizer.garbage_collection_prevention import anchor_pyo_objects
+from simple_speech_synthesizer.garbage_collection_prevention import anchor_pyo_objects, SEND_TO_THE_SCOPE
 
 @anchor_pyo_objects
 def transform(input_: this_layer_types.Input) -> next_layer_types.Input:

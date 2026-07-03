@@ -33,7 +33,7 @@ def _targets_to_step(targets: Targets, input_duration: float) -> pyo.Linseg:
         elif i == len(targets.ts) - 1:
             stepped_targets.append((point[0], point[1]))
             stepped_targets.append((input_duration, point[1]))  # pull the signal out till the end
-    return pyo.Linseg(stepped_targets)
+    return pyo.Linseg(stepped_targets, loop=False, initToFirstVal=True)
 
 @anchor_pyo_objects
 def _formant_targets_to_steps(formant_targets: FormantTargets, input_duration: float) -> tuple[list[pyo.Linseg], list[pyo.Linseg]]:
@@ -46,7 +46,7 @@ def _formant_targets_to_steps(formant_targets: FormantTargets, input_duration: f
     """
     max_num_formants = max(len(points) for points in formant_targets.vs)
 
-    PLACEHOLDER_FREQ_IF_THERE_IS_NO_DATA = 500
+    PLACEHOLDER_FREQ_IF_THERE_IS_NO_DATA = 4500
 
     # Each of the lists within stepped_formant_* will be converted to pyo.Linsegs.
     stepped_formant_targets = [[] for _ in range(max_num_formants)]
@@ -111,8 +111,8 @@ def _formant_targets_to_steps(formant_targets: FormantTargets, input_duration: f
                     stepped_formant_importances[formant_i].append((input_duration, 0))
 
     _DEBUG_RETURN = False
-    normal_return = ([pyo.Linseg(points) for points in stepped_formant_targets],
-            [pyo.Linseg(points) for points in stepped_formant_importances])
+    normal_return = ([pyo.Linseg(points, loop=False, initToFirstVal=True) for points in stepped_formant_targets],
+            [pyo.Linseg(points, loop=False, initToFirstVal=True) for points in stepped_formant_importances])
     debug_return = (stepped_formant_targets, stepped_formant_importances)
     return normal_return if not _DEBUG_RETURN else debug_return
 
@@ -123,7 +123,7 @@ def _approximate_envelopes_with_linseg(envelope: Envelope, dt: float = 1/100) ->
     while t <= envelope.max_t:
         points.append((t, envelope.get_value(t)))
         t += dt
-    return pyo.Linseg(points)
+    return pyo.Linseg(points, loop=False, initToFirstVal=True)
 
 @anchor_pyo_objects
 def convert_input(input_: this_layer_types.Input) -> dict:

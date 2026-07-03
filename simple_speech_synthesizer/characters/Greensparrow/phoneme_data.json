@@ -24,7 +24,7 @@
     "phoneme": "hun_iy_s",
     "manner": "flow",
     "vowel_formants_importance": 0,
-    "aspiration_importance": 1,
+    "aspiration_importance": 0.05,
     "constriction_importance": 1,
     "nasality": 0,
     "vowel_coarticulation_coloring": 0,

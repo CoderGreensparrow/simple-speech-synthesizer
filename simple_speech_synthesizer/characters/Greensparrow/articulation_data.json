@@ -25,11 +25,11 @@
     "vowel_formants": [280, 2042, 2588, 3676],
     "constriction": {
       "low_end": 2000,
-      "high_end": 17000,
-      "peak_frequency": 3210,
-      "peak_bandwidth": 800,
-      "boost": 10,
-      "overtone_importance": 1
+      "high_end": 11000,
+      "peak_frequency": 3300,
+      "peak_bandwidth": 400,
+      "boost": 16,
+      "overtone_importance": 0.7
     }
   }
 }

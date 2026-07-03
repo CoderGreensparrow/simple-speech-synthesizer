@@ -172,7 +172,7 @@ def synthesize(input: this_layer_types.Input):
                       q=calculate_aspiration_q(freq,
                                                s_p["aspiration_Q_floor"],
                                                s_p["aspiration_Q_slope"]),  # * input.Vowel_Q_tension_deltafactor,
-                      mul=1)
+                      mul=input.Vowel_formant_importances[j])
         )
 
     dark_aspiration_component = aspiration_f0 + sum(aspiration_formants)

@@ -32,7 +32,7 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     # ADDITIONAL COMPUTED VALUES
     Stop_amp = pyo.Port(
         # calculation: map range [0; 1] to [stop_amp_should_rise_after...; 1] then map the [0; 1] range of that to [1; max_stop_amp]
-        __1:=pyo.Clip((input_.Full_closure / (1-s_p["stop_amp_should_rise_after_full_closure_hits_this"]) - 1/(1-s_p["stop_amp_should_rise_after_full_closure_hits_this"]) + 1)
+        pyo.Clip((input_.Full_closure / (1-s_p["stop_amp_should_rise_after_full_closure_hits_this"]) - 1/(1-s_p["stop_amp_should_rise_after_full_closure_hits_this"]) + 1)
                  * (1-s_p["max_stop_amp"]) + 1,
                  min=1, max=s_p["max_stop_amp"]).play(),
         risetime=s_p["stop_amp_risetime"],
@@ -42,33 +42,33 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
 
     ### OUTPUTS
     # Envelopes, simulated from acoustic targets
-    Vowel_formant_freqs = [pyo.Port(seg, tongue_rt, tongue_ft) for seg in input_.Vowel_formant_freqs]
-    Vowel_formant_importances = [pyo.Port(seg, tongue_rt, tongue_ft) for seg in input_.Vowel_formant_importances]
-    Constriction_HP_freq = pyo.Port(input_.Constriction_HP_freq, tongue_rt, tongue_ft)
-    Constriction_peak_freq = pyo.Port(input_.Constriction_peak_freq, tongue_rt, tongue_ft)
-    Constriction_peak_bandwidth = pyo.Port(input_.Constriction_peak_bandwidth, tongue_rt, tongue_ft)
-    Constriction_peak_boost = pyo.Port(input_.Constriction_peak_boost, tongue_rt, tongue_ft)
-    Constriction_peak_overtone_importance = pyo.Port(input_.Constriction_peak_overtone_importance, tongue_rt, tongue_ft)
-    Constriction_LP_freq = pyo.Port(input_.Constriction_LP_freq, tongue_rt, tongue_ft)
+    Vowel_formant_freqs                   = [pyo.Port(seg, tongue_rt, tongue_ft, init=seg.getPoints()[0][1]) for seg in input_.Vowel_formant_freqs]
+    Vowel_formant_importances             = [pyo.Port(seg, tongue_rt, tongue_ft, init=seg.getPoints()[0][1]) for seg in input_.Vowel_formant_importances]
+    Constriction_HP_freq                  = pyo.Port(input_.Constriction_HP_freq, tongue_rt, tongue_ft, init=input_.Constriction_HP_freq.getPoints()[0][1])
+    Constriction_peak_freq                = pyo.Port(input_.Constriction_peak_freq, tongue_rt, tongue_ft, init=input_.Constriction_peak_freq.getPoints()[0][1])
+    Constriction_peak_bandwidth           = pyo.Port(input_.Constriction_peak_bandwidth, tongue_rt, tongue_ft, init=input_.Constriction_peak_bandwidth.getPoints()[0][1])
+    Constriction_peak_boost               = pyo.Port(input_.Constriction_peak_boost, tongue_rt, tongue_ft, init=input_.Constriction_peak_boost.getPoints()[0][1])
+    Constriction_peak_overtone_importance = pyo.Port(input_.Constriction_peak_overtone_importance, tongue_rt, tongue_ft, init=input_.Constriction_peak_overtone_importance.getPoints()[0][1])
+    Constriction_LP_freq                  = pyo.Port(input_.Constriction_LP_freq, tongue_rt, tongue_ft, init=input_.Constriction_LP_freq.getPoints()[0][1])
     #  Voice_to_noise_ratio: Envelope  This is replaced by individual Vowel, Aspiration and Constriction importances and Nasality
-    Vowel_importance = pyo.Port(input_.Vowel_importance, pharynx_rt, pharynx_ft)
-    Aspiration_importance = pyo.Port(input_.Aspiration_importance, pharynx_rt, pharynx_ft)
-    Constriction_importance = pyo.Port(input_.Constriction_importance, tongue_rt, tongue_ft)
-    Nasality = pyo.Port(input_.Nasality, larynx_rt, larynx_ft)
-    Full_closure = pyo.Port(input_.Full_closure, tongue_rt, tongue_ft)
-    Stop_amp = Stop_amp
+    Vowel_importance        = pyo.Port(input_.Vowel_importance, pharynx_rt, pharynx_ft, init=input_.Vowel_importance.getPoints()[0][1])
+    Aspiration_importance   = pyo.Port(input_.Aspiration_importance, pharynx_rt, pharynx_ft, init=input_.Aspiration_importance.getPoints()[0][1])
+    Constriction_importance = pyo.Port(input_.Constriction_importance, tongue_rt, tongue_ft, init=input_.Constriction_importance.getPoints()[0][1])
+    Nasality                = pyo.Port(input_.Nasality, larynx_rt, larynx_ft, init=input_.Nasality.getPoints()[0][1])
+    Full_closure            = pyo.Port(input_.Full_closure, tongue_rt, tongue_ft, init=input_.Full_closure.getPoints()[0][1])
+    Stop_amp                = Stop_amp
     # TODO Maybe there should be a max_stop_amp slider, and not just a constant
     # Global envelopes
-    Volume = pyo.Port(input_.Volume, pharynx_rt, pharynx_ft)
-    F0 = pyo.Port(input_.F0, pharynx_rt, pharynx_ft)
-    NasalityDelta = pyo.Port(input_.NasalityDelta, larynx_rt, larynx_ft)
-    BreathinessDelta = pyo.Port(input_.BreathinessDelta, pharynx_rt, pharynx_ft)
-    Tension = pyo.Port(input_.Tension, pharynx_rt, pharynx_ft)
-    MachineGrowl = pyo.Port(input_.MachineGrowl, pharynx_rt, pharynx_ft)
-    LipRoundingDelta = pyo.Port(input_.LipRoundingDelta, lip_rt, lip_ft)
-    VocalGenderDelta = pyo.Port(input_.VocalGenderDelta, pharynx_rt, pharynx_ft)
+    Volume           = pyo.Port(input_.Volume, pharynx_rt, pharynx_ft, init=input_.Volume.getPoints()[0][1])
+    F0               = pyo.Port(input_.F0, pharynx_rt, pharynx_ft, init=input_.F0.getPoints()[0][1])
+    NasalityDelta    = pyo.Port(input_.NasalityDelta, larynx_rt, larynx_ft, init=input_.NasalityDelta.getPoints()[0][1])
+    BreathinessDelta = pyo.Port(input_.BreathinessDelta, pharynx_rt, pharynx_ft, init=input_.BreathinessDelta.getPoints()[0][1])
+    Tension          = pyo.Port(input_.Tension, pharynx_rt, pharynx_ft, init=input_.Tension.getPoints()[0][1])
+    MachineGrowl     = pyo.Port(input_.MachineGrowl, pharynx_rt, pharynx_ft, init=input_.MachineGrowl.getPoints()[0][1])
+    LipRoundingDelta = pyo.Port(input_.LipRoundingDelta, lip_rt, lip_ft, init=input_.LipRoundingDelta.getPoints()[0][1])
+    VocalGenderDelta = pyo.Port(input_.VocalGenderDelta, pharynx_rt, pharynx_ft, init=input_.VocalGenderDelta.getPoints()[0][1])
     # Throat jitter
-    ThroatJitter = pyo.Port(input_.ThroatJitter, pharynx_rt, pharynx_ft)
+    ThroatJitter     = pyo.Port(input_.ThroatJitter, pharynx_rt, pharynx_ft, init=input_.ThroatJitter.getPoints()[0][1])
 
     output = next_layer_types.Input(
         server=input_.server,

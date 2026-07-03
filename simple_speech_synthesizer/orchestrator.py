@@ -190,7 +190,7 @@ def run_pyo_converter_fixed(input_: InputPyoConverter):
     else:
         to_scope = [audio_out]
         to_scope.extend(SEND_TO_THE_SCOPE)
-        pyo.Scope(to_scope)
+        scope = pyo.Scope(to_scope, length=0.75)
         analyzer = pyo.Spectrum([audio_out], size=2 ** 14)
         analyzer.setFscaling(True)  # log
         analyzer.setLowFreq(0)
