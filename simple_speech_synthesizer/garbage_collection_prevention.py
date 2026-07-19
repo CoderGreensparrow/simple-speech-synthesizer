@@ -6,7 +6,6 @@ import pyo
 gc.disable()
 
 GLOBAL_AUDIO_FORTRESS = []
-SEND_TO_THE_SCOPE = []
 
 
 def anchor_pyo_objects(func):

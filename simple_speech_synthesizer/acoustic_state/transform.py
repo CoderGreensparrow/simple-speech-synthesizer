@@ -6,7 +6,9 @@ from simple_speech_synthesizer.base.load_low_level_character import load_low_lev
 
 import pyo
 
-from simple_speech_synthesizer.global_debug_vars import _DEBUG_SYNTHESIS
+import math
+
+from simple_speech_synthesizer.global_debug_vars import SEND_TO_THE_SCOPE
 
 from simple_speech_synthesizer.garbage_collection_prevention import anchor_pyo_objects
 
@@ -42,7 +44,8 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
 
     ### OUTPUTS
     # Envelopes, simulated from acoustic targets
-    Vowel_formant_freqs                   = [pyo.Port(seg, tongue_rt, tongue_ft, init=seg.getPoints()[0][1]) for seg in input_.Vowel_formant_freqs]
+    # TODO: NOTE: if this ever fails again, I can add a pyo.Max(seg, 1) instead of seg to make sure Log2 doesn't get a 0 value.
+    Vowel_formant_freqs                   = [pyo.Pow(2, pyo.SigTo(pyo.Log2(seg), tongue_rt, init=math.log2(seg.getPoints()[0][1]))) for seg in input_.Vowel_formant_freqs]
     Vowel_formant_importances             = [pyo.Port(seg, tongue_rt, tongue_ft, init=seg.getPoints()[0][1]) for seg in input_.Vowel_formant_importances]
     Constriction_HP_freq                  = pyo.Port(input_.Constriction_HP_freq, tongue_rt, tongue_ft, init=input_.Constriction_HP_freq.getPoints()[0][1])
     Constriction_peak_freq                = pyo.Port(input_.Constriction_peak_freq, tongue_rt, tongue_ft, init=input_.Constriction_peak_freq.getPoints()[0][1])

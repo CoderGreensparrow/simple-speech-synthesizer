@@ -13,9 +13,11 @@ from simple_speech_synthesizer.base.garbage_collection_prevention_helpers import
 
 from simple_speech_synthesizer.base.load_low_level_character import load_low_level_character
 
+from simple_speech_synthesizer.global_debug_vars import SEND_TO_THE_SCOPE
+
 from pyo import Max, Min, Sig
 
-from simple_speech_synthesizer.garbage_collection_prevention import anchor_pyo_objects, SEND_TO_THE_SCOPE
+from simple_speech_synthesizer.garbage_collection_prevention import anchor_pyo_objects
 
 @anchor_pyo_objects
 def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
@@ -31,6 +33,7 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     ### INPUTS
     vowel_formant_freqs = input_.Vowel_formant_freqs
     vowel_formant_importances = input_.Vowel_formant_importances
+    SEND_TO_THE_SCOPE.extend(list(map(lambda x: x / 5000, vowel_formant_freqs)))
     constriction_HP_freq = input_.Constriction_HP_freq
     constriction_peak_freq = input_.Constriction_peak_freq
     constriction_peak_bandwidth = input_.Constriction_peak_bandwidth

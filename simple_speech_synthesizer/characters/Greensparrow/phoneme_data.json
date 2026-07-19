@@ -7,7 +7,7 @@
     "constriction_importance": 0,
     "nasality": 0,
     "vowel_coarticulation_coloring": 0.4,
-    "constriction_coarticulation_coloring": 0.1,
+    "constriction_coarticulation_coloring": 0.1
   },
   "hun_a": {
     "phoneme": "hun_a_ch",

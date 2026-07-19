@@ -1,4 +1,4 @@
-from simple_speech_synthesizer.garbage_collection_prevention import GLOBAL_AUDIO_FORTRESS, SEND_TO_THE_SCOPE
+from simple_speech_synthesizer.garbage_collection_prevention import GLOBAL_AUDIO_FORTRESS
 """This may be required to run correctly."""
 from simple_speech_synthesizer.targeting.types import Input as InputTargeting
 from simple_speech_synthesizer.targeting.transform import transform as transform_targeting
