@@ -1,8 +1,16 @@
 # simple-speech-synthesizer
 A simple speech synthesizer without rigorous internal structure.
 
-Name: PESK (from a typo by one of my friends)
-It's an acronym not yet decided... maybe parametrically engineered speech K____
+/Name: PESK (from a typo by one of my friends)/
+
+MODIFICATION: PEKSS, for Parametrically Engineered Kinetic Speech and Singing.
+STYLIZATIONS PER LANGUAGE:
+(stylized as PEKSZ for Hun, PEKẞ for Ger, ペックス for Jp, and left as PEKSS for English, PÉKSS for Spa)
+- Hun: PÉKSZ (Parametrikus Építésű Kinetikus SZintézis)
+- Ger: PEKẞ (Parametrisch Erbaut Kinematisch ẞynthese)
+- Jp: ペックス (意味なし)
+- Eng: PEKSS (base acronym)
+- Spa: PÉKSS (acronym undecided)
 
 The project description is better in __init__.py.
 Everything below is a remnant of the brainstorming.
