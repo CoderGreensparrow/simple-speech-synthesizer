@@ -36,6 +36,7 @@ class Input:
     # Global Envelopes
     Volume: PyoObject
     F0: PyoObject
+    H1_H2_balance: PyoObject
     Spectral_tilt_cutoff_delta: PyoObject
     Spectral_tilt_tension: PyoObject
     #  Spectral_hill_freq_deltafactor: PyoObject
@@ -43,9 +44,20 @@ class Input:
     Vowel_Q_multiplier: PyoObject
     Aspiration_volume_factor: PyoObject
     Constriction_volume_factor: PyoObject
-    Nasal_murmur_importance: PyoObject
+    #Nasal_murmur_importance: PyoObject
+    #Nasality_LP_strength: PyoObject
+    #Nasality_antiformant_boost: PyoObject
+    #### PROPER NASALS, REMOVE/REPURPOSE ABOVE
+    Nasality_F0_importance_factor: PyoObject
+    Nasality_F0_Q_factor: PyoObject
+    Nasality_F1_importance_factor: PyoObject
+    Nasality_F1_Q_factor: PyoObject
+    Nasality_nasal_formant_N1_freq: PyoObject
+    Nasality_nasal_formant_N1_importance: PyoObject
+    Nasality_nasal_formant_N2_freq: PyoObject
+    Nasality_nasal_formant_N2_importance: PyoObject
+    Nasality_LP_freq: PyoObject
     Nasality_LP_strength: PyoObject
-    Nasality_antiformant_boost: PyoObject
     # Throat jitter
     F0_freq_sway: PyoObject  # these are percentages from 0 to 1 (unbounded)
     F0_freq_FM_jitter: PyoObject

@@ -21,11 +21,24 @@
   "aspiration_F0_scaling_factor": "unknown",
 
   "nasal_murmur": 250,
-  "default_nasal_murmur_importance": 1,
-  "nasal_LP_freq": 1300,
-  "nasal_antiformant_freq": 500,
+  "default_nasal_murmur_importance": 0.5,
+  "nasal_LP_freq": 2000,
+  "nasal_antiformant_freq": 400,
   "nasal_antiformant_bandwidth": 500,
-  "default_nasal_antiformant_boost": -12,
+  "default_nasal_antiformant_boost": 0,
+
+  "default_nasality_F0_importance_factor": 0.8,
+  "default_nasality_F0_Q_factor": 0.5,
+  "default_nasality_H1_H2_balance_delta": -0.4,
+  "default_nasality_F1_importance_factor": 0.4,
+  "default_nasality_F1_Q_factor": 0.5,
+  "default_nasality_all_formants_Q_factor": 1,
+  "default_nasality_nasal_formant_n1_freq": 400,
+  "default_nasality_nasal_formant_n1_importance": 0.3,
+  "default_nasality_nasal_formant_n2_freq": 900,
+  "default_nasality_nasal_formant_n2_importance": 0.6,
+  "default_nasality_LP_freq": 1500,
+  "default_nasality_LP_strength": 0.4,
 
   "default_Constriction_volume_as_a_factor_of_volume": 0.3,
 

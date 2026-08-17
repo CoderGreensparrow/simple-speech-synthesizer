@@ -18,6 +18,8 @@ from simple_speech_synthesizer.base.types import FormantTargets, Targets, Envelo
 
 from simple_speech_synthesizer.global_debug_vars import _DEBUG_SYNTHESIS
 
+from simple_speech_synthesizer.global_debug_vars import SEND_TO_THE_SCOPE
+
 from simple_speech_synthesizer.garbage_collection_prevention import anchor_pyo_objects
 
 @anchor_pyo_objects
@@ -131,7 +133,7 @@ def _formant_targets_to_steps(formant_targets: FormantTargets, input_duration: f
     return normal_return if not _DEBUG_RETURN else debug_return
 
 @anchor_pyo_objects
-def _approximate_envelopes_with_linseg(envelope: Envelope, dt: float = 1/100) -> pyo.Linseg:
+def _approximate_envelopes_with_linseg(envelope: Envelope, dt: float = 1/20) -> pyo.Linseg:
     t = envelope.min_t
     points = []
     while t <= envelope.max_t:
@@ -162,7 +164,7 @@ def convert_input(input_: this_layer_types.Input) -> dict:
         elif isinstance(val, Targets):
             output_attrs[new_key] = _targets_to_step(val, input_.duration)
         elif isinstance(val, Envelope):
-            output_attrs[new_key] = _approximate_envelopes_with_linseg(val, input_.duration)
+            output_attrs[new_key] = _approximate_envelopes_with_linseg(val)
 
     """input_all_attrs.update(attr_overrides)
     for key in to_delete_because_of_formanttargets:

@@ -77,14 +77,12 @@ if __name__ == "__main__":
         output_filepath=r"D:\PycharmProjects\simple-speech-synthesizer\simple_speech_synthesizer\testaudio.wav",
         duration=3,
         phonemes=(
-            TimedPhoneme("hun_s", 0, 1),
-            TimedPhoneme("hun_a", 1, 2),
-            TimedPhoneme("hun_s", 2, 3),
+            TimedPhoneme("hun_a", 0, 3),
         ),
         envelope_targets=EnvelopeTargets(
             Volume=Envelope((Point(0, -6), Point(3, -6)), (Segment("linear"),)),
             F0=Envelope((Point(0, 120), Point(3, 120)), (Segment("linear"),)),
-            NasalityDelta=Envelope((Point(0, 0), Point(3, 0)), (Segment("linear"),)),
+            NasalityDelta=Envelope((Point(0, 0), Point(1.5, 1), Point(3, 1)), (Segment("linear"), Segment("linear"))),
             BreathinessDelta=Envelope((Point(0, 0), Point(3, 0)), (Segment("linear"),)),
             Tension=Envelope((Point(0, 0), Point(3, 0)), (Segment("linear"),)),
             MachineGrowl=Envelope((Point(0, 0), Point(3, 0)), (Segment("linear"),)),

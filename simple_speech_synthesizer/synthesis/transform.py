@@ -93,46 +93,42 @@ def synthesize(input: this_layer_types.Input):
 
     ### VOICE FILTER
     vowel_f0 = pyo.ButLP(
-        pyo.Reson(voice_source, true_F0, 1, mul=s_p["FO_mul"]),
-            true_F0 * s_p["H1_H2_balance"]
+        pyo.Reson(voice_source, true_F0, 1 * input.Nasality_F0_Q_factor, mul=s_p["FO_mul"] * input.Nasality_F0_importance_factor),
+            true_F0 * input.H1_H2_balance
     )  # TODO implement H1_H2_balance correctly (there are weird cancelling artifacts...
     vowel_formants = list()
     for j, freq in enumerate(input.Vowel_formant_freqs):
         calculated_freq = freq
-        if j == 0:
+        calculated_q = calculate_q(freq, s_p["vowel_Q_floor"], s_p["vowel_Q_slope"]) * input.Vowel_Q_multiplier
+        calculated_importance = input.Vowel_formant_importances[j]
+        if j == 0:  # F1
             calculated_freq = pyo.Max(calculated_freq, true_F0 + s_p["F0_F1_min_difference"])
+            calculated_q *= input.Nasality_F1_Q_factor
+            calculated_importance *= input.Nasality_F1_importance_factor
         vowel_formants.append(
             pyo.Reson(voice_source,
                       freq=calculated_freq,
-                      q=calculate_q(freq, s_p["vowel_Q_floor"], s_p["vowel_Q_slope"]) * input.Vowel_Q_multiplier,
-                      mul=input.Vowel_formant_importances[j])
+                      q=calculated_q,
+                      mul=calculated_importance)
         )
 
-    ##### NASAL MURMUR "FORMANT"
-    nasal_murmur_freq = s_p["nasal_murmur"]
-    vowel_formants.append(
-        pyo.Reson(voice_source,
-                  freq=nasal_murmur_freq,
-                  q=calculate_q(nasal_murmur_freq, s_p["vowel_Q_floor"], s_p["vowel_Q_slope"]) * input.Vowel_Q_multiplier,
-                  mul=input.Nasal_murmur_importance)
-    )
+    ##### NASAL FORMANTS INSERTED IN VOWEL FORMANTS
+    for j, freq in enumerate([input.Nasality_nasal_formant_N1_freq, input.Nasality_nasal_formant_N2_freq]):
+        """NO MINIMUM BETWEEN F0 AND N1???
+        calculated_freq = freq
+        if j == 0:
+            calculated_freq = pyo.Max(calculated_freq, true_F0 + s_p["F0_F1_min_difference"])"""
+        vowel_formants.append(  # they are not treated differently, as they are still pyo.Reson objects acting upon the same source
+            pyo.Reson(voice_source,
+                      freq=freq,
+                      q=calculate_q(freq, s_p["vowel_Q_floor"], s_p["vowel_Q_slope"]) * input.Vowel_Q_multiplier,
+                      mul=[input.Nasality_nasal_formant_N1_importance, input.Nasality_nasal_formant_N2_importance][j])
+        )
 
-    voiced_component_without_nasal_component = vowel_f0 + sum(vowel_formants)
-    ##### NASAL LP AND ANTIFORMANT
-    nasal_lp_applied = pyo.ButLP(pyo.ButLP(voiced_component_without_nasal_component,
-                                freq=s_p["nasal_LP_freq"]), freq=s_p["nasal_LP_freq"])
-    nasal_lp_crossfade = pyo.Selector([voiced_component_without_nasal_component,
-                                       nasal_lp_applied],
-                                      voice=input.Nasality_LP_strength)
-    voiced_component = pyo.EQ(nasal_lp_crossfade,
-                              freq=s_p["nasal_antiformant_freq"],
-                              q=s_p["nasal_antiformant_freq"] / s_p["nasal_antiformant_bandwidth"],
-                              boost=input.Nasality_antiformant_boost)
+    raw_voiced_component = vowel_f0 + sum(vowel_formants)  # aka. without aspiration and nasality
 
-    ### VOWEL + NASALITY OUTPUT
-    voiced_component = voiced_component * input.Voiced_component_importance
-
-
+    ### VOWEL OUTPUT
+    raw_voiced_component = raw_voiced_component * input.Voiced_component_importance
 
     # TODO: There's still a whistle left because of the aspiration...
     ### ASPIRATION SOURCE (this is also passed to the same filters for efficiency)
@@ -159,20 +155,36 @@ def synthesize(input: this_layer_types.Input):
     ### ASPIRATION FILTER
     aspiration_f0 = pyo.ButLP(
         pyo.Reson(aspiration_source, true_F0, 1, mul=s_p["F0_aspiration_mul"]),
-            true_F0 * s_p["H1_H2_balance"]
+            true_F0 * input.H1_H2_balance
     )  # TODO implement H1_H2_balance correctly (there are weird cancelling artifacts...
     aspiration_formants = list()
     for j, freq in enumerate(input.Vowel_formant_freqs):
         calculated_freq = freq
-        if j == 0:
+        calculated_q = calculate_q(freq, s_p["aspiration_Q_floor"], s_p["aspiration_Q_slope"]) #  * input.Vowel_Q_multiplier
+        calculated_importance = input.Vowel_formant_importances[j]
+        if j == 0:  # F1
             calculated_freq = pyo.Max(calculated_freq, true_F0 + s_p["F0_F1_min_difference"])
+            calculated_q *= input.Nasality_F1_Q_factor
+            calculated_importance *= input.Nasality_F1_importance_factor
         aspiration_formants.append(
             pyo.Reson(aspiration_source,
                       freq=calculated_freq,
-                      q=calculate_aspiration_q(freq,
-                                               s_p["aspiration_Q_floor"],
-                                               s_p["aspiration_Q_slope"]),  # * input.Vowel_Q_tension_deltafactor,
-                      mul=input.Vowel_formant_importances[j])
+                      q=calculated_q,
+                      mul=calculated_importance)
+        )
+
+    ##### NASAL FORMANTS INSERTED IN ASPIRATION FORMANTS
+    for j, freq in enumerate([input.Nasality_nasal_formant_N1_freq, input.Nasality_nasal_formant_N2_freq]):
+        """NO MINIMUM BETWEEN F0 AND N1???
+        calculated_freq = freq
+        if j == 0:
+            calculated_freq = pyo.Max(calculated_freq, true_F0 + s_p["F0_F1_min_difference"])"""
+        aspiration_formants.append(
+            # they are not treated differently, as they are still pyo.Reson objects acting upon the same source
+            pyo.Reson(aspiration_source,
+                      freq=freq,
+                      q=calculate_q(freq, s_p["aspiration_Q_floor"], s_p["aspiration_Q_slope"]),
+                      mul=[input.Nasality_nasal_formant_N1_importance, input.Nasality_nasal_formant_N2_importance][j])
         )
 
     dark_aspiration_component = aspiration_f0 + sum(aspiration_formants)
@@ -186,6 +198,22 @@ def synthesize(input: this_layer_types.Input):
     aspiration_component = dark_aspiration_component + pyo.Balance(brightness_loss_compensation, pyo.FastSine(true_F0, mul=amp_multiplier))
 
     aspiration_component = aspiration_component * input.Aspiration_component_importance
+
+    ### VOWEL + ASPIRATION = FULL_VOICED_WITHOUT_GLOBAL_NASALITY (but nasal formants are there)
+    full_voiced_component_without_global_nasality = raw_voiced_component + aspiration_component
+
+    ##### VOWEL_NASALALITY LP (AND NO ANTIFORMANT)
+    nasal_lp_applied = pyo.ButLP(full_voiced_component_without_global_nasality,
+                                           freq=input.Nasality_LP_freq)
+    nasal_lp_crossfade = pyo.Selector([full_voiced_component_without_global_nasality,
+                                       nasal_lp_applied],
+                                      voice=input.Nasality_LP_strength)
+
+    """full_voiced_component = pyo.EQ(nasal_lp_crossfade,
+                              freq=s_p["nasal_antiformant_freq"],
+                              q=s_p["nasal_antiformant_freq"] / s_p["nasal_antiformant_bandwidth"],
+                              boost=input.Nasality_antiformant_boost)"""
+    full_voiced_component = nasal_lp_crossfade  # vowel + aspiration + nasal formants for both + global nasalaity properties
 
     # CONSTRICTION SOURCE
     constriction_source = pyo.Noise()
@@ -206,7 +234,7 @@ def synthesize(input: this_layer_types.Input):
 
     ### Effects + FULL SUM OUT
 
-    non_effected_sum = voiced_component + aspiration_component + constriction_component
+    non_effected_sum = full_voiced_component + constriction_component
 
     reverb_sum = pyo.Freeverb(
         non_effected_sum,

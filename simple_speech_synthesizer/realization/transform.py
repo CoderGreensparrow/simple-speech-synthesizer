@@ -134,18 +134,30 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
 
     Volume = true_volume
     F0 = f0  # tension not added for correct singing
+    H1_H2_balance = s_p["H1_H2_balance"] + s_p["default_nasality_H1_H2_balance_delta"] * true_nasality
     Spectral_tilt_cutoff_delta = 0 + tension * s_p["tension_induced_spectral_tilt_freq_delta"]
     Spectral_tilt_tension = (0 + true_aspiration * s_p["aspiration_tension_scaling_factor"]
                              + tension * s_p["tension_induced_spectral_tilt_scaling_factor"])
     Spectral_hill_boost_delta = (0 + true_aspiration * s_p["spectral_hill_aspiration_boost"]
                                  + tension * s_p["tension_induced_spectral_hill_boost"]
                                  + gender_hill_boost_factor)
-    Vowel_Q_multiplier = Max(1 - (0.5 * true_nasality), 0.0001)  # failsafe: don't get Q to 0
+    Vowel_Q_multiplier = Max(1 + -(1 - s_p["default_nasality_all_formants_Q_factor"]) * true_nasality, 0.0001)  # failsafe: don't get Q to 0
     Aspiration_volume_factor = Sig(s_p["default_Vowel_aspiration_as_a_factor_of_volume"])
     Constriction_volume_factor = Sig(s_p["default_Constriction_volume_as_a_factor_of_volume"])
-    Nasal_murmur_importance = true_nasality * s_p["default_nasal_murmur_importance"]
-    Nasality_LP_strength = true_nasality
-    Nasality_antiformant_boost = true_nasality * s_p["default_nasal_antiformant_boost"]
+    """Nasal_murmur_importance = true_nasality * s_p["default_nasal_murmur_importance"]
+    Nasality_LP_strength = true_nasality"""
+    #Nasality_antiformant_boost = true_nasality * s_p["default_nasal_antiformant_boost"]
+
+    Nasality_F0_importance_factor = true_nasality * -(1 - s_p["default_nasality_F0_importance_factor"]) + 1
+    Nasality_F0_Q_factor = true_nasality * -(1 - s_p["default_nasality_F0_Q_factor"]) + 1
+    Nasality_F1_importance_factor = true_nasality * -(1 - s_p["default_nasality_F1_importance_factor"]) + 1
+    Nasality_F1_Q_factor = true_nasality * -(1 - s_p["default_nasality_F1_Q_factor"]) + 1
+    Nasality_nasal_formant_N1_freq = Sig(s_p["default_nasality_nasal_formant_n1_freq"])
+    Nasality_nasal_formant_N1_importance = true_nasality * s_p["default_nasality_nasal_formant_n1_importance"]
+    Nasality_nasal_formant_N2_freq = Sig(s_p["default_nasality_nasal_formant_n2_freq"])
+    Nasality_nasal_formant_N2_importance = true_nasality * s_p["default_nasality_nasal_formant_n2_importance"]
+    Nasality_LP_freq = Sig(s_p["default_nasality_LP_freq"])
+    Nasality_LP_strength = true_nasality * Sig(s_p["default_nasality_LP_strength"])
 
     F0_freq_sway = Sig(throat_jitter)  # magic numbers in synthesizer, these are just factors
     F0_freq_FM_jitter = Sig(throat_jitter)
@@ -172,15 +184,25 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
 
         Volume=Volume,
         F0=F0,
+        H1_H2_balance=H1_H2_balance,
         Spectral_tilt_cutoff_delta=Spectral_tilt_cutoff_delta,
         Spectral_tilt_tension=Spectral_tilt_tension,
         Spectral_hill_boost_delta=Spectral_hill_boost_delta,
         Vowel_Q_multiplier=Vowel_Q_multiplier,
         Aspiration_volume_factor=Aspiration_volume_factor,
         Constriction_volume_factor=Constriction_volume_factor,
-        Nasal_murmur_importance=Nasal_murmur_importance,
-        Nasality_LP_strength=Nasality_LP_strength,
-        Nasality_antiformant_boost=Nasality_antiformant_boost,
+
+        #Nasality_antiformant_boost=Nasality_antiformant_boost,
+        Nasality_F0_importance_factor=Nasality_F0_importance_factor,
+        Nasality_F0_Q_factor = Nasality_F0_Q_factor,
+        Nasality_F1_importance_factor=Nasality_F1_importance_factor,
+        Nasality_F1_Q_factor=Nasality_F1_Q_factor,
+        Nasality_nasal_formant_N1_freq = Nasality_nasal_formant_N1_freq,
+        Nasality_nasal_formant_N1_importance = Nasality_nasal_formant_N1_importance,
+        Nasality_nasal_formant_N2_freq = Nasality_nasal_formant_N2_freq,
+        Nasality_nasal_formant_N2_importance = Nasality_nasal_formant_N2_importance,
+        Nasality_LP_freq = Nasality_LP_freq,
+        Nasality_LP_strength = Nasality_LP_strength,
 
         F0_freq_sway=F0_freq_sway,
         F0_freq_FM_jitter=F0_freq_FM_jitter,
