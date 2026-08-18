@@ -46,5 +46,21 @@
       "antiformant_bandwidth": 500,
       "antiformant_boost": -20
     }
+  },
+  "hun_n_syh": {
+    "vowel_formants": [200, 1676, 2681, 3607],
+    "constriction": {
+      "low_end": 2000,
+      "high_end": 15000,
+      "peak_frequency": 7200,
+      "peak_bandwidth": 1000,
+      "boost": 16,
+      "overtone_importance": 0
+    },
+    "nasalization": {
+      "antiformant_freq": 1342,
+      "antiformant_bandwidth": 200,
+      "antiformant_boost": -20
+    }
   }
 }

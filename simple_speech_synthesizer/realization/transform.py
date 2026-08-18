@@ -33,7 +33,7 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     ### INPUTS
     vowel_formant_freqs = input_.Vowel_formant_freqs
     vowel_formant_importances = input_.Vowel_formant_importances
-    SEND_TO_THE_SCOPE.extend(list(map(lambda x: x / 5000, vowel_formant_freqs)))
+    #SEND_TO_THE_SCOPE.extend(list(map(lambda x: x / 5000, vowel_formant_freqs)))
     constriction_HP_freq = input_.Constriction_HP_freq
     constriction_peak_freq = input_.Constriction_peak_freq
     constriction_peak_bandwidth = input_.Constriction_peak_bandwidth
@@ -148,20 +148,26 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     Vowel_Q_multiplier = Max(1 + -(1 - s_p["default_nasality_all_formants_Q_factor"]) * true_nasality, 0.0001)  # failsafe: don't get Q to 0
     Aspiration_volume_factor = Sig(s_p["default_Vowel_aspiration_as_a_factor_of_volume"])
     Constriction_volume_factor = Sig(s_p["default_Constriction_volume_as_a_factor_of_volume"])
-    """Nasal_murmur_importance = true_nasality * s_p["default_nasal_murmur_importance"]
-    Nasality_LP_strength = true_nasality"""
-
+    Nasal_murmur_importance = ((Max(oral_closure - s_p["default_nasal_murmur_activates_after_this_oral_constriction"], 0) / (1 - s_p["default_nasal_murmur_activates_after_this_oral_constriction"]))
+                               * true_nasality * s_p["default_oral_constriction_nasal_murmur_importance"])
     Nasality_F0_importance_factor = true_nasality * -(1 - s_p["default_nasality_F0_importance_factor"]) + 1
     Nasality_F0_Q_factor = true_nasality * -(1 - s_p["default_nasality_F0_Q_factor"]) + 1
     Nasality_antiformant_freq      = oral_closure * (nasality_antiformant_freq_for_nasal_consonants - s_p["default_nasality_antiformant_freq_for_nasalized_vowels"]) + s_p["default_nasality_antiformant_freq_for_nasalized_vowels"]
     Nasality_antiformant_bandwidth = oral_closure * (nasality_antiformant_bandwidth_for_nasal_consonants - s_p["default_nasality_antiformant_bandwidth_for_nasalized_vowels"]) + s_p["default_nasality_antiformant_bandwidth_for_nasalized_vowels"]
     Nasality_antiformant_boost     = true_nasality * (oral_closure * (nasality_antiformant_boost_for_nasal_consonants - s_p["default_nasality_antiformant_boost_for_nasalized_vowels"]) + s_p["default_nasality_antiformant_boost_for_nasalized_vowels"])
-    Nasality_F1_importance_factor = true_nasality * -(1 - s_p["default_nasality_F1_importance_factor"]) + 1
+    Nasality_F1_importance_factor = (true_nasality * -(1 - s_p["default_nasality_F1_importance_factor"]) + 1) * (oral_closure * -(1 - s_p["default_oral_constriction_F1_importance_factor"]) + 1)
     Nasality_F1_Q_factor = true_nasality * -(1 - s_p["default_nasality_F1_Q_factor"]) + 1
+    Nasality_F2_and_higher_importance_factor = oral_closure * -(1 - s_p["default_oral_constriction_F2_and_higher_importance_factor"]) + 1
     Nasality_nasal_formant_N1_freq = Sig(s_p["default_nasality_nasal_formant_n1_freq"])
-    Nasality_nasal_formant_N1_importance = true_nasality * s_p["default_nasality_nasal_formant_n1_importance"]
+    Nasality_nasal_formant_N1_importance = (true_nasality * s_p["default_nasality_nasal_formant_n1_importance"]
+                                            * ((Max(oral_closure - s_p["default_oral_constriction_n1n2_imp_factors_only_after_oc_is"], 0) / (1 - s_p["default_oral_constriction_n1n2_imp_factors_only_after_oc_is"]))
+                                               * -(1 - s_p["default_oral_constriction_n1_importance_factor"]) + 1))
     Nasality_nasal_formant_N2_freq = Sig(s_p["default_nasality_nasal_formant_n2_freq"])
-    Nasality_nasal_formant_N2_importance = true_nasality * s_p["default_nasality_nasal_formant_n2_importance"]
+    Nasality_nasal_formant_N2_importance = (true_nasality * s_p["default_nasality_nasal_formant_n2_importance"]
+                                            * ((Max(oral_closure - s_p["default_oral_constriction_n1n2_imp_factors_only_after_oc_is"], 0) / (1 - s_p["default_oral_constriction_n1n2_imp_factors_only_after_oc_is"]))
+                                               * -(1 - s_p["default_oral_constriction_n2_importance_factor"]) + 1))
+    SEND_TO_THE_SCOPE.extend([Max(oral_closure - s_p["default_oral_constriction_n1n2_imp_factors_only_after_oc_is"], 0) / (1 - s_p["default_oral_constriction_n1n2_imp_factors_only_after_oc_is"])])
+    #Nasality_nasal_formant_N2_importance = true_nasality * s_p["default_nasality_nasal_formant_n2_importance"]
     Nasality_LP_freq = Sig(s_p["default_nasality_LP_freq"])
     Nasality_LP_strength = true_nasality * Sig(s_p["default_nasality_LP_strength"])
 
@@ -197,7 +203,7 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
         Vowel_Q_multiplier=Vowel_Q_multiplier,
         Aspiration_volume_factor=Aspiration_volume_factor,
         Constriction_volume_factor=Constriction_volume_factor,
-
+        Nasal_murmur_importance=Nasal_murmur_importance,
         Nasality_F0_importance_factor=Nasality_F0_importance_factor,
         Nasality_F0_Q_factor = Nasality_F0_Q_factor,
         Nasality_antiformant_freq=Nasality_antiformant_freq,
@@ -205,6 +211,7 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
         Nasality_antiformant_boost=Nasality_antiformant_boost,
         Nasality_F1_importance_factor=Nasality_F1_importance_factor,
         Nasality_F1_Q_factor=Nasality_F1_Q_factor,
+        Nasality_F2_and_higher_importance_factor=Nasality_F2_and_higher_importance_factor,
         Nasality_nasal_formant_N1_freq = Nasality_nasal_formant_N1_freq,
         Nasality_nasal_formant_N1_importance = Nasality_nasal_formant_N1_importance,
         Nasality_nasal_formant_N2_freq = Nasality_nasal_formant_N2_freq,

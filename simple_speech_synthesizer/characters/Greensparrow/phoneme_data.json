@@ -28,5 +28,15 @@
     "nasality": 0,
     "vowel_coarticulation_coloring": 0,
     "constriction_coarticulation_coloring": 0.2
+  },
+  "hun_n": {
+    "phoneme": "hun_n_syh",
+    "manner": "nasal",
+    "vowel_formants_importance": 1,
+    "aspiration_importance": 1,
+    "constriction_importance": 0,
+    "nasality": 1,
+    "vowel_coarticulation_coloring": 0,
+    "constriction_coarticulation_coloring": 0.2
   }
 }

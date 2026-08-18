@@ -103,6 +103,8 @@ class Targeter:
             match curr_phoneme_d["manner"]:
                 case "flow":
                     target_dict = self._manner__flow(phoneme, prev_articulation_d, curr_articulation_d, next_articulation_d, curr_phoneme_d)
+                case "nasal":
+                    target_dict = self._manner__nasal(phoneme, prev_articulation_d, curr_articulation_d, next_articulation_d, curr_phoneme_d)
 
             for internal_name in self.all_internal_names:
                 targets[internal_name + "_ts"].append(target_dict[internal_name + "_t"])
@@ -293,6 +295,48 @@ class Targeter:
         # There is no one here though, because flow is for vowels, fricatives, liquids etc.
         target["oral_closure_targets_t"] = phoneme.start
         target["oral_closure_targets_v"] = 0
+
+        # DICTIONARIFY OUTPUTS TO PASS THEM CLEANLY
+        return target
+
+    def _manner__nasal(
+            self, phoneme, prev_articulation_d, curr_articulation_d, next_articulation_d,
+            curr_phoneme_d):
+        target = dict()
+        """NOTE, THIS IS BASICALLY THE SAME AS _manner__flow, JUST WITH ORAL_CLOSURE = 1."""
+
+        # vowel formants
+        t, v = self._simple_vowel_formant_freqs_targets_coarticulator(phoneme, prev_articulation_d, curr_articulation_d, next_articulation_d, curr_phoneme_d)
+        target["vowel_formant_freqs_targets_t"] = t
+        target["vowel_formant_freqs_targets_v"] = v
+        # constriction parameters (generalized)
+        for json_parameter_name, internal_parameter_name in self.coarticulated_constriction_parameter_names.items():
+            t, v = self._simple_target_coarticulator(
+                phoneme,
+                prev_articulation_d["constriction"][json_parameter_name],
+                curr_articulation_d["constriction"][json_parameter_name],
+                next_articulation_d["constriction"][json_parameter_name],
+                curr_phoneme_d["constriction_coarticulation_coloring"]
+            )
+            target[internal_parameter_name + "_t"] = t
+            target[internal_parameter_name + "_v"] = v
+        # passthrough non-coarticulated constriciton parameters
+        target.update(
+            self._passthrough_non_coarticulated_constriction_parameters(phoneme, curr_articulation_d)
+        )
+        # passthrough nasalization parameters (non-coarticulated)
+        target.update(
+            self._passthrough_nasalization_parameters(phoneme, curr_articulation_d)
+        )
+        # phoneme_data.json parameters (removed for DRY-ness)
+        target.update(
+            self._passthrough_phoneme_parameters(phoneme, curr_phoneme_d)
+        )
+
+        # HANDLE MANNER-SPECIFIC ORAL_CLOSURE
+        # There is no one here though, because flow is for vowels, fricatives, liquids etc.
+        target["oral_closure_targets_t"] = phoneme.start
+        target["oral_closure_targets_v"] = 1
 
         # DICTIONARIFY OUTPUTS TO PASS THEM CLEANLY
         return target

@@ -105,6 +105,8 @@ def synthesize(input: this_layer_types.Input):
             calculated_freq = pyo.Max(calculated_freq, true_F0 + s_p["F0_F1_min_difference"])
             calculated_q *= input.Nasality_F1_Q_factor
             calculated_importance *= input.Nasality_F1_importance_factor
+        else:
+            calculated_importance *= input.Nasality_F2_and_higher_importance_factor
         vowel_formants.append(
             pyo.Reson(voice_source,
                       freq=calculated_freq,
@@ -113,7 +115,8 @@ def synthesize(input: this_layer_types.Input):
         )
 
     ##### NASAL FORMANTS INSERTED IN VOWEL FORMANTS
-    for j, freq in enumerate([input.Nasality_nasal_formant_N1_freq, input.Nasality_nasal_formant_N2_freq]):
+    nasal_murmur_freq = s_p["default_oral_constriction_nasal_murmur_freq"]  # should this be in realization?
+    for j, freq in enumerate([input.Nasality_nasal_formant_N1_freq, input.Nasality_nasal_formant_N2_freq, nasal_murmur_freq]):
         """NO MINIMUM BETWEEN F0 AND N1???
         calculated_freq = freq
         if j == 0:
@@ -122,7 +125,7 @@ def synthesize(input: this_layer_types.Input):
             pyo.Reson(voice_source,
                       freq=freq,
                       q=calculate_q(freq, s_p["vowel_Q_floor"], s_p["vowel_Q_slope"]) * input.Vowel_Q_multiplier,
-                      mul=[input.Nasality_nasal_formant_N1_importance, input.Nasality_nasal_formant_N2_importance][j])
+                      mul=[input.Nasality_nasal_formant_N1_importance, input.Nasality_nasal_formant_N2_importance, input.Nasal_murmur_importance][j])
         )
 
     raw_voiced_component = vowel_f0 + sum(vowel_formants)  # aka. without aspiration and nasality
@@ -166,6 +169,8 @@ def synthesize(input: this_layer_types.Input):
             calculated_freq = pyo.Max(calculated_freq, true_F0 + s_p["F0_F1_min_difference"])
             calculated_q *= input.Nasality_F1_Q_factor
             calculated_importance *= input.Nasality_F1_importance_factor
+        else:
+            calculated_importance *= input.Nasality_F2_and_higher_importance_factor
         aspiration_formants.append(
             pyo.Reson(aspiration_source,
                       freq=calculated_freq,
@@ -173,7 +178,7 @@ def synthesize(input: this_layer_types.Input):
                       mul=calculated_importance)
         )
 
-    ##### NASAL FORMANTS INSERTED IN ASPIRATION FORMANTS
+    ##### NASAL FORMANTS INSERTED IN ASPIRATION FORMANTS    # Should there be nasal murmur here?
     for j, freq in enumerate([input.Nasality_nasal_formant_N1_freq, input.Nasality_nasal_formant_N2_freq]):
         """NO MINIMUM BETWEEN F0 AND N1???
         calculated_freq = freq
