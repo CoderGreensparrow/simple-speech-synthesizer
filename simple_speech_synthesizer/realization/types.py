@@ -43,7 +43,10 @@ class Input:
     Aspiration_importance: PyoObject
     Constriction_importance: PyoObject
     Nasality: PyoObject
-    Full_closure: PyoObject
+    Oral_closure: PyoObject
+    Nasality_antiformant_freq_for_nasal_consonants: PyoObject
+    Nasality_antiformant_bandwidth_for_nasal_consonants: PyoObject
+    Nasality_antiformant_boost_for_nasal_consonants: PyoObject
     Stop_amp: PyoObject
     # Global envelopes
     Volume: PyoObject  # general singing volume in dB (0 means maximum, negatives count down)

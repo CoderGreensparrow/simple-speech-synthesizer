@@ -46,10 +46,12 @@ class Input:
     Constriction_volume_factor: PyoObject
     #Nasal_murmur_importance: PyoObject
     #Nasality_LP_strength: PyoObject
-    #Nasality_antiformant_boost: PyoObject
     #### PROPER NASALS, REMOVE/REPURPOSE ABOVE
     Nasality_F0_importance_factor: PyoObject
     Nasality_F0_Q_factor: PyoObject
+    Nasality_antiformant_freq: PyoObject
+    Nasality_antiformant_bandwidth: PyoObject
+    Nasality_antiformant_boost: PyoObject
     Nasality_F1_importance_factor: PyoObject
     Nasality_F1_Q_factor: PyoObject
     Nasality_nasal_formant_N1_freq: PyoObject

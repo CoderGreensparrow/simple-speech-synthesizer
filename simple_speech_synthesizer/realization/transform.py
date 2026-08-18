@@ -47,7 +47,10 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     true_nasality = input_.Nasality + input_.NasalityDelta
     true_aspiration = (input_.Aspiration_importance + input_.BreathinessDelta)
 
-    full_closure = input_.Full_closure
+    oral_closure = input_.Oral_closure
+    nasality_antiformant_freq_for_nasal_consonants = input_.Nasality_antiformant_freq_for_nasal_consonants
+    nasality_antiformant_bandwidth_for_nasal_consonants = input_.Nasality_antiformant_bandwidth_for_nasal_consonants
+    nasality_antiformant_boost_for_nasal_consonants = input_.Nasality_antiformant_boost_for_nasal_consonants
     stop_amp = input_.Stop_amp
 
     volume = input_.Volume
@@ -75,7 +78,10 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     true_nasality.play()
     true_aspiration.play()
 
-    full_closure.play()
+    oral_closure.play()
+    nasality_antiformant_freq_for_nasal_consonants.play()
+    nasality_antiformant_bandwidth_for_nasal_consonants.play()
+    nasality_antiformant_boost_for_nasal_consonants.play()
     stop_amp.play()
 
     volume.play()
@@ -100,11 +106,10 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     gender_hill_boost_factor = vocal_gender_delta * s_p["tension_induced_spectral_hill_boost"] * 0.5
     # TODO: These numbers here for gender shifting are just off the top of my head
 
-    ### ADD IN FULL_CLOSURE & STOP_AMP
-    true_nasality *= full_closure
-    true_aspiration *= 1-full_closure
-    true_constriction_importance = constriction_importance * (1-full_closure)
-    true_vowel_importance = vowel_importance * (1-full_closure)
+    ############ TODO DEBUG BELOW REMOVE LATER
+    ### ADD IN ORAL_CLOSURE & STOP_AMP
+    true_aspiration *= 1-oral_closure
+    true_constriction_importance = constriction_importance * (1-oral_closure)
     true_volume = volume * stop_amp
 
     ### region PLAY ABOVE
@@ -114,7 +119,6 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     true_nasality.play()
     true_aspiration.play()
     true_constriction_importance.play()
-    true_vowel_importance.play()
     true_volume.play()
     ### endregion
 
@@ -128,7 +132,7 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     Constriction_peak_boost = constriction_peak_boost
     Constriction_peak_overtone_importance = constriction_peak_overtone_importance
     Constriction_LP_freq = constriction_LP_freq * gender_formant_factor * true_lip_rounding_factor
-    Voiced_component_importance = true_vowel_importance
+    Voiced_component_importance = vowel_importance  # oral_closure DOESN'T affect this specifically!
     Constriction_component_importance = true_constriction_importance
     Aspiration_component_importance = true_aspiration
 
@@ -146,10 +150,12 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     Constriction_volume_factor = Sig(s_p["default_Constriction_volume_as_a_factor_of_volume"])
     """Nasal_murmur_importance = true_nasality * s_p["default_nasal_murmur_importance"]
     Nasality_LP_strength = true_nasality"""
-    #Nasality_antiformant_boost = true_nasality * s_p["default_nasal_antiformant_boost"]
 
     Nasality_F0_importance_factor = true_nasality * -(1 - s_p["default_nasality_F0_importance_factor"]) + 1
     Nasality_F0_Q_factor = true_nasality * -(1 - s_p["default_nasality_F0_Q_factor"]) + 1
+    Nasality_antiformant_freq      = oral_closure * (nasality_antiformant_freq_for_nasal_consonants - s_p["default_nasality_antiformant_freq_for_nasalized_vowels"]) + s_p["default_nasality_antiformant_freq_for_nasalized_vowels"]
+    Nasality_antiformant_bandwidth = oral_closure * (nasality_antiformant_bandwidth_for_nasal_consonants - s_p["default_nasality_antiformant_bandwidth_for_nasalized_vowels"]) + s_p["default_nasality_antiformant_bandwidth_for_nasalized_vowels"]
+    Nasality_antiformant_boost     = true_nasality * (oral_closure * (nasality_antiformant_boost_for_nasal_consonants - s_p["default_nasality_antiformant_boost_for_nasalized_vowels"]) + s_p["default_nasality_antiformant_boost_for_nasalized_vowels"])
     Nasality_F1_importance_factor = true_nasality * -(1 - s_p["default_nasality_F1_importance_factor"]) + 1
     Nasality_F1_Q_factor = true_nasality * -(1 - s_p["default_nasality_F1_Q_factor"]) + 1
     Nasality_nasal_formant_N1_freq = Sig(s_p["default_nasality_nasal_formant_n1_freq"])
@@ -192,9 +198,11 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
         Aspiration_volume_factor=Aspiration_volume_factor,
         Constriction_volume_factor=Constriction_volume_factor,
 
-        #Nasality_antiformant_boost=Nasality_antiformant_boost,
         Nasality_F0_importance_factor=Nasality_F0_importance_factor,
         Nasality_F0_Q_factor = Nasality_F0_Q_factor,
+        Nasality_antiformant_freq=Nasality_antiformant_freq,
+        Nasality_antiformant_bandwidth=Nasality_antiformant_bandwidth,
+        Nasality_antiformant_boost=Nasality_antiformant_boost,
         Nasality_F1_importance_factor=Nasality_F1_importance_factor,
         Nasality_F1_Q_factor=Nasality_F1_Q_factor,
         Nasality_nasal_formant_N1_freq = Nasality_nasal_formant_N1_freq,

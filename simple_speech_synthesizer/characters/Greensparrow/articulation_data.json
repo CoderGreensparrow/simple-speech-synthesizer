@@ -8,6 +8,11 @@
       "peak_bandwidth": 500,
       "boost": 10,
       "overtone_importance": 0.5
+    },
+    "nasalization": {
+      "antiformant_freq": 2500,
+      "antiformant_bandwidth": 500,
+      "antiformant_boost": -20
     }
   },
   "hun_a_ch": {
@@ -19,6 +24,11 @@
       "peak_bandwidth": 300,
       "boost": 12,
       "overtone_importance": 0.05
+    },
+    "nasalization": {
+      "antiformant_freq": 2500,
+      "antiformant_bandwidth": 500,
+      "antiformant_boost": -20
     }
   },
   "hun_iy_s": {
@@ -30,6 +40,11 @@
       "peak_bandwidth": 400,
       "boost": 16,
       "overtone_importance": 0.7
+    },
+    "nasalization": {
+      "antiformant_freq": 2500,
+      "antiformant_bandwidth": 500,
+      "antiformant_boost": -20
     }
   }
 }

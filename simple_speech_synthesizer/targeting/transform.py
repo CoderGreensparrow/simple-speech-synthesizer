@@ -29,7 +29,10 @@ class Targeter:
         self.aspiration_importance_targets = None
         self.constriction_importance_targets = None
         self.nasality_targets = None
-        self.full_closure_targets = None  # treated by manner function specifically
+        self.oral_closure_targets = None  # treated by manner function specifically
+        self.nasality_antiformant_freq_for_nasal_consonants_targets = None
+        self.nasality_antiformant_bandwidth_for_nasal_consonants_targets = None
+        self.nasality_antiformant_boost_for_nasal_consonants_targets = None
 
         # These contain information about
         # which constriciton parameters should be coarticulated or not (the keys).
@@ -45,6 +48,11 @@ class Targeter:
             "boost": "constriction_peak_boost_targets",
             "overtone_importance": "constriction_peak_overtone_importance_targets"
         }
+        self.nasalization_parameter_names = {
+            "antiformant_freq": "nasality_antiformant_freq_for_nasal_consonants_targets",
+            "antiformant_bandwidth": "nasality_antiformant_bandwidth_for_nasal_consonants_targets",
+            "antiformant_boost": "nasality_antiformant_boost_for_nasal_consonants_targets",
+        }
         self.passthrough_phoneme_parameter_names = {
             "vowel_formants_importance": "vowel_importance_targets",
             "aspiration_importance": "aspiration_importance_targets",
@@ -53,11 +61,12 @@ class Targeter:
         }
 
         self.extra_parameter_names = [
-            "vowel_formant_freqs_targets", "full_closure_targets"
+            "vowel_formant_freqs_targets", "oral_closure_targets"
         ]  # this is just here to have a list of all internal parameter names at any given time, if I concatenate this with all above .values()
         self.all_internal_names = (list(self.extra_parameter_names) +
                                    list(self.coarticulated_constriction_parameter_names.values()) +
                                    list(self.non_coarticulated_constriction_parameter_names.values()) +
+                                   list(self.nasalization_parameter_names.values()) +
                                    list(self.passthrough_phoneme_parameter_names.values()))
         # TODO: Potentially implement aspiration coarticulation coloring?
 
@@ -112,7 +121,10 @@ class Targeter:
         self.aspiration_importance_targets = Targets(targets["aspiration_importance_targets_ts"], targets["aspiration_importance_targets_vs"])
         self.constriction_importance_targets = Targets(targets["constriction_importance_targets_ts"], targets["constriction_importance_targets_vs"])
         self.nasality_targets = Targets(targets["nasality_targets_ts"], targets["nasality_targets_vs"])
-        self.full_closure_targets = Targets(targets["full_closure_targets_ts"], targets["full_closure_targets_vs"])
+        self.oral_closure_targets = Targets(targets["oral_closure_targets_ts"], targets["oral_closure_targets_vs"])
+        self.nasality_antiformant_freq_for_nasal_consonants_targets = Targets(targets["nasality_antiformant_freq_for_nasal_consonants_targets_ts"], targets["nasality_antiformant_freq_for_nasal_consonants_targets_vs"])
+        self.nasality_antiformant_bandwidth_for_nasal_consonants_targets = Targets(targets["nasality_antiformant_bandwidth_for_nasal_consonants_targets_ts"], targets["nasality_antiformant_bandwidth_for_nasal_consonants_targets_vs"])
+        self.nasality_antiformant_boost_for_nasal_consonants_targets = Targets(targets["nasality_antiformant_boost_for_nasal_consonants_targets_ts"], targets["nasality_antiformant_boost_for_nasal_consonants_targets_vs"])
 
 
     def _simple_vowel_formant_freqs_targets_coarticulator(
@@ -209,6 +221,23 @@ class Targeter:
             target_passthroughs[internal_parameter_name + "_v"] = v
         return target_passthroughs
 
+    def _passthrough_nasalization_parameters(  # THIS FUNC IS ALMOST THE SAME AS THE ABOVE ONE, SHOULD I DRY IT?
+            self, phoneme: this_layer_types.TimedPhoneme, curr_articulation_d) -> dict:
+        """
+        Calculates all the t and v of all NON-COARTICULATED CONSTRICTION parameters.
+        The list of these parameters, along with the mapping to internal names, is found in __init__() under self.non_coarticulated_constriction_parameter_names.
+        :param phoneme: The current TimedPhoneme.
+        :param curr_articulation_d:
+        :return: All the passthrough values with correct internal naming in a dict.
+        """
+        target_passthroughs = dict()
+        for json_parameter_name, internal_parameter_name in self.nasalization_parameter_names.items():
+            t = phoneme.start
+            v = curr_articulation_d["nasalization"][json_parameter_name]
+            target_passthroughs[internal_parameter_name + "_t"] = t
+            target_passthroughs[internal_parameter_name + "_v"] = v
+        return target_passthroughs
+
     def _passthrough_phoneme_parameters(
             self, phoneme: this_layer_types.TimedPhoneme, curr_phoneme_d) -> dict:
         """
@@ -251,15 +280,19 @@ class Targeter:
         target.update(
             self._passthrough_non_coarticulated_constriction_parameters(phoneme, curr_articulation_d)
         )
+        # passthrough nasalization parameters (non-coarticulated)
+        target.update(
+            self._passthrough_nasalization_parameters(phoneme, curr_articulation_d)
+        )
         # phoneme_data.json parameters (removed for DRY-ness)
         target.update(
             self._passthrough_phoneme_parameters(phoneme, curr_phoneme_d)
         )
 
-        # HANDLE MANNER-SPECIFIC FULL_CLOSURE
+        # HANDLE MANNER-SPECIFIC ORAL_CLOSURE
         # There is no one here though, because flow is for vowels, fricatives, liquids etc.
-        target["full_closure_targets_t"] = phoneme.start
-        target["full_closure_targets_v"] = 0
+        target["oral_closure_targets_t"] = phoneme.start
+        target["oral_closure_targets_v"] = 0
 
         # DICTIONARIFY OUTPUTS TO PASS THEM CLEANLY
         return target
@@ -290,7 +323,10 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
         aspiration_importance_targets=targets.aspiration_importance_targets,
         constriction_importance_targets=targets.constriction_importance_targets,
         nasality_targets=targets.nasality_targets,
-        full_closure_targets=targets.full_closure_targets,
+        oral_closure_targets=targets.oral_closure_targets,
+        nasality_antiformant_freq_for_nasal_consonants_targets=targets.nasality_antiformant_freq_for_nasal_consonants_targets,
+        nasality_antiformant_bandwidth_for_nasal_consonants_targets=targets.nasality_antiformant_bandwidth_for_nasal_consonants_targets,
+        nasality_antiformant_boost_for_nasal_consonants_targets=targets.nasality_antiformant_boost_for_nasal_consonants_targets,
         # Global envelopes
         Volume=input_.envelope_targets.Volume,
         F0=input_.envelope_targets.F0,

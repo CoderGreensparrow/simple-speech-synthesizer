@@ -209,11 +209,11 @@ def synthesize(input: this_layer_types.Input):
                                        nasal_lp_applied],
                                       voice=input.Nasality_LP_strength)
 
-    """full_voiced_component = pyo.EQ(nasal_lp_crossfade,
-                              freq=s_p["nasal_antiformant_freq"],
-                              q=s_p["nasal_antiformant_freq"] / s_p["nasal_antiformant_bandwidth"],
-                              boost=input.Nasality_antiformant_boost)"""
-    full_voiced_component = nasal_lp_crossfade  # vowel + aspiration + nasal formants for both + global nasalaity properties
+    full_voiced_component = pyo.EQ(nasal_lp_crossfade,
+                              freq=input.Nasality_antiformant_freq,
+                              q=input.Nasality_antiformant_freq / input.Nasality_antiformant_bandwidth,
+                              boost=input.Nasality_antiformant_boost)
+    #full_voiced_component = nasal_lp_crossfade  # vowel + aspiration + nasal formants for both + global nasalaity properties
 
     # CONSTRICTION SOURCE
     constriction_source = pyo.Noise()

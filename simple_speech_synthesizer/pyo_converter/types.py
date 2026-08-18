@@ -19,7 +19,10 @@ class Input:
     aspiration_importance_targets: Targets
     constriction_importance_targets: Targets
     nasality_targets: Targets
-    full_closure_targets: Targets
+    oral_closure_targets: Targets
+    nasality_antiformant_freq_for_nasal_consonants_targets: Targets
+    nasality_antiformant_bandwidth_for_nasal_consonants_targets: Targets
+    nasality_antiformant_boost_for_nasal_consonants_targets: Targets
     # Global envelopes
     Volume: Envelope  # general singing volume in dB (0 means maximum, negatives count down)
     F0: Envelope  # fundamental pitch

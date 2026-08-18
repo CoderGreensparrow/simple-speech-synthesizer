@@ -29,7 +29,10 @@ class Input:
     Aspiration_importance: Linseg
     Constriction_importance: Linseg
     Nasality: Linseg
-    Full_closure: Linseg
+    Oral_closure: Linseg
+    Nasality_antiformant_freq_for_nasal_consonants: Linseg
+    Nasality_antiformant_bandwidth_for_nasal_consonants: Linseg
+    Nasality_antiformant_boost_for_nasal_consonants: Linseg
     # Global envelopes
     Volume: Linseg  # general singing volume in dB (0 means maximum, negatives count down)
     F0: Linseg  # fundamental pitch
