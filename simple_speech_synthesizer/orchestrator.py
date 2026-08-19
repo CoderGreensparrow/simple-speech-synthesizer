@@ -75,14 +75,16 @@ if __name__ == "__main__":
     i = Input(
         character_dir_path=r"D:\PycharmProjects\simple-speech-synthesizer\simple_speech_synthesizer\characters\Greensparrow",
         output_filepath=r"D:\PycharmProjects\simple-speech-synthesizer\simple_speech_synthesizer\testaudio.wav",
-        duration=3,
+        duration=1.5,
         phonemes=(
-            TimedPhoneme("hun_a", 0, 0.4),
-            TimedPhoneme("hun_n", 0.4, 1.5),
-            TimedPhoneme("hun_a", 1.5, 1.8),
+            TimedPhoneme("hun_a", 0, 0.5),
+            TimedPhoneme("hun_a", 0.5, 0.73),
+            TimedPhoneme("hun_n", 0.73, 0.98),
+            TimedPhoneme("hun_a", 0.98, 1.16),
+            TimedPhoneme("hun_a", 1.16, 1.5),
         ),
         envelope_targets=EnvelopeTargets(
-            Volume=Envelope((Point(0, -3), Point(3, -3)), (Segment("linear"),)),
+            Volume=Envelope((Point(0, -60), Point(0.3, -60), Point(0.4, -3), Point(1.16, -3), Point(1.17, -60), Point(1.5, -60)), (Segment("linear"), Segment("linear"), Segment("linear"), Segment("linear"), Segment("linear"),)),
             F0=Envelope((Point(0, 125), Point(10, 125)), (Segment("linear"),)),
             NasalityDelta=Envelope((Point(0, 0), Point(3, 0)), (Segment("linear"),)),
             BreathinessDelta=Envelope((Point(0, 0), Point(3, 0)), (Segment("linear"),)),
