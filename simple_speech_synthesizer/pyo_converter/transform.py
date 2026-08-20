@@ -133,7 +133,7 @@ def _formant_targets_to_steps(formant_targets: FormantTargets, input_duration: f
     return normal_return if not _DEBUG_RETURN else debug_return
 
 @anchor_pyo_objects
-def _approximate_envelopes_with_linseg(envelope: Envelope, dt: float = 1/20) -> pyo.Linseg:
+def _approximate_envelopes_with_linseg(envelope: Envelope, dt: float = 1/120) -> pyo.Linseg:
     t = envelope.min_t
     points = []
     while t <= envelope.max_t:

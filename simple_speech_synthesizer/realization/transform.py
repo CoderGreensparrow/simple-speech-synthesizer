@@ -141,7 +141,7 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     H1_H2_balance = s_p["H1_H2_balance"] + s_p["default_nasality_H1_H2_balance_delta"] * true_nasality
     Spectral_tilt_cutoff_delta = 0 + tension * s_p["tension_induced_spectral_tilt_freq_delta"]
     Spectral_tilt_tension = (0 + true_aspiration * s_p["aspiration_tension_scaling_factor"]
-                             + tension * s_p["tension_induced_spectral_tilt_scaling_factor"])
+                             + tension * s_p["tension_induced_spectral_tilt_scaling_factor"]) + machine_growl
     Spectral_hill_boost_delta = (0 + true_aspiration * s_p["spectral_hill_aspiration_boost"]
                                  + tension * s_p["tension_induced_spectral_hill_boost"]
                                  + gender_hill_boost_factor)

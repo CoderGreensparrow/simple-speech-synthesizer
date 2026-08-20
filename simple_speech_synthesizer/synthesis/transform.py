@@ -67,6 +67,8 @@ def synthesize(input: this_layer_types.Input):
     voice_source_amp_sway = pyo.ButLP(pyo.BrownNoise(), freq=25, mul=0.03 * input.voice_source_amp_sway)
 
     raw_blit_source = pyo.Blit(freq=true_F0, harms=70, mul=1 + voice_source_amp_sway)
+    raw_machine_growl_source = pyo.Degrade(pyo.Blit(true_F0, harms=10, mul=1), bitdepth=1, srscale=10/true_F0, mul=1)
+    mixed_source = pyo.Compress(raw_blit_source + raw_machine_growl_source, thresh=input_Volume, risetime=0, falltime=0, lookahead=10, knee=0, mul=0.1)
     spectral_tilted_6db_rolloff_blit_source = pyo.Tone(raw_blit_source, s_p["spectral_tilt_cutoff"] + input.Spectral_tilt_cutoff_delta, mul=1)
     spectral_tilted_12db_rolloff_blit_source = pyo.ButLP(raw_blit_source, s_p["spectral_tilt_cutoff"] + input.Spectral_tilt_cutoff_delta, mul=1)
     spectral_tilted_18db_rolloff_blit_source = pyo.Tone(spectral_tilted_12db_rolloff_blit_source, s_p["spectral_tilt_cutoff"] + input.Spectral_tilt_cutoff_delta, mul=1)
@@ -77,7 +79,8 @@ def synthesize(input: this_layer_types.Input):
     spectral_tilted_blit_source = pyo.Selector([spectral_tilted_24db_rolloff_blit_source,
                                                        spectral_tilted_18db_rolloff_blit_source,
                                                        spectral_tilted_12db_rolloff_blit_source,
-                                                       spectral_tilted_6db_rolloff_blit_source],
+                                                       spectral_tilted_6db_rolloff_blit_source,
+                                                       mixed_source],
                                                (input.Spectral_tilt_tension + 1) / 2 * 3)
     high_freq_retention_blit_source = pyo.ButHP(raw_blit_source, 3000, mul=0.005)
     partial_voice_source = spectral_tilted_blit_source + high_freq_retention_blit_source
