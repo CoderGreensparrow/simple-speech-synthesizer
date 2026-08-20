@@ -75,7 +75,7 @@ if __name__ == "__main__":
     i = Input(
         character_dir_path=r"D:\PycharmProjects\simple-speech-synthesizer\simple_speech_synthesizer\characters\Greensparrow",
         output_filepath=r"D:\PycharmProjects\simple-speech-synthesizer\simple_speech_synthesizer\testaudio.wav",
-        duration=10,
+        duration=1.5,
         phonemes=(
             TimedPhoneme("hun_a", 0, 0.5),
             TimedPhoneme("hun_a", 0.5, 0.73),
@@ -84,11 +84,11 @@ if __name__ == "__main__":
             TimedPhoneme("hun_a", 1.16, 1.5),
         ),
         envelope_targets=EnvelopeTargets(
-            Volume=Envelope((Point(0, -60), Point(0.3, -60), Point(0.4, -3), Point(1.16, -3), Point(1.17, -3), Point(1.5, -3)), (Segment("linear"), Segment("linear"), Segment("linear"), Segment("linear"), Segment("linear"),)),
-            F0=Envelope((Point(0, 125), Point(10, 100)), (Segment("linear"),)),
+            Volume=Envelope((Point(0, -60), Point(0.3, -60), Point(0.4, -3), Point(1.16, -3), Point(1.17, -60), Point(1.5, -60)), (Segment("linear"), Segment("linear"), Segment("linear"), Segment("linear"), Segment("linear"),)),
+            F0=Envelope((Point(0, 125), Point(10, 125)), (Segment("linear"),)),
             NasalityDelta=Envelope((Point(0, 0), Point(3, 0)), (Segment("linear"),)),
             BreathinessDelta=Envelope((Point(0, 0), Point(3, 0)), (Segment("linear"),)),
-            Tension=Envelope((Point(0, 0), Point(1.16, 0)), (Segment("linear"),)),
+            Tension=Envelope((Point(0, 0), Point(3, 0)), (Segment("linear"),)),
             MachineGrowl=Envelope((Point(0, 0), Point(3, 0)), (Segment("linear"),)),
             LipRoundingDelta=Envelope((Point(0, 0), Point(3, 0)), (Segment("linear"),)),
             VocalGenderDelta=Envelope((Point(0, 0), Point(3, 0)), (Segment("linear"),)),
