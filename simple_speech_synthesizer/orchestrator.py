@@ -79,7 +79,8 @@ if __name__ == "__main__":
         phonemes=(
             TimedPhoneme("<sil>", 0, 0.5),
             TimedPhoneme("hun_a", 0.5, 1),
-            TimedPhoneme("hun_cs", 1, 2),
+            TimedPhoneme("hun_n", 1, 1.5),
+            TimedPhoneme("hun_cs", 1.5, 2),
             TimedPhoneme("hun_a", 2, 2.5),
             TimedPhoneme("<sil>", 2.5, 3),
         ),

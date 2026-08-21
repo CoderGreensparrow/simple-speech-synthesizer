@@ -109,9 +109,10 @@ class Targeter:
 
             match curr_phoneme_d["manner"]:
                 case "flow":
-                    target_dicts = self._manner__flow(phoneme, prev_articulation_d, curr_articulation_d, next_articulation_d, curr_phoneme_d)
+                    target_dicts = self._manner__flow(phoneme, prev_articulation_d, curr_articulation_d, next_articulation_d, curr_phoneme_d, "flow")
                 case "nasal":
-                    target_dicts = self._manner__nasal(phoneme, prev_articulation_d, curr_articulation_d, next_articulation_d, curr_phoneme_d)
+                    #target_dicts = self._manner__nasal(phoneme, prev_articulation_d, curr_articulation_d, next_articulation_d, curr_phoneme_d)
+                    target_dicts = self._manner__flow(phoneme, prev_articulation_d, curr_articulation_d, next_articulation_d, curr_phoneme_d, "nasal")
                 case "silence":
                     target_dicts = self._manner__silence(phoneme, prev_articulation_d, next_articulation_d, prev_phoneme_d, next_phoneme_d)
                 case "stop":
@@ -277,7 +278,7 @@ class Targeter:
 
     def _manner__flow(
             self, phoneme, prev_articulation_d, curr_articulation_d, next_articulation_d,
-            curr_phoneme_d):
+            curr_phoneme_d, flow_type):
         target = dict()
 
         # vowel formants
@@ -310,15 +311,22 @@ class Targeter:
 
         # HANDLE MANNER-SPECIFIC ORAL_CLOSURE
         # There is no one here though, because flow is for vowels, fricatives, liquids etc.
-        target["oral_closure_targets_t"] = phoneme.start
-        target["oral_closure_targets_v"] = 0
-        target["stop_amp_targets_t"] = phoneme.start
-        target["stop_amp_targets_v"] = 1
+        match flow_type:
+            case "flow":
+                target["oral_closure_targets_t"] = phoneme.start
+                target["oral_closure_targets_v"] = 0
+                target["stop_amp_targets_t"] = phoneme.start
+                target["stop_amp_targets_v"] = 1
+            case "nasal":
+                target["oral_closure_targets_t"] = phoneme.start
+                target["oral_closure_targets_v"] = 1
+                target["stop_amp_targets_t"] = phoneme.start
+                target["stop_amp_targets_v"] = 1
 
         # DICTIONARIFY OUTPUTS TO PASS THEM CLEANLY
         return (target,)
 
-    def _manner__nasal(
+    '''def _manner__nasal(
             self, phoneme, prev_articulation_d, curr_articulation_d, next_articulation_d,
             curr_phoneme_d):
         target = dict()
@@ -360,7 +368,7 @@ class Targeter:
         target["stop_amp_targets_v"] = 1
 
         # DICTIONARIFY OUTPUTS TO PASS THEM CLEANLY
-        return (target,)
+        return (target,)'''
 
     def _manner__silence(
             self, phoneme, prev_articulation_d, next_articulation_d, prev_phoneme_d, next_phoneme_d):
