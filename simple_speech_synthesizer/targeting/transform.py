@@ -11,10 +11,16 @@ from simple_speech_synthesizer.base.types import Targets, FormantTargets
 
 from pprint import pprint
 
+def clip(val, min, max):
+    if val < min: return min
+    elif val > max: return max
+    else: return val
+
 class Targeter:
     def __init__(self, input_: this_layer_types.Input):
         self.in_ = input_
         character = load_character(input_.character_dir_path)
+        self.synthesis_d = character.synthesis_data
         self.phoneme_d = character.phoneme_data
         self.articulation_d = character.articulation_data
         # OUTPUTS
@@ -215,52 +221,55 @@ class Targeter:
         return phoneme.start, coarticulated_datapoints
 
     def _passthrough_non_coarticulated_constriction_parameters(
-            self, phoneme: this_layer_types.TimedPhoneme, curr_articulation_d) -> dict:
+            self, phoneme: this_layer_types.TimedPhoneme, curr_articulation_d, t_override=None) -> dict:
         """
         Calculates all the t and v of all NON-COARTICULATED CONSTRICTION parameters.
         The list of these parameters, along with the mapping to internal names, is found in __init__() under self.non_coarticulated_constriction_parameter_names.
         :param phoneme: The current TimedPhoneme.
         :param curr_articulation_d:
+        :param t_override: Override the t value of the targets to not be phoneme.start. Optional parameter, default None.
         :return: All the passthrough values with correct internal naming in a dict.
         """
         target_passthroughs = dict()
         for json_parameter_name, internal_parameter_name in self.non_coarticulated_constriction_parameter_names.items():
-            t = phoneme.start
+            t = phoneme.start if t_override is None else t_override
             v = curr_articulation_d["constriction"][json_parameter_name]
             target_passthroughs[internal_parameter_name + "_t"] = t
             target_passthroughs[internal_parameter_name + "_v"] = v
         return target_passthroughs
 
     def _passthrough_nasalization_parameters(  # THIS FUNC IS ALMOST THE SAME AS THE ABOVE ONE, SHOULD I DRY IT?
-            self, phoneme: this_layer_types.TimedPhoneme, curr_articulation_d) -> dict:
+            self, phoneme: this_layer_types.TimedPhoneme, curr_articulation_d, t_override=None) -> dict:
         """
         Calculates all the t and v of all NON-COARTICULATED CONSTRICTION parameters.
         The list of these parameters, along with the mapping to internal names, is found in __init__() under self.non_coarticulated_constriction_parameter_names.
         :param phoneme: The current TimedPhoneme.
         :param curr_articulation_d:
+        :param t_override: Override the t value of the targets to not be phoneme.start. Optional parameter, default None.
         :return: All the passthrough values with correct internal naming in a dict.
         """
         target_passthroughs = dict()
         for json_parameter_name, internal_parameter_name in self.nasalization_parameter_names.items():
-            t = phoneme.start
+            t = phoneme.start if t_override is None else t_override
             v = curr_articulation_d["nasalization"][json_parameter_name]
             target_passthroughs[internal_parameter_name + "_t"] = t
             target_passthroughs[internal_parameter_name + "_v"] = v
         return target_passthroughs
 
     def _passthrough_phoneme_parameters(
-            self, phoneme: this_layer_types.TimedPhoneme, curr_phoneme_d) -> dict:
+            self, phoneme: this_layer_types.TimedPhoneme, curr_phoneme_d, t_override=None) -> dict:
         """
         Calculates all the t and v of all PHONEME (so phoneme_data.json) parameters that don't have any coarticulation, like
         vowel_formants_importance, constriction_importance etc.
         The list of these parameters, along with the mapping to internal names, is found in __init__() under self.passthrough_phoneme_parameter_names.
         :param phoneme: The current TimedPhoneme.
         :param curr_phoneme_d:
+        :param t_override: Override the t value of the targets to not be phoneme.start. Optional parameter, default None.
         :return: All the passthrough values with correct internal naming in a dict.
         """
         target_passthroughs = dict()
         for json_parameter_name, internal_parameter_name in self.passthrough_phoneme_parameter_names.items():
-            t = phoneme.start
+            t = phoneme.start if t_override is None else t_override
             v = curr_phoneme_d[json_parameter_name]
             target_passthroughs[internal_parameter_name + "_t"] = t
             target_passthroughs[internal_parameter_name + "_v"] = v
@@ -451,45 +460,68 @@ class Targeter:
     def _manner__stop(
             self, phoneme, prev_articulation_d, curr_articulation_d, next_articulation_d,
             curr_phoneme_d):
-        target = dict()
+        target_closure = dict()
+        target_buildup = dict()
+        target_release = dict()
+        t_closure = phoneme.start
+        t_buildup = max(phoneme.end - curr_phoneme_d["manner_specific"]["release_time"] - self.synthesis_d["stop_amp_risetime"], phoneme.start)
+        t_release = max(phoneme.end - curr_phoneme_d["manner_specific"]["release_time"], phoneme.start)
 
         # vowel formants
-        t, v = self._simple_vowel_formant_freqs_targets_coarticulator(phoneme, prev_articulation_d, curr_articulation_d, next_articulation_d, curr_phoneme_d)
-        target["vowel_formant_freqs_targets_t"] = t
-        target["vowel_formant_freqs_targets_v"] = v
+        _, v = self._simple_vowel_formant_freqs_targets_coarticulator(phoneme, prev_articulation_d, curr_articulation_d, next_articulation_d, curr_phoneme_d)
+        target_closure["vowel_formant_freqs_targets_t"] = t_closure
+        target_closure["vowel_formant_freqs_targets_v"] = v
+        target_buildup["vowel_formant_freqs_targets_t"] = t_buildup
+        target_buildup["vowel_formant_freqs_targets_v"] = v
+        target_release["vowel_formant_freqs_targets_t"] = t_release
+        target_release["vowel_formant_freqs_targets_v"] = v
         # constriction parameters (generalized)
         for json_parameter_name, internal_parameter_name in self.coarticulated_constriction_parameter_names.items():
-            t, v = self._simple_target_coarticulator(
+            _, v = self._simple_target_coarticulator(
                 phoneme,
                 prev_articulation_d["constriction"][json_parameter_name],
                 curr_articulation_d["constriction"][json_parameter_name],
                 next_articulation_d["constriction"][json_parameter_name],
                 curr_phoneme_d["constriction_coarticulation_coloring"]
             )
-            target[internal_parameter_name + "_t"] = t
-            target[internal_parameter_name + "_v"] = v
+            target_closure[internal_parameter_name + "_t"] = t_closure
+            target_closure[internal_parameter_name + "_v"] = v
+            target_buildup[internal_parameter_name + "_t"] = t_buildup
+            target_buildup[internal_parameter_name + "_v"] = v
+            target_release[internal_parameter_name + "_t"] = t_release
+            target_release[internal_parameter_name + "_v"] = v
         # passthrough non-coarticulated constriciton parameters
-        target.update(
-            self._passthrough_non_coarticulated_constriction_parameters(phoneme, curr_articulation_d)
-        )
+        target_closure.update(self._passthrough_non_coarticulated_constriction_parameters(phoneme, curr_articulation_d, t_override=t_closure))
+        target_buildup.update(self._passthrough_non_coarticulated_constriction_parameters(phoneme, curr_articulation_d, t_override=t_buildup))
+        target_release.update(self._passthrough_non_coarticulated_constriction_parameters(phoneme, curr_articulation_d, t_override=t_release))
         # passthrough nasalization parameters (non-coarticulated)
-        target.update(
-            self._passthrough_nasalization_parameters(phoneme, curr_articulation_d)
-        )
+        target_closure.update(self._passthrough_nasalization_parameters(phoneme, curr_articulation_d, t_override=t_closure))
+        target_buildup.update(self._passthrough_nasalization_parameters(phoneme, curr_articulation_d, t_override=t_buildup))
+        target_release.update(self._passthrough_nasalization_parameters(phoneme, curr_articulation_d, t_override=t_release))
         # phoneme_data.json parameters (removed for DRY-ness)
-        target.update(
-            self._passthrough_phoneme_parameters(phoneme, curr_phoneme_d)
-        )
+        target_closure.update(self._passthrough_phoneme_parameters(phoneme, curr_phoneme_d, t_override=t_closure))
+        target_buildup.update(self._passthrough_phoneme_parameters(phoneme, curr_phoneme_d, t_override=t_buildup))
+        target_release.update(self._passthrough_phoneme_parameters(phoneme, curr_phoneme_d, t_override=t_release))
 
         # HANDLE MANNER-SPECIFIC ORAL_CLOSURE
         # There is no one here though, because flow is for vowels, fricatives, liquids etc.
-        target["oral_closure_targets_t"] = phoneme.start
-        target["oral_closure_targets_v"] = 0
-        target["stop_amp_targets_t"] = phoneme.start
-        target["stop_amp_targets_v"] = 1
+        target_closure["oral_closure_targets_t"] = t_closure
+        target_closure["oral_closure_targets_v"] = 1
+        target_closure["stop_amp_targets_t"] = t_closure
+        target_closure["stop_amp_targets_v"] = 1
+
+        target_buildup["oral_closure_targets_t"] = t_buildup
+        target_buildup["oral_closure_targets_v"] = 1
+        target_buildup["stop_amp_targets_t"] = t_buildup
+        target_buildup["stop_amp_targets_v"] = curr_phoneme_d["manner_specific"]["max_stop_amp"]
+
+        target_release["oral_closure_targets_t"] = t_release
+        target_release["oral_closure_targets_v"] = 0
+        target_release["stop_amp_targets_t"] = t_release
+        target_release["stop_amp_targets_v"] = 0
 
         # DICTIONARIFY OUTPUTS TO PASS THEM CLEANLY
-        return (target,)
+        return (target_closure, target_buildup, target_release)
 
 
 

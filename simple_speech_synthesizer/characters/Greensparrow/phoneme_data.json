@@ -7,7 +7,8 @@
     "constriction_importance": 0,
     "nasality": 0,
     "vowel_coarticulation_coloring": 0.4,
-    "constriction_coarticulation_coloring": 0.1
+    "constriction_coarticulation_coloring": 0.1,
+    "manner_specific": {}
   },
   "hun_a": {
     "phoneme": "hun_a_ch",
@@ -17,7 +18,8 @@
     "constriction_importance": 0,
     "nasality": 0,
     "vowel_coarticulation_coloring": 0,
-    "constriction_coarticulation_coloring": 0.2
+    "constriction_coarticulation_coloring": 0.2,
+    "manner_specific": {}
   },
   "hun_s": {
     "phoneme": "hun_iy_s",
@@ -27,7 +29,22 @@
     "constriction_importance": 1,
     "nasality": 0,
     "vowel_coarticulation_coloring": 0,
-    "constriction_coarticulation_coloring": 0.2
+    "constriction_coarticulation_coloring": 0.2,
+    "manner_specific": {}
+  },
+  "hun_cs": {
+    "phoneme": "hun_iy_s",
+    "manner": "stop",
+    "vowel_formants_importance": 0,
+    "aspiration_importance": 0.05,
+    "constriction_importance": 1,
+    "nasality": 0,
+    "vowel_coarticulation_coloring": 0,
+    "constriction_coarticulation_coloring": 0.2,
+    "manner_specific": {
+      "release_time": 0.02,
+      "max_stop_amp": 3
+    }
   },
   "hun_n": {
     "phoneme": "hun_n_syh",
@@ -35,9 +52,10 @@
     "vowel_formants_importance": 1,
     "aspiration_importance": 1,
     "constriction_importance": 0,
-    "nasality": 1,
+    "nasality": 0,
     "vowel_coarticulation_coloring": 0,
-    "constriction_coarticulation_coloring": 0.2
+    "constriction_coarticulation_coloring": 0.2,
+    "manner_specific": {}
   },
   "<sil>": {
     "phoneme": "<default_silence_schwa>",
@@ -47,6 +65,7 @@
     "constriction_importance": 0,
     "nasality": 0,
     "vowel_coarticulation_coloring": 1,
-    "constriction_coarticulation_coloring": 1
+    "constriction_coarticulation_coloring": 1,
+    "manner_specific": {}
   }
 }

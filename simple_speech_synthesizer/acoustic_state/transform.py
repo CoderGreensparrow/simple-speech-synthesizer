@@ -55,7 +55,7 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     Nasality_antiformant_freq_for_nasal_consonants      = pyo.Port(input_.Nasality_antiformant_freq_for_nasal_consonants, tongue_rt, tongue_ft, init=input_.Nasality_antiformant_freq_for_nasal_consonants.getPoints()[0][1])
     Nasality_antiformant_bandwidth_for_nasal_consonants = pyo.Port(input_.Nasality_antiformant_bandwidth_for_nasal_consonants, tongue_rt, tongue_ft, init=input_.Nasality_antiformant_bandwidth_for_nasal_consonants.getPoints()[0][1])
     Nasality_antiformant_boost_for_nasal_consonants     = pyo.Port(input_.Nasality_antiformant_boost_for_nasal_consonants, tongue_rt, tongue_ft, init=input_.Nasality_antiformant_boost_for_nasal_consonants.getPoints()[0][1])
-    Stop_amp                = pyo.Port(input_.Stop_amp, tongue_tip_rt, tongue_tip_ft, init=input_.Stop_amp.getPoints()[0][1])
+    Stop_amp                = pyo.Port(input_.Stop_amp, s_p["stop_amp_risetime"], s_p["stop_amp_falltime"], init=input_.Stop_amp.getPoints()[0][1])
     # TODO Maybe there should be a max_stop_amp slider, and not just a constant
     # Global envelopes
     Volume           = pyo.Port(input_.Volume, lungs_rt, lungs_rt, init=input_.Volume.getPoints()[0][1])

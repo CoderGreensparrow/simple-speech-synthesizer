@@ -101,18 +101,20 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
                        * (oral_closure * -(1 - s_p["oral_constriction_aspiration_factor"]) + 1))
     true_constriction_importance = constriction_importance * Clip(1-oral_closure, 0, 1)
 
-    in_pressure_buildup_fence = s_p["default_stop_pressure_buildup_happens_above_this_level_of_obstruction"]
+    in_pressure_buildup_fence = 1/(1-s_p["default_stop_pressure_buildup_happens_above_this_level_of_obstruction"])
     in_pressure_buildup_phase = Clip(
-        ((1-true_nasal_openness) * in_pressure_buildup_fence - (in_pressure_buildup_fence - 1)) *
-        (oral_closure * in_pressure_buildup_fence - (in_pressure_buildup_fence - 1)),
-        0, 1)
-    in_pressure_release_fence = s_p["default_stop_pressure_release_happens_above_this_level_of_obstruction"]
+        Clip(Clip(1-true_nasal_openness, 0, 1) * in_pressure_buildup_fence - (in_pressure_buildup_fence - 1), 0, 1) *
+        Clip(Clip(oral_closure, 0, 1) * in_pressure_buildup_fence - (in_pressure_buildup_fence - 1), 0, 1),
+        0, 1)  # 0 false, 1 true, with inbetween
+    """in_pressure_release_fence = 1/(1-s_p["default_stop_pressure_release_happens_above_this_level_of_obstruction"])
     in_pressure_release_phase = Clip(
-        ((1 - true_nasal_openness) * in_pressure_release_fence - (in_pressure_release_fence - 1)) *
-        (oral_closure * in_pressure_release_fence - (in_pressure_release_fence - 1)),
-        0, 1) * (1-in_pressure_buildup_phase)
+        Clip(Clip(1-true_nasal_openness, 0, 1) * in_pressure_release_fence - (in_pressure_release_fence - 1), 0, 1) *
+        Clip(Clip(oral_closure, 0, 1) * in_pressure_release_fence - (in_pressure_release_fence - 1), 0, 1),
+        0, 1) * (1-in_pressure_buildup_phase)"""
 
-    true_volume = volume / (1 + (stop_amp-1) * in_pressure_release_phase)  # bc volume is negative and higher stop amp means higher volume proportionally
+    volume_multiplier = (1 + (stop_amp-1) * (1-in_pressure_buildup_phase)) * (1-in_pressure_buildup_phase)
+    """Base logic: once the product of 1-true_nasal_openness and oral_closure go above some fence, they can do stuff in true volume (hence the many clips, though the outermost ones may not be needed)."""
+    SEND_TO_THE_SCOPE.extend([true_nasal_openness, oral_closure, in_pressure_buildup_phase, volume_multiplier / 3, stop_amp / 3])
 
     # TODO IMPLEMENT PRESSURE CHAMBER LEAKING BEFORE VOICED PLOSIVES
     true_lip_rounding_factor = 1 + (lip_rounding_delta * s_p["lip_rounding_formant_effect_factor"])
@@ -130,7 +132,7 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     true_nasality.play()
     true_aspiration.play()
     true_constriction_importance.play()
-    true_volume.play()
+    volume_multiplier.play()
     ### endregion
 
     Vowel_formant_freqs = [sig.play() * gender_formant_factor * true_lip_rounding_factor
@@ -147,7 +149,8 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     Constriction_component_importance = true_constriction_importance
     Aspiration_component_importance = true_aspiration
 
-    Volume = true_volume
+    Volume = volume
+    Volume_multiplier = volume_multiplier
     F0 = f0  # tension not added for correct singing
     H1_H2_balance = s_p["H1_H2_balance"] + s_p["default_nasality_H1_H2_balance_delta"] * true_nasality
     Spectral_tilt_cutoff_delta = 0 + tension * s_p["tension_induced_spectral_tilt_freq_delta"]
@@ -205,6 +208,7 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
         Aspiration_component_importance=Aspiration_component_importance,
 
         Volume=Volume,
+        Volume_multiplier=Volume_multiplier,
         F0=F0,
         H1_H2_balance=H1_H2_balance,
         Spectral_tilt_cutoff_delta=Spectral_tilt_cutoff_delta,

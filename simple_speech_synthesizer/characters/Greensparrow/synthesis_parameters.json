@@ -58,8 +58,9 @@
 
   "voiced_frication_constriction_component_importance": 0.1,
 
-  "default_stop_pressure_buildup_happens_above_this_level_of_obstruction": 0.9,
-  "default_stop_pressure_release_happens_above_this_level_of_obstruction": 0.5,
+  "default_stop_pressure_buildup_happens_above_this_level_of_obstruction": 0.95,
+  "stop_amp_risetime": 0.08,
+  "stop_amp_falltime": 0.02,
 
   "acoustic_simulation_tongue_tip_risetime": 0.015,
   "acoustic_simulation_tongue_tip_falltime": 0.015,
@@ -72,8 +73,5 @@
   "acoustic_simulation_lungs_risetime": 0.025,
   "acoustic_simulation_lungs_falltime": 0.08,
   "acoustic_simulation_lip_risetime": 0.02,
-  "acoustic_simulation_lip_falltime": 0.02,
-  "max_stop_amp": 1.5,
-  "stop_amp_risetime": 0.3,
-  "stop_amp_falltime": 0.05
+  "acoustic_simulation_lip_falltime": 0.02
 }

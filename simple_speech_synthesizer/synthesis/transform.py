@@ -242,7 +242,7 @@ def synthesize(input: this_layer_types.Input):
 
     ### Effects + FULL SUM OUT
 
-    non_effected_sum = full_voiced_component + constriction_component
+    non_effected_sum = (full_voiced_component + constriction_component) * input.Volume_multiplier
 
     reverb_sum = pyo.Freeverb(
         non_effected_sum,

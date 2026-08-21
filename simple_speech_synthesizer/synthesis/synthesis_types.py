@@ -35,6 +35,7 @@ class Input:
     Aspiration_component_importance: PyoObject
     # Global Envelopes
     Volume: PyoObject
+    Volume_multiplier: PyoObject
     F0: PyoObject
     H1_H2_balance: PyoObject
     Spectral_tilt_cutoff_delta: PyoObject
