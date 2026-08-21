@@ -62,5 +62,21 @@
       "antiformant_bandwidth": 200,
       "antiformant_boost": -20
     }
+  },
+  "<default_silence_schwa>": {
+    "vowel_formants": [311, 1141, 2726, 3723],
+    "constriction": {
+      "low_end": 1000,
+      "high_end": 15000,
+      "peak_frequency": 8000,
+      "peak_bandwidth": 14000,
+      "boost": 0,
+      "overtone_importance": 0
+    },
+    "nasalization": {
+      "antiformant_freq": 1500,
+      "antiformant_bandwidth": 200,
+      "antiformant_boost": 0
+    }
   }
 }

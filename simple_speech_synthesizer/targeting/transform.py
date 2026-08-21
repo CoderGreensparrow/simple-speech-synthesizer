@@ -102,13 +102,17 @@ class Targeter:
 
             match curr_phoneme_d["manner"]:
                 case "flow":
-                    target_dict = self._manner__flow(phoneme, prev_articulation_d, curr_articulation_d, next_articulation_d, curr_phoneme_d)
+                    target_dicts = self._manner__flow(phoneme, prev_articulation_d, curr_articulation_d, next_articulation_d, curr_phoneme_d)
                 case "nasal":
-                    target_dict = self._manner__nasal(phoneme, prev_articulation_d, curr_articulation_d, next_articulation_d, curr_phoneme_d)
+                    target_dicts = self._manner__nasal(phoneme, prev_articulation_d, curr_articulation_d, next_articulation_d, curr_phoneme_d)
+                case "silence":
+                    target_dicts = self._manner__silence(phoneme, prev_articulation_d, next_articulation_d, prev_phoneme_d, next_phoneme_d)
 
-            for internal_name in self.all_internal_names:
-                targets[internal_name + "_ts"].append(target_dict[internal_name + "_t"])
-                targets[internal_name + "_vs"].append(target_dict[internal_name + "_v"])
+
+            for target_dict in target_dicts:
+                for internal_name in self.all_internal_names:
+                    targets[internal_name + "_ts"].append(target_dict[internal_name + "_t"])
+                    targets[internal_name + "_vs"].append(target_dict[internal_name + "_v"])
 
 
         ### OUTPUTS
@@ -297,7 +301,7 @@ class Targeter:
         target["oral_closure_targets_v"] = 0
 
         # DICTIONARIFY OUTPUTS TO PASS THEM CLEANLY
-        return target
+        return (target,)
 
     def _manner__nasal(
             self, phoneme, prev_articulation_d, curr_articulation_d, next_articulation_d,
@@ -334,12 +338,99 @@ class Targeter:
         )
 
         # HANDLE MANNER-SPECIFIC ORAL_CLOSURE
-        # There is no one here though, because flow is for vowels, fricatives, liquids etc.
+        # Nasals have oral closure *and* nasality (normally)
         target["oral_closure_targets_t"] = phoneme.start
         target["oral_closure_targets_v"] = 1
 
         # DICTIONARIFY OUTPUTS TO PASS THEM CLEANLY
-        return target
+        return (target,)
+
+    def _manner__silence(
+            self, phoneme, prev_articulation_d, next_articulation_d, prev_phoneme_d, next_phoneme_d):
+        target1 = dict()
+        target1_to_2 = dict()
+        """This one is silent. It completely adapts itself to the previous and next phoneme, so much so that no change can be heard.
+        Target1: This one mutes the current phoneme without changing frequencies and other parameters, only importances. (Specifically, the vowel_form_imp, asp_imp and constr_imp.)
+        Target1_to_2: Right in the middle between 1 and 2 on the targeting timeline, we move the mouth from the current position to the next as anticipatory articulation (because we will be starting a new word or sentence.)
+        There is no Target2, because that's the actual next phoneme we start with."""
+
+        # TODO: DRY this code?
+        # vowel formants
+        t1 = phoneme.start
+        t1_to_2 = (phoneme.end - phoneme.start) / 2
+        v1 = prev_articulation_d["vowel_formants"]
+        v1_to_2 = next_articulation_d["vowel_formants"]
+        target1["vowel_formant_freqs_targets_t"] = t1
+        target1["vowel_formant_freqs_targets_v"] = v1
+        target1_to_2["vowel_formant_freqs_targets_t"] = t1_to_2
+        target1_to_2["vowel_formant_freqs_targets_v"] = v1_to_2
+        # constriction parameters (generalized)
+        for json_parameter_name, internal_parameter_name in self.coarticulated_constriction_parameter_names.items():
+            v1 = prev_articulation_d["constriction"][json_parameter_name]
+            v1_to_2 = next_articulation_d["constriction"][json_parameter_name]
+            target1[internal_parameter_name + "_t"] = t1
+            target1[internal_parameter_name + "_v"] = v1
+            target1_to_2[internal_parameter_name + "_t"] = t1_to_2
+            target1_to_2[internal_parameter_name + "_v"] = v1_to_2
+        # passthrough non-coarticulated constriciton parameters
+        target1.update(
+            self._passthrough_non_coarticulated_constriction_parameters(phoneme, prev_articulation_d)
+        )
+        target1_to_2.update(
+            self._passthrough_non_coarticulated_constriction_parameters(phoneme, next_articulation_d)
+        )
+        # passthrough nasalization parameters (non-coarticulated)
+        target1.update(
+            self._passthrough_nasalization_parameters(phoneme, prev_articulation_d)
+        )
+        target1_to_2.update(
+            self._passthrough_nasalization_parameters(phoneme, next_articulation_d)
+        )
+        # phoneme_data.json parameters (removed for DRY-ness)
+        # CANNOT PASSTHROUGH ALL: MUST MUTE IMPORTANCES
+        target1.update(
+            self._passthrough_phoneme_parameters(phoneme, prev_phoneme_d)
+        )
+        target1_to_2.update(
+            self._passthrough_phoneme_parameters(phoneme, next_phoneme_d)
+        )
+        target1["vowel_importance_targets_t"] = t1
+        target1["vowel_importance_targets_v"] = 0
+        target1["aspiration_importance_targets_t"] = t1
+        target1["aspiration_importance_targets_v"] = 0
+        target1["constriction_importance_targets_t"] = t1
+        target1["constriction_importance_targets_v"] = 0
+        target1_to_2["vowel_importance_targets_t"] = t1_to_2
+        target1_to_2["vowel_importance_targets_v"] = 0
+        target1_to_2["aspiration_importance_targets_t"] = t1_to_2
+        target1_to_2["aspiration_importance_targets_v"] = 0
+        target1_to_2["constriction_importance_targets_t"] = t1_to_2
+        target1_to_2["constriction_importance_targets_v"] = 0
+
+        # HANDLE MANNER-SPECIFIC ORAL_CLOSURE
+        # Silence is passthrough
+        match prev_phoneme_d["manner"]:
+            case "flow":
+                v1 = 0
+            case "nasal":
+                v1 = 1
+            case "silence":
+                v1 = 0
+        target1["oral_closure_targets_t"] = t1
+        target1["oral_closure_targets_v"] = v1
+
+        match next_phoneme_d["manner"]:
+            case "flow":
+                v1_to_2 = 0
+            case "nasal":
+                v1_to_2 = 1
+            case "silence":
+                v1_to_2 = 0
+        target1_to_2["oral_closure_targets_t"] = t1_to_2
+        target1_to_2["oral_closure_targets_v"] = v1_to_2
+
+        # DICTIONARIFY OUTPUTS TO PASS THEM CLEANLY
+        return (target1, target1_to_2)
 
 
 

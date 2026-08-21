@@ -24,10 +24,12 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     s_p = load_low_level_character(input_.character_dir_path).synthesis_parameters
     tongue_rt = s_p["acoustic_simulation_tongue_risetime"]
     tongue_ft = s_p["acoustic_simulation_tongue_falltime"]
-    larynx_rt = s_p["acoustic_simulation_larynx_risetime"]
-    larynx_ft = s_p["acoustic_simulation_larynx_falltime"]
     pharynx_rt = s_p["acoustic_simulation_pharynx_risetime"]
     pharynx_ft = s_p["acoustic_simulation_pharynx_falltime"]
+    larynx_rt = s_p["acoustic_simulation_larynx_risetime"]
+    larynx_ft = s_p["acoustic_simulation_larynx_falltime"]
+    lungs_rt = s_p["acoustic_simulation_lungs_risetime"]
+    lungs_ft = s_p["acoustic_simulation_lungs_falltime"]
     lip_rt = s_p["acoustic_simulation_lip_risetime"]
     lip_ft = s_p["acoustic_simulation_lip_falltime"]
 
@@ -54,7 +56,7 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     Constriction_peak_overtone_importance = pyo.Port(input_.Constriction_peak_overtone_importance, tongue_rt, tongue_ft, init=input_.Constriction_peak_overtone_importance.getPoints()[0][1])
     Constriction_LP_freq                  = pyo.Port(input_.Constriction_LP_freq, tongue_rt, tongue_ft, init=input_.Constriction_LP_freq.getPoints()[0][1])
     #  Voice_to_noise_ratio: Envelope  This is replaced by individual Vowel, Aspiration and Constriction importances and Nasality
-    Vowel_importance        = pyo.Port(input_.Vowel_importance, larynx_rt, larynx_ft, init=input_.Vowel_importance.getPoints()[0][1])
+    Vowel_importance        = pyo.Port(input_.Vowel_importance, lungs_rt, lungs_ft, init=input_.Vowel_importance.getPoints()[0][1])
     Aspiration_importance   = pyo.Port(input_.Aspiration_importance, larynx_rt, larynx_ft, init=input_.Aspiration_importance.getPoints()[0][1])
     Constriction_importance = pyo.Port(input_.Constriction_importance, tongue_rt, tongue_ft, init=input_.Constriction_importance.getPoints()[0][1])
     Nasality                = pyo.SigTo(input_.Nasality, pharynx_rt, init=input_.Nasality.getPoints()[0][1])
@@ -65,7 +67,7 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     Stop_amp                = Stop_amp * 0 + 2
     # TODO Maybe there should be a max_stop_amp slider, and not just a constant
     # Global envelopes
-    Volume           = pyo.Port(input_.Volume, larynx_rt, larynx_ft, init=input_.Volume.getPoints()[0][1])
+    Volume           = pyo.Port(input_.Volume, lungs_rt, lungs_rt, init=input_.Volume.getPoints()[0][1])
     F0               = pyo.Port(input_.F0, larynx_rt, larynx_ft, init=input_.F0.getPoints()[0][1])
     NasalityDelta    = pyo.Port(input_.NasalityDelta, pharynx_rt, pharynx_ft, init=input_.NasalityDelta.getPoints()[0][1])
     BreathinessDelta = pyo.Port(input_.BreathinessDelta, larynx_rt, larynx_ft, init=input_.BreathinessDelta.getPoints()[0][1])
@@ -75,8 +77,6 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     VocalGenderDelta = pyo.Port(input_.VocalGenderDelta, larynx_rt, larynx_ft, init=input_.VocalGenderDelta.getPoints()[0][1])
     # Throat jitter
     ThroatJitter     = pyo.Port(input_.ThroatJitter, larynx_rt, larynx_ft, init=input_.ThroatJitter.getPoints()[0][1])
-
-    SEND_TO_THE_SCOPE.append(Stop_amp / 2)
 
     output = next_layer_types.Input(
         server=input_.server,

@@ -15,7 +15,7 @@
     "vowel_formants_importance": 1,
     "aspiration_importance": 1,
     "constriction_importance": 0,
-    "nasality": 1,
+    "nasality": 0,
     "vowel_coarticulation_coloring": 0,
     "constriction_coarticulation_coloring": 0.2
   },
@@ -35,8 +35,18 @@
     "vowel_formants_importance": 1,
     "aspiration_importance": 1,
     "constriction_importance": 0,
-    "nasality": 1,
+    "nasality": 0,
     "vowel_coarticulation_coloring": 0,
     "constriction_coarticulation_coloring": 0.2
+  },
+  "<sil>": {
+    "phoneme": "<default_silence_schwa>",
+    "manner": "silence",
+    "vowel_formants_importance": 0,
+    "aspiration_importance": 0,
+    "constriction_importance": 0,
+    "nasality": 0,
+    "vowel_coarticulation_coloring": 1,
+    "constriction_coarticulation_coloring": 1
   }
 }

@@ -166,7 +166,6 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     Nasality_nasal_formant_N2_importance = (true_nasality * s_p["default_nasality_nasal_formant_n2_importance"]
                                             * ((Max(oral_closure - s_p["default_oral_constriction_n1n2_imp_factors_only_after_oc_is"], 0) / (1 - s_p["default_oral_constriction_n1n2_imp_factors_only_after_oc_is"]))
                                                * -(1 - s_p["default_oral_constriction_n2_importance_factor"]) + 1))
-    SEND_TO_THE_SCOPE.extend([Max(oral_closure - s_p["default_oral_constriction_n1n2_imp_factors_only_after_oc_is"], 0) / (1 - s_p["default_oral_constriction_n1n2_imp_factors_only_after_oc_is"])])
     #Nasality_nasal_formant_N2_importance = true_nasality * s_p["default_nasality_nasal_formant_n2_importance"]
     Nasality_LP_freq = Sig(s_p["default_nasality_LP_freq"])
     Nasality_LP_strength = true_nasality * Sig(s_p["default_nasality_LP_strength"])
