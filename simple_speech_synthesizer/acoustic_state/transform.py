@@ -34,7 +34,7 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     # ADDITIONAL COMPUTED VALUES
     Stop_amp = pyo.Port(
         # calculation: map range [0; 1] to [stop_amp_should_rise_after...; 1] then map the [0; 1] range of that to [1; max_stop_amp]
-        pyo.Clip((input_.Oral_closure / (1-s_p["stop_amp_should_rise_after_full_closure_hits_this"]) - 1/(1-s_p["stop_amp_should_rise_after_full_closure_hits_this"]) + 1)
+        pyo.Clip(((1-input_.Oral_closure) / (1-s_p["stop_amp_should_rise_after_full_closure_hits_this"]) - 1/(1-s_p["stop_amp_should_rise_after_full_closure_hits_this"]) + 1)
                  * (1-s_p["max_stop_amp"]) + 1,
                  min=1, max=s_p["max_stop_amp"]).play(),
         risetime=s_p["stop_amp_risetime"],
@@ -62,7 +62,7 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     Nasality_antiformant_freq_for_nasal_consonants      = pyo.Port(input_.Nasality_antiformant_freq_for_nasal_consonants, tongue_rt, tongue_ft, init=input_.Nasality_antiformant_freq_for_nasal_consonants.getPoints()[0][1])
     Nasality_antiformant_bandwidth_for_nasal_consonants = pyo.Port(input_.Nasality_antiformant_bandwidth_for_nasal_consonants, tongue_rt, tongue_ft, init=input_.Nasality_antiformant_bandwidth_for_nasal_consonants.getPoints()[0][1])
     Nasality_antiformant_boost_for_nasal_consonants     = pyo.Port(input_.Nasality_antiformant_boost_for_nasal_consonants, tongue_rt, tongue_ft, init=input_.Nasality_antiformant_boost_for_nasal_consonants.getPoints()[0][1])
-    Stop_amp                = Stop_amp
+    Stop_amp                = Stop_amp * 0 + 2
     # TODO Maybe there should be a max_stop_amp slider, and not just a constant
     # Global envelopes
     Volume           = pyo.Port(input_.Volume, larynx_rt, larynx_ft, init=input_.Volume.getPoints()[0][1])
@@ -75,6 +75,8 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     VocalGenderDelta = pyo.Port(input_.VocalGenderDelta, larynx_rt, larynx_ft, init=input_.VocalGenderDelta.getPoints()[0][1])
     # Throat jitter
     ThroatJitter     = pyo.Port(input_.ThroatJitter, larynx_rt, larynx_ft, init=input_.ThroatJitter.getPoints()[0][1])
+
+    SEND_TO_THE_SCOPE.append(Stop_amp / 2)
 
     output = next_layer_types.Input(
         server=input_.server,

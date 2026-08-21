@@ -110,7 +110,7 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     ### ADD IN ORAL_CLOSURE & STOP_AMP
     true_aspiration *= 1-oral_closure
     true_constriction_importance = constriction_importance * (1-oral_closure)
-    true_volume = volume * stop_amp
+    true_volume = volume / stop_amp  # bc volume is negative and higher stop amp means higher volume proportionally
 
     ### region PLAY ABOVE
     true_lip_rounding_factor.play()

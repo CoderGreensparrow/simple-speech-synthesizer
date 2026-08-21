@@ -15,7 +15,7 @@
     "vowel_formants_importance": 1,
     "aspiration_importance": 1,
     "constriction_importance": 0,
-    "nasality": 0,
+    "nasality": 1,
     "vowel_coarticulation_coloring": 0,
     "constriction_coarticulation_coloring": 0.2
   },
