@@ -15,7 +15,7 @@ from simple_speech_synthesizer.base.load_low_level_character import load_low_lev
 
 from simple_speech_synthesizer.global_debug_vars import SEND_TO_THE_SCOPE
 
-from pyo import Max, Min, Sig
+from pyo import Max, Sig, Clip, Min
 
 from simple_speech_synthesizer.garbage_collection_prevention import anchor_pyo_objects
 
@@ -43,9 +43,6 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
 
     vowel_importance = input_.Vowel_importance
     constriction_importance = input_.Constriction_importance
-
-    true_nasality = input_.Nasality + input_.NasalityDelta
-    true_aspiration = (input_.Aspiration_importance + input_.BreathinessDelta)
 
     oral_closure = input_.Oral_closure
     nasality_antiformant_freq_for_nasal_consonants = input_.Nasality_antiformant_freq_for_nasal_consonants
@@ -75,9 +72,6 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     vowel_importance.play()
     constriction_importance.play()
 
-    true_nasality.play()
-    true_aspiration.play()
-
     oral_closure.play()
     nasality_antiformant_freq_for_nasal_consonants.play()
     nasality_antiformant_bandwidth_for_nasal_consonants.play()
@@ -101,6 +95,26 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     # To make it more readable, every time some modifier is applied, the following order must be used:
     # Nasality + Tension + Gender + Whatever else
 
+    true_nasal_openness = input_.Nasality + input_.NasalityDelta
+    true_nasality = Max(true_nasal_openness, oral_closure)
+    true_aspiration = ((input_.Aspiration_importance + input_.BreathinessDelta)
+                       * (oral_closure * -(1 - s_p["oral_constriction_aspiration_factor"]) + 1))
+    true_constriction_importance = constriction_importance * Clip(1-oral_closure, 0, 1)
+
+    in_pressure_buildup_fence = s_p["default_stop_pressure_buildup_happens_above_this_level_of_obstruction"]
+    in_pressure_buildup_phase = Clip(
+        ((1-true_nasal_openness) * in_pressure_buildup_fence - (in_pressure_buildup_fence - 1)) *
+        (oral_closure * in_pressure_buildup_fence - (in_pressure_buildup_fence - 1)),
+        0, 1)
+    in_pressure_release_fence = s_p["default_stop_pressure_release_happens_above_this_level_of_obstruction"]
+    in_pressure_release_phase = Clip(
+        ((1 - true_nasal_openness) * in_pressure_release_fence - (in_pressure_release_fence - 1)) *
+        (oral_closure * in_pressure_release_fence - (in_pressure_release_fence - 1)),
+        0, 1) * (1-in_pressure_buildup_phase)
+
+    true_volume = volume / (1 + (stop_amp-1) * in_pressure_release_phase)  # bc volume is negative and higher stop amp means higher volume proportionally
+
+    # TODO IMPLEMENT PRESSURE CHAMBER LEAKING BEFORE VOICED PLOSIVES
     true_lip_rounding_factor = 1 + (lip_rounding_delta * s_p["lip_rounding_formant_effect_factor"])
     gender_formant_factor = 1 + (vocal_gender_delta * 0.5)  # -1 ultra-masculine, 1 ultra-feminine, 0 natural
     gender_hill_boost_factor = vocal_gender_delta * s_p["tension_induced_spectral_hill_boost"] * 0.5
@@ -108,9 +122,6 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
 
     ############ TODO DEBUG BELOW REMOVE LATER
     ### ADD IN ORAL_CLOSURE & STOP_AMP
-    true_aspiration *= 1-oral_closure
-    true_constriction_importance = constriction_importance * (1-oral_closure)
-    true_volume = volume / stop_amp  # bc volume is negative and higher stop amp means higher volume proportionally
 
     ### region PLAY ABOVE
     true_lip_rounding_factor.play()

@@ -22,6 +22,8 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     activate_layer_inputs(input_)
 
     s_p = load_low_level_character(input_.character_dir_path).synthesis_parameters
+    tongue_tip_rt = s_p["acoustic_simulation_tongue_tip_risetime"]
+    tongue_tip_ft = s_p["acoustic_simulation_tongue_tip_falltime"]
     tongue_rt = s_p["acoustic_simulation_tongue_risetime"]
     tongue_ft = s_p["acoustic_simulation_tongue_falltime"]
     pharynx_rt = s_p["acoustic_simulation_pharynx_risetime"]
@@ -32,17 +34,6 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     lungs_ft = s_p["acoustic_simulation_lungs_falltime"]
     lip_rt = s_p["acoustic_simulation_lip_risetime"]
     lip_ft = s_p["acoustic_simulation_lip_falltime"]
-
-    # ADDITIONAL COMPUTED VALUES
-    Stop_amp = pyo.Port(
-        # calculation: map range [0; 1] to [stop_amp_should_rise_after...; 1] then map the [0; 1] range of that to [1; max_stop_amp]
-        pyo.Clip(((1-input_.Oral_closure) / (1-s_p["stop_amp_should_rise_after_full_closure_hits_this"]) - 1/(1-s_p["stop_amp_should_rise_after_full_closure_hits_this"]) + 1)
-                 * (1-s_p["max_stop_amp"]) + 1,
-                 min=1, max=s_p["max_stop_amp"]).play(),
-        risetime=s_p["stop_amp_risetime"],
-        falltime=s_p["stop_amp_falltime"],
-        init=1
-    )
 
     ### OUTPUTS
     # Envelopes, simulated from acoustic targets
@@ -64,7 +55,7 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     Nasality_antiformant_freq_for_nasal_consonants      = pyo.Port(input_.Nasality_antiformant_freq_for_nasal_consonants, tongue_rt, tongue_ft, init=input_.Nasality_antiformant_freq_for_nasal_consonants.getPoints()[0][1])
     Nasality_antiformant_bandwidth_for_nasal_consonants = pyo.Port(input_.Nasality_antiformant_bandwidth_for_nasal_consonants, tongue_rt, tongue_ft, init=input_.Nasality_antiformant_bandwidth_for_nasal_consonants.getPoints()[0][1])
     Nasality_antiformant_boost_for_nasal_consonants     = pyo.Port(input_.Nasality_antiformant_boost_for_nasal_consonants, tongue_rt, tongue_ft, init=input_.Nasality_antiformant_boost_for_nasal_consonants.getPoints()[0][1])
-    Stop_amp                = Stop_amp * 0 + 2
+    Stop_amp                = pyo.Port(input_.Stop_amp, tongue_tip_rt, tongue_tip_ft, init=input_.Stop_amp.getPoints()[0][1])
     # TODO Maybe there should be a max_stop_amp slider, and not just a constant
     # Global envelopes
     Volume           = pyo.Port(input_.Volume, lungs_rt, lungs_rt, init=input_.Volume.getPoints()[0][1])

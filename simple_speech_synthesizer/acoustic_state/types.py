@@ -30,6 +30,7 @@ class Input:
     Constriction_importance: Linseg
     Nasality: Linseg
     Oral_closure: Linseg
+    Stop_amp: Linseg
     Nasality_antiformant_freq_for_nasal_consonants: Linseg
     Nasality_antiformant_bandwidth_for_nasal_consonants: Linseg
     Nasality_antiformant_boost_for_nasal_consonants: Linseg

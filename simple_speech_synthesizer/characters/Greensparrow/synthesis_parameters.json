@@ -50,6 +50,7 @@
   "default_oral_constriction_nasal_murmur_freq": 250,
   "default_oral_constriction_nasal_murmur_importance": 0.5,
   "default_nasal_murmur_activates_after_this_oral_constriction": 0.8,
+  "oral_constriction_aspiration_factor": 0.3,
 
   "default_Constriction_volume_as_a_factor_of_volume": 0.3,
 
@@ -57,6 +58,11 @@
 
   "voiced_frication_constriction_component_importance": 0.1,
 
+  "default_stop_pressure_buildup_happens_above_this_level_of_obstruction": 0.9,
+  "default_stop_pressure_release_happens_above_this_level_of_obstruction": 0.5,
+
+  "acoustic_simulation_tongue_tip_risetime": 0.015,
+  "acoustic_simulation_tongue_tip_falltime": 0.015,
   "acoustic_simulation_tongue_risetime": 0.04,
   "acoustic_simulation_tongue_falltime": 0.04,
   "acoustic_simulation_pharynx_risetime": 0.07,
@@ -69,6 +75,5 @@
   "acoustic_simulation_lip_falltime": 0.02,
   "max_stop_amp": 1.5,
   "stop_amp_risetime": 0.3,
-  "stop_amp_falltime": 0.05,
-  "stop_amp_should_rise_after_full_closure_hits_this": 0.8
+  "stop_amp_falltime": 0.05
 }

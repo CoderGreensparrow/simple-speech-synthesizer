@@ -20,6 +20,7 @@ class Input:
     constriction_importance_targets: Targets
     nasality_targets: Targets
     oral_closure_targets: Targets
+    stop_amp_targets: Targets
     nasality_antiformant_freq_for_nasal_consonants_targets: Targets
     nasality_antiformant_bandwidth_for_nasal_consonants_targets: Targets
     nasality_antiformant_boost_for_nasal_consonants_targets: Targets

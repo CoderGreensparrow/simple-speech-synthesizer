@@ -30,6 +30,7 @@ class Targeter:
         self.constriction_importance_targets = None
         self.nasality_targets = None
         self.oral_closure_targets = None  # treated by manner function specifically
+        self.stop_amp_targets = None  # treated by manner function specifically
         self.nasality_antiformant_freq_for_nasal_consonants_targets = None
         self.nasality_antiformant_bandwidth_for_nasal_consonants_targets = None
         self.nasality_antiformant_boost_for_nasal_consonants_targets = None
@@ -61,7 +62,7 @@ class Targeter:
         }
 
         self.extra_parameter_names = [
-            "vowel_formant_freqs_targets", "oral_closure_targets"
+            "vowel_formant_freqs_targets", "oral_closure_targets", "stop_amp_targets"
         ]  # this is just here to have a list of all internal parameter names at any given time, if I concatenate this with all above .values()
         self.all_internal_names = (list(self.extra_parameter_names) +
                                    list(self.coarticulated_constriction_parameter_names.values()) +
@@ -107,6 +108,8 @@ class Targeter:
                     target_dicts = self._manner__nasal(phoneme, prev_articulation_d, curr_articulation_d, next_articulation_d, curr_phoneme_d)
                 case "silence":
                     target_dicts = self._manner__silence(phoneme, prev_articulation_d, next_articulation_d, prev_phoneme_d, next_phoneme_d)
+                case "stop":
+                    target_dicts = self._manner__stop(phoneme, prev_articulation_d, curr_articulation_d, next_articulation_d, curr_phoneme_d)
 
 
             for target_dict in target_dicts:
@@ -128,6 +131,7 @@ class Targeter:
         self.constriction_importance_targets = Targets(targets["constriction_importance_targets_ts"], targets["constriction_importance_targets_vs"])
         self.nasality_targets = Targets(targets["nasality_targets_ts"], targets["nasality_targets_vs"])
         self.oral_closure_targets = Targets(targets["oral_closure_targets_ts"], targets["oral_closure_targets_vs"])
+        self.stop_amp_targets = Targets(targets["stop_amp_targets_ts"], targets["stop_amp_targets_vs"])
         self.nasality_antiformant_freq_for_nasal_consonants_targets = Targets(targets["nasality_antiformant_freq_for_nasal_consonants_targets_ts"], targets["nasality_antiformant_freq_for_nasal_consonants_targets_vs"])
         self.nasality_antiformant_bandwidth_for_nasal_consonants_targets = Targets(targets["nasality_antiformant_bandwidth_for_nasal_consonants_targets_ts"], targets["nasality_antiformant_bandwidth_for_nasal_consonants_targets_vs"])
         self.nasality_antiformant_boost_for_nasal_consonants_targets = Targets(targets["nasality_antiformant_boost_for_nasal_consonants_targets_ts"], targets["nasality_antiformant_boost_for_nasal_consonants_targets_vs"])
@@ -299,6 +303,8 @@ class Targeter:
         # There is no one here though, because flow is for vowels, fricatives, liquids etc.
         target["oral_closure_targets_t"] = phoneme.start
         target["oral_closure_targets_v"] = 0
+        target["stop_amp_targets_t"] = phoneme.start
+        target["stop_amp_targets_v"] = 1
 
         # DICTIONARIFY OUTPUTS TO PASS THEM CLEANLY
         return (target,)
@@ -341,6 +347,8 @@ class Targeter:
         # Nasals have oral closure *and* nasality (normally)
         target["oral_closure_targets_t"] = phoneme.start
         target["oral_closure_targets_v"] = 1
+        target["stop_amp_targets_t"] = phoneme.start
+        target["stop_amp_targets_v"] = 1
 
         # DICTIONARIFY OUTPUTS TO PASS THEM CLEANLY
         return (target,)
@@ -416,8 +424,12 @@ class Targeter:
                 v1 = 1
             case "silence":
                 v1 = 0
+            case "stop":
+                v1 = 0
         target1["oral_closure_targets_t"] = t1
         target1["oral_closure_targets_v"] = v1
+        target1["stop_amp_targets_t"] = t1
+        target1["stop_amp_targets_v"] = 1
 
         match next_phoneme_d["manner"]:
             case "flow":
@@ -426,11 +438,58 @@ class Targeter:
                 v1_to_2 = 1
             case "silence":
                 v1_to_2 = 0
+            case "stop":
+                v1_to_2 = 1  # Only stops are special enough to have a difference at start and end (at start, they are orally closed, at end, they are not).
         target1_to_2["oral_closure_targets_t"] = t1_to_2
         target1_to_2["oral_closure_targets_v"] = v1_to_2
+        target1_to_2["stop_amp_targets_t"] = t1_to_2
+        target1_to_2["stop_amp_targets_v"] = 1
 
         # DICTIONARIFY OUTPUTS TO PASS THEM CLEANLY
         return (target1, target1_to_2)
+
+    def _manner__stop(
+            self, phoneme, prev_articulation_d, curr_articulation_d, next_articulation_d,
+            curr_phoneme_d):
+        target = dict()
+
+        # vowel formants
+        t, v = self._simple_vowel_formant_freqs_targets_coarticulator(phoneme, prev_articulation_d, curr_articulation_d, next_articulation_d, curr_phoneme_d)
+        target["vowel_formant_freqs_targets_t"] = t
+        target["vowel_formant_freqs_targets_v"] = v
+        # constriction parameters (generalized)
+        for json_parameter_name, internal_parameter_name in self.coarticulated_constriction_parameter_names.items():
+            t, v = self._simple_target_coarticulator(
+                phoneme,
+                prev_articulation_d["constriction"][json_parameter_name],
+                curr_articulation_d["constriction"][json_parameter_name],
+                next_articulation_d["constriction"][json_parameter_name],
+                curr_phoneme_d["constriction_coarticulation_coloring"]
+            )
+            target[internal_parameter_name + "_t"] = t
+            target[internal_parameter_name + "_v"] = v
+        # passthrough non-coarticulated constriciton parameters
+        target.update(
+            self._passthrough_non_coarticulated_constriction_parameters(phoneme, curr_articulation_d)
+        )
+        # passthrough nasalization parameters (non-coarticulated)
+        target.update(
+            self._passthrough_nasalization_parameters(phoneme, curr_articulation_d)
+        )
+        # phoneme_data.json parameters (removed for DRY-ness)
+        target.update(
+            self._passthrough_phoneme_parameters(phoneme, curr_phoneme_d)
+        )
+
+        # HANDLE MANNER-SPECIFIC ORAL_CLOSURE
+        # There is no one here though, because flow is for vowels, fricatives, liquids etc.
+        target["oral_closure_targets_t"] = phoneme.start
+        target["oral_closure_targets_v"] = 0
+        target["stop_amp_targets_t"] = phoneme.start
+        target["stop_amp_targets_v"] = 1
+
+        # DICTIONARIFY OUTPUTS TO PASS THEM CLEANLY
+        return (target,)
 
 
 
@@ -459,6 +518,7 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
         constriction_importance_targets=targets.constriction_importance_targets,
         nasality_targets=targets.nasality_targets,
         oral_closure_targets=targets.oral_closure_targets,
+        stop_amp_targets=targets.stop_amp_targets,
         nasality_antiformant_freq_for_nasal_consonants_targets=targets.nasality_antiformant_freq_for_nasal_consonants_targets,
         nasality_antiformant_bandwidth_for_nasal_consonants_targets=targets.nasality_antiformant_bandwidth_for_nasal_consonants_targets,
         nasality_antiformant_boost_for_nasal_consonants_targets=targets.nasality_antiformant_boost_for_nasal_consonants_targets,
