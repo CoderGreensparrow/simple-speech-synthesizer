@@ -60,7 +60,7 @@
 
   "default_stop_pressure_buildup_happens_above_this_level_of_obstruction": 0.95,
   "stop_amp_risetime": 0.08,
-  "stop_amp_falltime": 0.02,
+  "stop_amp_falltime": 0.013,
 
   "acoustic_simulation_tongue_tip_risetime": 0.015,
   "acoustic_simulation_tongue_tip_falltime": 0.015,

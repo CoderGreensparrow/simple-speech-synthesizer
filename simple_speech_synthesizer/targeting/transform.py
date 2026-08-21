@@ -475,6 +475,8 @@ class Targeter:
         t_buildup = max(phoneme.end - curr_phoneme_d["manner_specific"]["release_time"] - self.synthesis_d["stop_amp_risetime"], phoneme.start)
         t_release = max(phoneme.end - curr_phoneme_d["manner_specific"]["release_time"], phoneme.start)
 
+        ### TODO: To differentiate between stops (big VOT), and affricates (small VOT), I could introduce VOT (voice onset time) with toggleable aspiration.
+
         # vowel formants
         _, v = self._simple_vowel_formant_freqs_targets_coarticulator(phoneme, prev_articulation_d, curr_articulation_d, next_articulation_d, curr_phoneme_d)
         target_closure["vowel_formant_freqs_targets_t"] = t_closure

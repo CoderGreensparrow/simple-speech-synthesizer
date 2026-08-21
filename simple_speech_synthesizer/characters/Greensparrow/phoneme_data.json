@@ -36,13 +36,13 @@
     "phoneme": "hun_iy_s",
     "manner": "stop",
     "vowel_formants_importance": 0,
-    "aspiration_importance": 0.05,
+    "aspiration_importance": 0.2,
     "constriction_importance": 1,
     "nasality": 0,
     "vowel_coarticulation_coloring": 0,
     "constriction_coarticulation_coloring": 0.2,
     "manner_specific": {
-      "release_time": 0.02,
+      "release_time": 0.05,
       "max_stop_amp": 3
     }
   },
