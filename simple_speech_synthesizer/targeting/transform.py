@@ -528,7 +528,7 @@ class Targeter:
         target_release["oral_closure_targets_t"] = t_release
         target_release["oral_closure_targets_v"] = 0
         target_release["stop_amp_targets_t"] = t_release
-        target_release["stop_amp_targets_v"] = 0
+        target_release["stop_amp_targets_v"] = 1
 
         # DICTIONARIFY OUTPUTS TO PASS THEM CLEANLY
         return (target_closure, target_buildup, target_release)

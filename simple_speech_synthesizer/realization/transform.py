@@ -149,6 +149,8 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     Constriction_component_importance = true_constriction_importance
     Aspiration_component_importance = true_aspiration
 
+    SEND_TO_THE_SCOPE.append(Voiced_component_importance)
+
     Volume = volume
     Volume_multiplier = volume_multiplier
     F0 = f0  # tension not added for correct singing

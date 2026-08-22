@@ -40,18 +40,18 @@ def transform(input_: this_layer_types.Input) -> next_layer_types.Input:
     # TODO: NOTE: if this ever fails again, I can add a pyo.Max(seg, 1) instead of seg to make sure Log2 doesn't get a 0 value.
     Vowel_formant_freqs                   = [pyo.Pow(2, pyo.SigTo(pyo.Log2(seg), tongue_rt, init=math.log2(seg.getPoints()[0][1]))) for seg in input_.Vowel_formant_freqs]
     Vowel_formant_importances             = [pyo.Port(seg, tongue_rt, tongue_ft, init=seg.getPoints()[0][1]) for seg in input_.Vowel_formant_importances]
-    Constriction_HP_freq                  = pyo.Port(input_.Constriction_HP_freq, tongue_rt, tongue_ft, init=input_.Constriction_HP_freq.getPoints()[0][1])
-    Constriction_peak_freq                = pyo.Port(input_.Constriction_peak_freq, tongue_rt, tongue_ft, init=input_.Constriction_peak_freq.getPoints()[0][1])
-    Constriction_peak_bandwidth           = pyo.Port(input_.Constriction_peak_bandwidth, tongue_rt, tongue_ft, init=input_.Constriction_peak_bandwidth.getPoints()[0][1])
-    Constriction_peak_boost               = pyo.Port(input_.Constriction_peak_boost, tongue_rt, tongue_ft, init=input_.Constriction_peak_boost.getPoints()[0][1])
-    Constriction_peak_overtone_importance = pyo.Port(input_.Constriction_peak_overtone_importance, tongue_rt, tongue_ft, init=input_.Constriction_peak_overtone_importance.getPoints()[0][1])
-    Constriction_LP_freq                  = pyo.Port(input_.Constriction_LP_freq, tongue_rt, tongue_ft, init=input_.Constriction_LP_freq.getPoints()[0][1])
+    Constriction_HP_freq                  = pyo.Pow(2, pyo.SigTo(pyo.Log2(input_.Constriction_HP_freq), tongue_tip_rt, init=math.log2(input_.Constriction_HP_freq.getPoints()[0][1])))
+    Constriction_peak_freq                = pyo.Pow(2, pyo.SigTo(pyo.Log2(input_.Constriction_peak_freq), tongue_tip_rt, init=math.log2(input_.Constriction_peak_freq.getPoints()[0][1])))
+    Constriction_peak_bandwidth           = pyo.Port(input_.Constriction_peak_bandwidth, tongue_tip_rt, tongue_tip_ft, init=input_.Constriction_peak_bandwidth.getPoints()[0][1])
+    Constriction_peak_boost               = pyo.Port(input_.Constriction_peak_boost, tongue_tip_rt, tongue_tip_ft, init=input_.Constriction_peak_boost.getPoints()[0][1])
+    Constriction_peak_overtone_importance = pyo.Port(input_.Constriction_peak_overtone_importance, tongue_tip_rt, tongue_tip_ft, init=input_.Constriction_peak_overtone_importance.getPoints()[0][1])
+    Constriction_LP_freq                  = pyo.Pow(2, pyo.SigTo(input_.Constriction_LP_freq, tongue_tip_rt, init=math.log2(input_.Constriction_LP_freq.getPoints()[0][1])))
     #  Voice_to_noise_ratio: Envelope  This is replaced by individual Vowel, Aspiration and Constriction importances and Nasality
     Vowel_importance        = pyo.Port(input_.Vowel_importance, lungs_rt, lungs_ft, init=input_.Vowel_importance.getPoints()[0][1])
     Aspiration_importance   = pyo.Port(input_.Aspiration_importance, larynx_rt, larynx_ft, init=input_.Aspiration_importance.getPoints()[0][1])
-    Constriction_importance = pyo.Port(input_.Constriction_importance, tongue_rt, tongue_ft, init=input_.Constriction_importance.getPoints()[0][1])
+    Constriction_importance = pyo.Port(input_.Constriction_importance, tongue_tip_rt, tongue_tip_ft, init=input_.Constriction_importance.getPoints()[0][1])
     Nasality                = pyo.SigTo(input_.Nasality, pharynx_rt, init=input_.Nasality.getPoints()[0][1])
-    Oral_closure            = pyo.SigTo(input_.Oral_closure, tongue_rt, init=input_.Oral_closure.getPoints()[0][1])
+    Oral_closure            = pyo.SigTo(input_.Oral_closure, tongue_tip_rt, init=input_.Oral_closure.getPoints()[0][1])
     Nasality_antiformant_freq_for_nasal_consonants      = pyo.Port(input_.Nasality_antiformant_freq_for_nasal_consonants, tongue_rt, tongue_ft, init=input_.Nasality_antiformant_freq_for_nasal_consonants.getPoints()[0][1])
     Nasality_antiformant_bandwidth_for_nasal_consonants = pyo.Port(input_.Nasality_antiformant_bandwidth_for_nasal_consonants, tongue_rt, tongue_ft, init=input_.Nasality_antiformant_bandwidth_for_nasal_consonants.getPoints()[0][1])
     Nasality_antiformant_boost_for_nasal_consonants     = pyo.Port(input_.Nasality_antiformant_boost_for_nasal_consonants, tongue_rt, tongue_ft, init=input_.Nasality_antiformant_boost_for_nasal_consonants.getPoints()[0][1])
