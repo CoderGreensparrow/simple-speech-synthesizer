@@ -14,6 +14,7 @@ class Character:
     synthesis_data: dict
     phoneme_data: dict
     articulation_data: dict
+    singing_parameters: dict
 
 
 def load_character(path: str) -> Character:
@@ -29,5 +30,6 @@ def load_character(path: str) -> Character:
     synthesis_parameters = json.loads(open(os.path.join(path, "synthesis_parameters.json"), "r", encoding="utf-8").read())
     phoneme_data = json.loads(open(os.path.join(path, "phoneme_data.json"), "r", encoding="utf-8").read())
     articulation_data = json.loads(open(os.path.join(path, "articulation_data.json"), "r", encoding="utf-8").read())
+    singing_parameters = json.loads(open(os.path.join(path, "singing_parameters.json"), "r", encoding="utf-8").read())
 
-    return Character(synthesis_parameters, phoneme_data, articulation_data)
+    return Character(synthesis_parameters, phoneme_data, articulation_data, singing_parameters)

@@ -1,5 +1,7 @@
 #  from simple_speech_synthesizer.garbage_collection_prevention import GLOBAL_AUDIO_FORTRESS
 """This may be required to run correctly."""
+from simple_speech_synthesizer.sing_timing.types import Input as InputSingTiming
+from simple_speech_synthesizer.sing_timing.transform import transform as transform_sing_timing
 from simple_speech_synthesizer.targeting.types import Input as InputTargeting
 from simple_speech_synthesizer.targeting.transform import transform as transform_targeting
 from simple_speech_synthesizer.pyo_converter.types import Input as InputPyoConverter
@@ -10,6 +12,18 @@ from simple_speech_synthesizer.realization.types import Input as InputRealizatio
 from simple_speech_synthesizer.realization.transform import transform as transform_realization
 from simple_speech_synthesizer.synthesis.synthesis_types import Input as InputSynthesis
 from simple_speech_synthesizer.synthesis.transform import transform as transform_synthesis
+
+def process_sing_timing(input: InputSingTiming, full_stack: bool = True):
+    """
+    Process the SING TIMING (aka. the timing with notes) layer.
+    :param input: Input of the layer with the layer's own Input class.
+    :param full_stack: Whether (TRUE case:) to run through the input the full stack of layers, and output TTS audio, or (FALSE case:) to only process this layer.
+    :return:
+    """
+    output = transform_sing_timing(input)
+    if full_stack:
+        output = process_targeting(output)
+    return output
 
 def process_targeting(input: InputTargeting, full_stack: bool = True):
     """
@@ -73,7 +87,7 @@ if __name__ == "__main__":
     from simple_speech_synthesizer.base.types import Envelope, Point, Segment
 
     i = Input(
-        character_dir_path=r"D:\PycharmProjects\simple-speech-synthesizer\simple_speech_synthesizer\characters\Greensparrow",
+        character_dir_path=r"D:\PycharmProjects\simple-speech-synthesizer\simple_speech_synthesizer\characters\Greensparrow_JP",
         output_filepath=r"D:\PycharmProjects\simple-speech-synthesizer\simple_speech_synthesizer\testaudio.wav",
         duration=4,
         phonemes=(

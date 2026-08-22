@@ -1,0 +1,82 @@
+{
+  "PLACEHOLDER_i/ch/k": {
+    "vowel_formants": [200, 300, 4000],
+    "constriction": {
+      "low_end": 500,
+      "high_end": 1500,
+      "peak_frequency": 800,
+      "peak_bandwidth": 500,
+      "boost": 10,
+      "overtone_importance": 0.5
+    },
+    "nasalization": {
+      "antiformant_freq": 2500,
+      "antiformant_bandwidth": 500,
+      "antiformant_boost": -20
+    }
+  },
+  "hun_a_ch": {
+    "vowel_formants": [512, 945, 3004, 3542, 4422],
+    "constriction": {
+      "low_end": 350,
+      "high_end": 8000,
+      "peak_frequency": 1000,
+      "peak_bandwidth": 300,
+      "boost": 12,
+      "overtone_importance": 0.05
+    },
+    "nasalization": {
+      "antiformant_freq": 2500,
+      "antiformant_bandwidth": 500,
+      "antiformant_boost": -20
+    }
+  },
+  "hun_iy_s": {
+    "vowel_formants": [280, 2042, 2588, 3676],
+    "constriction": {
+      "low_end": 2000,
+      "high_end": 11000,
+      "peak_frequency": 3300,
+      "peak_bandwidth": 400,
+      "boost": 16,
+      "overtone_importance": 0.7
+    },
+    "nasalization": {
+      "antiformant_freq": 2500,
+      "antiformant_bandwidth": 500,
+      "antiformant_boost": -20
+    }
+  },
+  "hun_n_syh": {
+    "vowel_formants": [200, 1676, 2681, 3607],
+    "constriction": {
+      "low_end": 2000,
+      "high_end": 15000,
+      "peak_frequency": 7200,
+      "peak_bandwidth": 1000,
+      "boost": 16,
+      "overtone_importance": 0
+    },
+    "nasalization": {
+      "antiformant_freq": 1342,
+      "antiformant_bandwidth": 200,
+      "antiformant_boost": -20
+    }
+  },
+  "<default_silence_schwa>": {
+    "vowel_formants": [311, 1141, 2726, 3723],
+    "constriction": {
+      "low_end": 1000,
+      "high_end": 15000,
+      "peak_frequency": 8000,
+      "peak_bandwidth": 14000,
+      "boost": 0,
+      "overtone_importance": 0
+    },
+    "nasalization": {
+      "antiformant_freq": 1500,
+      "antiformant_bandwidth": 200,
+      "antiformant_boost": 0
+    }
+  }
+}
