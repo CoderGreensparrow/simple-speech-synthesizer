@@ -2,8 +2,6 @@ from dataclasses import dataclass
 
 from simple_speech_synthesizer.base.types import Envelope, Point, Segment
 
-from simple_speech_synthesizer.acoustic_state.OLD_ORDER_types import GlobalEnvelopeTargets
-
 @dataclass(frozen=True)
 class TimedPhoneme:
     """
